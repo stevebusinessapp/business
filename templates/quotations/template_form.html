@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if create %}Create Template{% else %}Edit Template{% endif %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .form-section h4 {
+        color: #333;
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .color-picker-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+    .color-picker-item {
+        flex: 1;
+        min-width: 200px;
+    }
+    .color-preview {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 2px solid #ddd;
+        margin-top: 0.5rem;
+        cursor: pointer;
+    }
+    .color-preview:hover {
+        border-color: #667eea;
+    }
+    .options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .option-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+    }
+    .option-item:hover {
+        background: #e9ecef;
+    }
+    .option-item label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    .option-item .form-text {
+        font-size: 0.85rem;
+        color: #666;
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        color: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .preview-section {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    .preview-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .preview-content {
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-palette text-primary me-2"></i>
+                        {% if create %}Create New Template{% else %}Edit Template{% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {% if create %}Design a new quotation template with custom branding{% else %}Update the template design and settings{% endif %}
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'quotations:template_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Templates
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="template-form" novalidate>
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="form-section">
+            <h4><i class="fas fa-info-circle me-2"></i>Basic Information</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.name|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.is_default|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    {{ form.description|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Scheme -->
+        <div class="form-section">
+            <h4><i class="fas fa-palette me-2"></i>Color Scheme</h4>
+            <div class="color-picker-group">
+                <div class="color-picker-item">
+                    {{ form.primary_color|as_crispy_field }}
+                    <div class="color-preview" id="primary-color-preview" style="background-color: {{ form.primary_color.value|default:'#1976d2' }};"></div>
+                </div>
+                <div class="color-picker-item">
+                    {{ form.secondary_color|as_crispy_field }}
+                    <div class="color-preview" id="secondary-color-preview" style="background-color: {{ form.secondary_color.value|default:'#f8f9fa' }};"></div>
+                </div>
+                <div class="color-picker-item">
+                    {{ form.text_color|as_crispy_field }}
+                    <div class="color-preview" id="text-color-preview" style="background-color: {{ form.text_color.value|default:'#333333' }};"></div>
+                </div>
+                <div class="color-picker-item">
+                    {{ form.accent_color|as_crispy_field }}
+                    <div class="color-preview" id="accent-color-preview" style="background-color: {{ form.accent_color.value|default:'#e9ecef' }};"></div>
+                </div>
+            </div>
+            
+            <!-- Color Presets -->
+            <div class="mt-4">
+                <h6><i class="fas fa-magic me-2"></i>Quick Color Presets</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary color-preset" data-primary="#1976d2" data-secondary="#f8f9fa" data-text="#333333" data-accent="#e9ecef">
+                        <div class="color-dot" style="background: linear-gradient(45deg, #1976d2, #f8f9fa);"></div>
+                        Blue
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success color-preset" data-primary="#28a745" data-secondary="#f8fff9" data-text="#333333" data-accent="#e8f5e8">
+                        <div class="color-dot" style="background: linear-gradient(45deg, #28a745, #f8fff9);"></div>
+                        Green
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger color-preset" data-primary="#dc3545" data-secondary="#fff8f8" data-text="#333333" data-accent="#ffe8e8">
+                        <div class="color-dot" style="background: linear-gradient(45deg, #dc3545, #fff8f8);"></div>
+                        Red
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning color-preset" data-primary="#ffc107" data-secondary="#fffdf8" data-text="#333333" data-accent="#fff8e8">
+                        <div class="color-dot" style="background: linear-gradient(45deg, #ffc107, #fffdf8);"></div>
+                        Gold
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info color-preset" data-primary="#17a2b8" data-secondary="#f8fdff" data-text="#333333" data-accent="#e8f8ff">
+                        <div class="color-dot" style="background: linear-gradient(45deg, #17a2b8, #f8fdff);"></div>
+                        Teal
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-dark color-preset" data-primary="#343a40" data-secondary="#f8f9fa" data-text="#333333" data-accent="#e9ecef">
+                        <div class="color-dot" style="background: linear-gradient(45deg, #343a40, #f8f9fa);"></div>
+                        Dark
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Options -->
+        <div class="form-section">
+            <h4><i class="fas fa-eye me-2"></i>Display Options</h4>
+            <div class="options-grid">
+                <div class="option-item">
+                    {{ form.show_company_logo|as_crispy_field }}
+                </div>
+                <div class="option-item">
+                    {{ form.show_company_details|as_crispy_field }}
+                </div>
+                <div class="option-item">
+                    {{ form.show_bank_details|as_crispy_field }}
+                </div>
+                <div class="option-item">
+                    {{ form.show_signature|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Settings -->
+        <div class="form-section">
+            <h4><i class="fas fa-file-text me-2"></i>Document Settings</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.document_title|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.number_prefix|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    {{ form.default_terms|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    {{ form.footer_text|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-section">
+            <div class="preview-title">
+                <i class="fas fa-eye me-2"></i>Template Preview
+            </div>
+            <div class="preview-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Document Title:</strong> <span id="preview-document-title">{{ form.document_title.value|default:"QUOTATION" }}</span><br>
+                        <strong>Number Prefix:</strong> <span id="preview-number-prefix">{{ form.number_prefix.value|default:"QT" }}</span><br>
+                        <strong>Primary Color:</strong> <span id="preview-primary-color">{{ form.primary_color.value|default:"#1976d2" }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Show Logo:</strong> <span id="preview-show-logo">{{ form.show_company_logo.value|yesno:"Yes,No" }}</span><br>
+                        <strong>Show Company Details:</strong> <span id="preview-show-company">{{ form.show_company_details.value|yesno:"Yes,No" }}</span><br>
+                        <strong>Show Bank Details:</strong> <span id="preview-show-bank">{{ form.show_bank_details.value|yesno:"Yes,No" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-submit me-2">
+                    <i class="fas fa-save me-1"></i>
+                    {% if create %}Create Template{% else %}Update Template{% endif %}
+                </button>
+                <a href="{% url 'quotations:template_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Color picker functionality
+    function updateColorPreview(inputId, previewId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        
+        input.addEventListener('input', function() {
+            preview.style.backgroundColor = this.value;
+        });
+        
+        // Initialize preview
+        preview.style.backgroundColor = input.value;
+    }
+    
+    // Initialize color previews
+    updateColorPreview('id_primary_color', 'primary-color-preview');
+    updateColorPreview('id_secondary_color', 'secondary-color-preview');
+    updateColorPreview('id_text_color', 'text-color-preview');
+    updateColorPreview('id_accent_color', 'accent-color-preview');
+    
+    // Live preview updates
+    function updatePreview() {
+        const documentTitle = document.getElementById('id_document_title').value || 'QUOTATION';
+        const numberPrefix = document.getElementById('id_number_prefix').value || 'QT';
+        const primaryColor = document.getElementById('id_primary_color').value || '#1976d2';
+        const showLogo = document.getElementById('id_show_company_logo').checked;
+        const showCompany = document.getElementById('id_show_company_details').checked;
+        const showBank = document.getElementById('id_show_bank_details').checked;
+        
+        document.getElementById('preview-document-title').textContent = documentTitle;
+        document.getElementById('preview-number-prefix').textContent = numberPrefix;
+        document.getElementById('preview-primary-color').textContent = primaryColor;
+        document.getElementById('preview-show-logo').textContent = showLogo ? 'Yes' : 'No';
+        document.getElementById('preview-show-company').textContent = showCompany ? 'Yes' : 'No';
+        document.getElementById('preview-show-bank').textContent = showBank ? 'Yes' : 'No';
+    }
+    
+    // Add event listeners for live preview
+    document.getElementById('id_document_title').addEventListener('input', updatePreview);
+    document.getElementById('id_number_prefix').addEventListener('input', updatePreview);
+    document.getElementById('id_primary_color').addEventListener('input', updatePreview);
+    document.getElementById('id_show_company_logo').addEventListener('change', updatePreview);
+    document.getElementById('id_show_company_details').addEventListener('change', updatePreview);
+    document.getElementById('id_show_bank_details').addEventListener('change', updatePreview);
+    
+    // Initialize preview
+    updatePreview();
+    
+    // Color preset functionality
+    document.querySelectorAll('.color-preset').forEach(button => {
+        button.addEventListener('click', function() {
+            const primary = this.dataset.primary;
+            const secondary = this.dataset.secondary;
+            const text = this.dataset.text;
+            const accent = this.dataset.accent;
+            
+            // Apply colors
+            document.getElementById('id_primary_color').value = primary;
+            document.getElementById('id_secondary_color').value = secondary;
+            document.getElementById('id_text_color').value = text;
+            document.getElementById('id_accent_color').value = accent;
+            
+            // Update previews
+            updateColorPreview('id_primary_color', 'primary-color-preview');
+            updateColorPreview('id_secondary_color', 'secondary-color-preview');
+            updateColorPreview('id_text_color', 'text-color-preview');
+            updateColorPreview('id_accent_color', 'accent-color-preview');
+            updatePreview();
+            
+            // Visual feedback
+            this.classList.add('btn-primary');
+            this.classList.remove('btn-outline-primary', 'btn-outline-success', 'btn-outline-danger', 'btn-outline-warning', 'btn-outline-info', 'btn-outline-dark');
+            
+            // Remove active state from other buttons
+            document.querySelectorAll('.color-preset').forEach(btn => {
+                if (btn !== this) {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add(btn.classList.contains('btn-outline-success') ? 'btn-outline-success' : 
+                                    btn.classList.contains('btn-outline-danger') ? 'btn-outline-danger' :
+                                    btn.classList.contains('btn-outline-warning') ? 'btn-outline-warning' :
+                                    btn.classList.contains('btn-outline-info') ? 'btn-outline-info' :
+                                    btn.classList.contains('btn-outline-dark') ? 'btn-outline-dark' : 'btn-outline-primary');
+                }
+            });
+        });
+    });
+    
+    // Form validation
+    document.getElementById('template-form').addEventListener('submit', function(e) {
+        const name = document.getElementById('id_name').value.trim();
+        
+        if (!name) {
+            alert('Please enter a template name.');
+            e.preventDefault();
+            return;
+        }
+        
+        // Validate hex colors
+        const colorInputs = ['id_primary_color', 'id_secondary_color', 'id_text_color', 'id_accent_color'];
+        const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+        
+        for (const inputId of colorInputs) {
+            const input = document.getElementById(inputId);
+            if (input.value && !hexRegex.test(input.value)) {
+                alert('Please enter valid hex color codes (e.g., #1976d2)');
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+    
+    // Auto-format hex colors
+    document.querySelectorAll('input[type="text"]').forEach(input => {
+        if (input.id.includes('color')) {
+            input.addEventListener('blur', function() {
+                let value = this.value.trim();
+                if (value && !value.startsWith('#')) {
+                    value = '#' + value;
+                }
+                if (value && /^#[A-Fa-f0-9]{6}$/.test(value)) {
+                    this.value = value.toUpperCase();
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %} 

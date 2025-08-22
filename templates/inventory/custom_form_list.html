@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Custom Inventory Forms{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-light {
+        background-color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-light {
+        color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        background-color: transparent !important;
+    }
+    
+    .form-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .form-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 20px;
+    }
+    .form-stats {
+        background: #f8f9fa;
+        border-radius: 0 0 15px 15px;
+        padding: 15px;
+    }
+    .stat-item {
+        text-align: center;
+        padding: 10px;
+    }
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    .default-badge {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .color-preview {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 10px;
+    }
+    .create-form-section {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-radius: 15px;
+        padding: 30px;
+        color: white;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-0">Custom Inventory Forms</h6>
+                            <p class="text-sm mb-0">Create and manage custom inventory templates</p>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'inventory:custom_form_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create New Form
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Form Section (if no forms exist) -->
+    {% if not custom_forms %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="create-form-section">
+                <i class="fas fa-edit fa-4x mb-3"></i>
+                <h4>Create Your First Custom Form</h4>
+                <p class="mb-4">Design custom inventory forms tailored to your specific needs. Add custom fields, set validation rules, and create specialized templates for different product types.</p>
+                <a href="{% url 'inventory:custom_form_create' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus"></i> Create Custom Form
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Forms Grid -->
+    <div class="row">
+        {% for form in custom_forms %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="form-card" onclick="window.location.href='{% url 'inventory:custom_form_detail' form.pk %}'">
+                <div class="form-header">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="mb-0">{{ form.name }}</h6>
+                        {% if form.is_default %}
+                            <span class="default-badge">Default</span>
+                        {% endif %}
+                    </div>
+                    {% if form.description %}
+                        <p class="mb-0 opacity-75">{{ form.description|truncatechars:100 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="form-stats">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ form.fields_structure|length }}</div>
+                                    <div class="stat-label">Fields</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ form.items.count }}</div>
+                                    <div class="stat-label">Items</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white border-0 p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="color-preview" style="background-color: {{ form.primary_color }};"></span>
+                            <small class="text-muted">Theme Colors</small>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'inventory:custom_form_detail' form.pk %}" 
+                               class="btn btn-sm btn-primary"
+                               onclick="event.stopPropagation()">
+                                <i class="fas fa-eye"></i> View Data
+                            </a>
+                            <a href="{% url 'inventory:custom_form_update' form.pk %}" 
+                               class="btn btn-sm btn-warning"
+                               onclick="event.stopPropagation()">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="mb-3">Quick Actions</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:custom_form_create' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-plus"></i> Create New Form
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:list' %}" class="btn btn-info w-100">
+                                <i class="fas fa-list"></i> View Standard Inventory
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:import' %}" class="btn btn-success w-100">
+                                <i class="fas fa-upload"></i> Import Data
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:export' %}" class="btn btn-warning w-100">
+                                <i class="fas fa-download"></i> Export Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>How Custom Forms Work</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-edit fa-2x text-primary mb-2"></i>
+                                <h6>Design Your Form</h6>
+                                <p class="text-muted">Create custom fields with different input types like text, numbers, dates, dropdowns, and more.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-database fa-2x text-success mb-2"></i>
+                                <h6>Store Custom Data</h6>
+                                <p class="text-muted">Each form creates its own table structure to store your specialized inventory data.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-chart-bar fa-2x text-warning mb-2"></i>
+                                <h6>Manage & Export</h6>
+                                <p class="text-muted">View, edit, and export your custom inventory data with full CRUD operations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers for form cards
+    const formCards = document.querySelectorAll('.form-card');
+    formCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const viewLink = this.querySelector('a[href*="detail"]');
+            if (viewLink) {
+                window.location.href = viewLink.href;
+            }
+        });
+    });
+    
+    // Prevent event bubbling for action buttons
+    const actionButtons = document.querySelectorAll('.btn-group a');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+    
+    // Add hover effects
+    formCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %} 

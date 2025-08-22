@@ -1,0 +1,804 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Layout Management - {{ layout.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.css">
+<style>
+    .layout-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    
+    .layout-header {
+        background: linear-gradient(135deg, var(--primary-color, #007bff) 0%, var(--secondary-color, #6c757d) 100%);
+        color: white;
+        padding: 25px;
+    }
+    
+    .layout-header h2 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.8rem;
+    }
+    
+    .layout-content {
+        padding: 30px;
+    }
+    
+    .layout-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color, #007bff);
+    }
+    
+    .layout-section h4 {
+        color: #333;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .column-config {
+        display: grid;
+        grid-template-columns: 1fr auto auto auto;
+        gap: 15px;
+        align-items: center;
+        padding: 15px;
+        background: white;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .column-config:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .column-config.dragging {
+        opacity: 0.5;
+        transform: rotate(5deg);
+    }
+    
+    .column-name {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .column-type {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .column-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .drag-handle {
+        cursor: grab;
+        color: #999;
+        padding: 5px;
+    }
+    
+    .drag-handle:hover {
+        color: #333;
+    }
+    
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+    
+    .visibility-toggle {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+    
+    .visibility-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+        background-color: #28a745;
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+    
+    .calculation-settings {
+        background: #e3f2fd;
+        border-left-color: #2196f3;
+    }
+    
+    .calculation-formula {
+        font-family: 'Courier New', monospace;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 8px 12px;
+        width: 100%;
+        font-size: 0.9rem;
+    }
+    
+    .formula-preview {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 8px 12px;
+        margin-top: 5px;
+        font-size: 0.9rem;
+        color: #666;
+    }
+    
+    .branding-settings {
+        background: #f3e5f5;
+        border-left-color: #9c27b0;
+    }
+    
+    .color-picker {
+        width: 50px;
+        height: 40px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    
+    .preview-section {
+        background: #e8f5e8;
+        border-left-color: #4caf50;
+    }
+    
+    .preview-table {
+        background: white;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .preview-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .preview-table th {
+        background: var(--primary-color, #007bff);
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+    }
+    
+    .preview-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .preview-table tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .btn-save {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-save:hover {
+        background: #218838;
+    }
+    
+    .btn-reset {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-reset:hover {
+        background: #545b62;
+    }
+    
+    .btn-preview {
+        background: #17a2b8;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-preview:hover {
+        background: #138496;
+    }
+    
+    .field-builder {
+        background: #fff3cd;
+        border-left-color: #ffc107;
+    }
+    
+    .field-builder-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        gap: 15px;
+        align-items: end;
+        margin-bottom: 15px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color, #007bff);
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+    
+    .btn-add-field {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .btn-add-field:hover {
+        background: #218838;
+    }
+    
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="layout-container">
+        <!-- Header -->
+        <div class="layout-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-cogs"></i> Layout Management: {{ layout.name }}</h2>
+                <a href="{% url 'inventory:list' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left"></i> Back to Inventory
+                </a>
+            </div>
+            <p class="mb-0 mt-2" style="opacity: 0.9;">
+                Customize your inventory table layout, columns, and appearance.
+            </p>
+        </div>
+
+        <!-- Content -->
+        <div class="layout-content">
+            <!-- Column Configuration -->
+            <div class="layout-section">
+                <h4><i class="fas fa-columns"></i> Column Configuration</h4>
+                <p class="text-muted mb-3">Drag and drop columns to reorder, or toggle visibility.</p>
+                
+                <div id="column-list">
+                    {% for column in layout.get_visible_columns %}
+                        <div class="column-config" data-column="{{ column.name }}">
+                            <div class="drag-handle">
+                                <i class="fas fa-grip-vertical"></i>
+                            </div>
+                            <div>
+                                <div class="column-name">{{ column.display_name }}</div>
+                                <div class="column-type">{{ column.field_type|title }}</div>
+                            </div>
+                            <div class="column-controls">
+                                <label class="visibility-toggle">
+                                    <input type="checkbox" 
+                                           class="column-toggle" 
+                                           data-column="{{ column.name }}"
+                                           {% if column.name in layout.column_visibility and layout.column_visibility|get_item:column.name %}checked{% endif %}>
+                                    <span class="slider"></span>
+                                </label>
+                                {% if column.field_type == 'calculated' %}
+                                    <button class="btn btn-sm btn-outline-info" onclick="editCalculation('{{ column.name }}')">
+                                        <i class="fas fa-calculator"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Field Builder -->
+            <div class="layout-section field-builder">
+                <h4><i class="fas fa-plus-circle"></i> Add Custom Field</h4>
+                <p class="text-muted mb-3">Create new custom fields for your inventory.</p>
+                
+                <div class="field-builder-form">
+                    <div class="form-group">
+                        <label>Field Name</label>
+                        <input type="text" class="form-control" id="new-field-name" placeholder="e.g., supplier">
+                    </div>
+                    <div class="form-group">
+                        <label>Display Name</label>
+                        <input type="text" class="form-control" id="new-field-display" placeholder="e.g., Supplier">
+                    </div>
+                    <div class="form-group">
+                        <label>Field Type</label>
+                        <select class="form-control" id="new-field-type">
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="decimal">Decimal</option>
+                            <option value="date">Date</option>
+                            <option value="select">Dropdown</option>
+                            <option value="boolean">Yes/No</option>
+                        </select>
+                    </div>
+                    <button class="btn-add-field" onclick="addCustomField()">
+                        <i class="fas fa-plus"></i> Add Field
+                    </button>
+                </div>
+            </div>
+
+            <!-- Calculation Settings -->
+            {% if layout.supports_calculations %}
+                <div class="layout-section calculation-settings">
+                    <h4><i class="fas fa-calculator"></i> Calculation Settings</h4>
+                    <p class="text-muted mb-3">Configure automatic calculations for your inventory.</p>
+                    
+                    <div class="form-group">
+                        <label>Calculation Formula</label>
+                        <input type="text" class="calculation-formula" 
+                               value="{{ layout.calculation_rules.formula|default:'{quantity} * {unit_price}' }}"
+                               placeholder="e.g., {quantity} * {unit_price}">
+                        <div class="formula-preview" id="formula-preview">
+                            Preview: ₦0.00
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="auto-calculate" 
+                                   {% if layout.auto_calculate %}checked{% endif %}>
+                            Enable automatic calculations
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="show-totals" 
+                                   {% if layout.show_totals %}checked{% endif %}>
+                            Show row totals
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="show-grand-total" 
+                                   {% if layout.show_grand_total %}checked{% endif %}>
+                            Show grand total
+                        </label>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Branding Settings -->
+            <div class="layout-section branding-settings">
+                <h4><i class="fas fa-palette"></i> Branding & Appearance</h4>
+                <p class="text-muted mb-3">Customize colors and company information.</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Primary Color</label>
+                            <input type="color" class="color-picker" id="primary-color" 
+                                   value="{{ layout.primary_color|default:'#007bff' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Secondary Color</label>
+                            <input type="color" class="color-picker" id="secondary-color" 
+                                   value="{{ layout.secondary_color|default:'#6c757d' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Company Name</label>
+                    <input type="text" class="form-control" id="company-name" 
+                           value="{{ layout.company_name|default:'' }}" 
+                           placeholder="Your Company Name">
+                </div>
+                
+                <div class="form-group">
+                    <label>Company Address</label>
+                    <textarea class="form-control" id="company-address" rows="2" 
+                              placeholder="Company Address">{{ layout.company_address|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="layout-section preview-section">
+                <h4><i class="fas fa-eye"></i> Layout Preview</h4>
+                <p class="text-muted mb-3">See how your inventory table will look.</p>
+                
+                <div class="preview-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                {% for column in layout.get_visible_columns %}
+                                    {% if layout.column_visibility|get_item:column.name %}
+                                        <th>{{ column.display_name }}</th>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                {% for column in layout.get_visible_columns %}
+                                    {% if layout.column_visibility|get_item:column.name %}
+                                        <td>
+                                            {% if column.name == 'product_name' %}
+                                                Sample Product
+                                            {% elif column.name == 'sku_code' %}
+                                                SKU-001
+                                            {% elif column.name == 'quantity' %}
+                                                10
+                                            {% elif column.name == 'unit_price' %}
+                                                ₦1,000.00
+                                            {% elif column.name == 'total' %}
+                                                ₦10,000.00
+                                            {% elif column.name == 'status' %}
+                                                <span class="badge bg-success">In Stock</span>
+                                            {% else %}
+                                                Sample Data
+                                            {% endif %}
+                                        </td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn-save" onclick="saveLayout()">
+                    <i class="fas fa-save"></i> Save Layout
+                </button>
+                <button class="btn-preview" onclick="previewLayout()">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button class="btn-reset" onclick="resetLayout()">
+                    <i class="fas fa-undo"></i> Reset to Default
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Layout Data for JavaScript -->
+<script id="layout-data" type="application/json">
+{
+    "id": {{ layout.pk }},
+    "name": "{{ layout.name }}",
+    "supports_calculations": {% if layout.supports_calculations %}true{% else %}false{% endif %},
+    "show_totals": {% if layout.show_totals %}true{% else %}false{% endif %},
+    "show_grand_total": {% if layout.show_grand_total %}true{% else %}false{% endif %},
+    "calculation_fields": {{ layout.get_calculation_fields|safe }},
+    "primary_color": "{{ layout.primary_color|default:'#007bff' }}",
+    "secondary_color": "{{ layout.secondary_color|default:'#6c757d' }}"
+}
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script src="{% static 'js/inventory-dynamic.js' %}"></script>
+<script>
+// Initialize sortable columns
+document.addEventListener('DOMContentLoaded', function() {
+    const columnList = document.getElementById('column-list');
+    if (columnList) {
+        new Sortable(columnList, {
+            animation: 150,
+            handle: '.drag-handle',
+            onEnd: function(evt) {
+                updateColumnOrder();
+            }
+        });
+    }
+    
+    // Initialize color pickers
+    initializeColorPickers();
+    
+    // Initialize formula preview
+    initializeFormulaPreview();
+});
+
+function updateColumnOrder() {
+    const columns = Array.from(document.querySelectorAll('.column-config'))
+        .map(config => config.dataset.column);
+    
+    fetch('/inventory/ajax/update-column-order/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.dynamicInventory.csrfToken
+        },
+        body: JSON.stringify({
+            layout_id: window.dynamicInventory.currentLayout.id,
+            column_order: columns
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.dynamicInventory.showSuccess('Column order updated');
+        } else {
+            window.dynamicInventory.showError(data.error || 'Failed to update column order');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating column order:', error);
+        window.dynamicInventory.showError('Failed to update column order');
+    });
+}
+
+function initializeColorPickers() {
+    const colorPickers = document.querySelectorAll('.color-picker');
+    colorPickers.forEach(picker => {
+        picker.addEventListener('change', function() {
+            updatePreviewColors();
+        });
+    });
+}
+
+function updatePreviewColors() {
+    const primaryColor = document.getElementById('primary-color').value;
+    const secondaryColor = document.getElementById('secondary-color').value;
+    
+    // Update CSS variables
+    document.documentElement.style.setProperty('--primary-color', primaryColor);
+    document.documentElement.style.setProperty('--secondary-color', secondaryColor);
+    
+    // Update preview table header
+    const previewHeaders = document.querySelectorAll('.preview-table th');
+    previewHeaders.forEach(header => {
+        header.style.backgroundColor = primaryColor;
+    });
+}
+
+function initializeFormulaPreview() {
+    const formulaInput = document.querySelector('.calculation-formula');
+    if (formulaInput) {
+        formulaInput.addEventListener('input', function() {
+            updateFormulaPreview(this.value);
+        });
+    }
+}
+
+function updateFormulaPreview(formula) {
+    const preview = document.getElementById('formula-preview');
+    if (preview) {
+        // Simple preview calculation
+        const sampleValues = {
+            quantity: 10,
+            unit_price: 1000
+        };
+        
+        let previewFormula = formula;
+        Object.keys(sampleValues).forEach(key => {
+            previewFormula = previewFormula.replace(new RegExp(`{${key}}`, 'g'), sampleValues[key]);
+        });
+        
+        try {
+            const result = eval(previewFormula);
+            preview.textContent = `Preview: ₦${result.toLocaleString()}`;
+            preview.style.color = '#28a745';
+        } catch (error) {
+            preview.textContent = 'Preview: Invalid formula';
+            preview.style.color = '#dc3545';
+        }
+    }
+}
+
+function addCustomField() {
+    const fieldName = document.getElementById('new-field-name').value;
+    const fieldDisplay = document.getElementById('new-field-display').value;
+    const fieldType = document.getElementById('new-field-type').value;
+    
+    if (!fieldName || !fieldDisplay) {
+        window.dynamicInventory.showError('Please fill in all field details');
+        return;
+    }
+    
+    // Add to column list
+    const columnList = document.getElementById('column-list');
+    const newColumn = document.createElement('div');
+    newColumn.className = 'column-config';
+    newColumn.dataset.column = fieldName;
+    newColumn.innerHTML = `
+        <div class="drag-handle">
+            <i class="fas fa-grip-vertical"></i>
+        </div>
+        <div>
+            <div class="column-name">${fieldDisplay}</div>
+            <div class="column-type">${fieldType.charAt(0).toUpperCase() + fieldType.slice(1)}</div>
+        </div>
+        <div class="column-controls">
+            <label class="visibility-toggle">
+                <input type="checkbox" class="column-toggle" data-column="${fieldName}" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+    `;
+    
+    columnList.appendChild(newColumn);
+    
+    // Clear form
+    document.getElementById('new-field-name').value = '';
+    document.getElementById('new-field-display').value = '';
+    document.getElementById('new-field-type').value = 'text';
+    
+    window.dynamicInventory.showSuccess('Custom field added');
+}
+
+function saveLayout() {
+    const layoutConfig = {
+        columns: [],
+        column_visibility: {},
+        column_order: [],
+        auto_calculate: document.getElementById('auto-calculate')?.checked || false,
+        show_totals: document.getElementById('show-totals')?.checked || false,
+        show_grand_total: document.getElementById('show-grand-total')?.checked || false,
+        primary_color: document.getElementById('primary-color').value,
+        secondary_color: document.getElementById('secondary-color').value,
+        company_name: document.getElementById('company-name').value,
+        company_address: document.getElementById('company-address').value,
+        calculation_rules: {
+            formula: document.querySelector('.calculation-formula')?.value || ''
+        }
+    };
+    
+    // Get column configuration
+    const columns = document.querySelectorAll('.column-config');
+    columns.forEach((config, index) => {
+        const columnName = config.dataset.column;
+        const isVisible = config.querySelector('.column-toggle').checked;
+        
+        layoutConfig.columns.push({
+            name: columnName,
+            order: index,
+            visible: isVisible
+        });
+        layoutConfig.column_visibility[columnName] = isVisible;
+        layoutConfig.column_order.push(columnName);
+    });
+    
+    fetch('/inventory/ajax/save-layout/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.dynamicInventory.csrfToken
+        },
+        body: JSON.stringify({
+            layout_id: window.dynamicInventory.currentLayout.id,
+            layout_config: layoutConfig
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.dynamicInventory.showSuccess('Layout saved successfully');
+        } else {
+            window.dynamicInventory.showError(data.error || 'Failed to save layout');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving layout:', error);
+        window.dynamicInventory.showError('Failed to save layout');
+    });
+}
+
+function previewLayout() {
+    // Open preview in new window
+    window.open('{% url "inventory:list" %}', '_blank');
+}
+
+function resetLayout() {
+    if (confirm('Are you sure you want to reset this layout to default settings? This action cannot be undone.')) {
+        // Reset to default layout
+        window.location.reload();
+    }
+}
+
+function editCalculation(columnName) {
+    // Open calculation editor modal
+    alert(`Edit calculation for ${columnName}`);
+}
+</script>
+{% endblock %} 

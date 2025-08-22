@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{% block title %}Print{% endblock %}</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Slab:wght@400;700&display=swap">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" rel="stylesheet">
+  <link href="{% static 'css/nucleo-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'css/nucleo-svg.css' %}" rel="stylesheet">
+  <link href="{% static 'css/material-dashboard.css' %}?v=3.0.0" rel="stylesheet" />
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+    }
+    body { background: #fff; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% block content %}{% endblock %}
+  {% block extra_js %}{% endblock %}
+</body>
+</html> 

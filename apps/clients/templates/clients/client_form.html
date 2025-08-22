@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if form.instance.pk %}Edit Client{% else %}Create Client{% endif %} - Business App{% endblock %}
+
+{% block extra_css %}
+<style>
+    .client-form-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .section-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-user-plus text-primary me-2"></i>
+                        {% if form.instance.pk %}Edit Client{% else %}Create New Client{% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {% if form.instance.pk %}Update client information{% else %}Add a new client to your database{% endif %}
+                    </p>
+                </div>
+                <div class="action-buttons">
+                    <a href="{% url 'clients:client_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Clients
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="client-form-card">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Client Information -->
+                    <div class="section-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>Client Information
+                        </h5>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.email|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.phone|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.address|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-end gap-3 mt-4">
+                        <a href="{% url 'clients:client_list' %}" class="btn btn-cancel">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-save">
+                            <i class="fas fa-save me-2"></i>
+                            {% if form.instance.pk %}Update Client{% else %}Create Client{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form validation feedback
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input, textarea');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value.trim() === '') {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.value.trim() !== '') {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+    
+    // Form submission handling
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (field.value.trim() === '') {
+                field.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            // Show error message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Please fill in all required fields.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            form.insertBefore(alertDiv, form.firstChild);
+        }
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,455 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-light {
+        background-color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-light {
+        color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        background-color: transparent !important;
+    }
+    
+    .form-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+    }
+    .form-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .field-builder {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .field-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    .field-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .field-item.dragging {
+        opacity: 0.5;
+        transform: rotate(5deg);
+    }
+    .field-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .drag-handle {
+        cursor: move;
+        color: #6c757d;
+        padding: 5px;
+    }
+    .field-preview {
+        background: #e9ecef;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .field-type-icon {
+        width: 20px;
+        text-align: center;
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-header pb-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-0">{{ title }}</h6>
+                            <p class="text-sm mb-0">Design your custom inventory form</p>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'inventory:custom_form_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Forms
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Basic Form Information -->
+                        <div class="field-builder">
+                            <h6><i class="fas fa-info-circle me-2"></i>Form Information</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        <strong>Form Name *</strong>
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.name.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        <strong>Description</strong>
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.description.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Field Builder -->
+                        <div class="field-builder">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6><i class="fas fa-cogs me-2"></i>Form Fields</h6>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="addField()">
+                                    <i class="fas fa-plus"></i> Add Field
+                                </button>
+                            </div>
+                            
+                            <div id="fieldsContainer">
+                                <!-- Dynamic fields will be added here -->
+                            </div>
+                            
+                            <input type="hidden" name="fields_structure" id="fieldsStructure" value="[]">
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'inventory:custom_form_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-submit">
+                                <i class="fas fa-save"></i> {{ action }} Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let fieldCounter = 0;
+let fields = [];
+
+// Field types configuration
+const fieldTypes = {
+    'text': { icon: 'fas fa-font', label: 'Text Input' },
+    'number': { icon: 'fas fa-hashtag', label: 'Number Input' },
+    'email': { icon: 'fas fa-envelope', label: 'Email Input' },
+    'url': { icon: 'fas fa-link', label: 'URL Input' },
+    'textarea': { icon: 'fas fa-align-left', label: 'Text Area' },
+    'select': { icon: 'fas fa-list', label: 'Dropdown' },
+    'checkbox': { icon: 'fas fa-check-square', label: 'Checkbox' },
+    'radio': { icon: 'fas fa-dot-circle', label: 'Radio Buttons' },
+    'date': { icon: 'fas fa-calendar', label: 'Date Picker' },
+    'datetime': { icon: 'fas fa-clock', label: 'Date & Time' },
+    'file': { icon: 'fas fa-file-upload', label: 'File Upload' }
+};
+
+function addField() {
+    const field = {
+        id: fieldCounter++,
+        name: '',
+        label: '',
+        type: 'text',
+        required: false,
+        options: '',
+        placeholder: '',
+        help_text: ''
+    };
+    
+    fields.push(field);
+    renderFields();
+    updateFieldsStructure();
+}
+
+function removeField(fieldId) {
+    fields = fields.filter(f => f.id !== fieldId);
+    renderFields();
+    updateFieldsStructure();
+}
+
+function updateField(fieldId, property, value) {
+    const field = fields.find(f => f.id === fieldId);
+    if (field) {
+        field[property] = value;
+        updateFieldsStructure();
+    }
+}
+
+function renderFields() {
+    const container = document.getElementById('fieldsContainer');
+    container.innerHTML = '';
+    
+    fields.forEach(function(field) {
+        // Build options HTML
+        var optionsHtml = '';
+        for (var key in fieldTypes) {
+            if (fieldTypes.hasOwnProperty(key)) {
+                var config = fieldTypes[key];
+                var selected = field.type === key ? 'selected' : '';
+                optionsHtml += '<option value="' + key + '" ' + selected + '>' + config.label + '</option>';
+            }
+        }
+        
+        var fieldHtml = 
+            '<div class="field-item" data-field-id="' + field.id + '">' +
+                '<div class="row">' +
+                    '<div class="col-md-3">' +
+                        '<label class="form-label">Field Name *</label>' +
+                        '<input type="text" class="form-control" ' +
+                               'value="' + (field.name || '') + '" ' +
+                               'onchange="updateField(' + field.id + ', \'name\', this.value)"' +
+                               'placeholder="e.g., product_code">' +
+                    '</div>' +
+                    '<div class="col-md-3">' +
+                        '<label class="form-label">Display Label *</label>' +
+                        '<input type="text" class="form-control" ' +
+                               'value="' + (field.label || '') + '" ' +
+                               'onchange="updateField(' + field.id + ', \'label\', this.value)"' +
+                               'placeholder="e.g., Product Code">' +
+                    '</div>' +
+                    '<div class="col-md-2">' +
+                        '<label class="form-label">Field Type</label>' +
+                        '<select class="form-select" onchange="updateField(' + field.id + ', \'type\', this.value)">' +
+                            optionsHtml +
+                        '</select>' +
+                    '</div>' +
+                    '<div class="col-md-2">' +
+                        '<label class="form-label">Required</label>' +
+                        '<div class="form-check mt-2">' +
+                            '<input type="checkbox" class="form-check-input" ' +
+                                   (field.required ? 'checked' : '') + ' ' +
+                                   'onchange="updateField(' + field.id + ', \'required\', this.checked)">' +
+                            '<label class="form-check-label">Required field</label>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="col-md-2">' +
+                        '<div class="field-controls">' +
+                            '<span class="drag-handle">' +
+                                '<i class="fas fa-grip-vertical"></i>' +
+                            '</span>' +
+                            '<button type="button" class="btn btn-danger btn-sm" ' +
+                                    'onclick="removeField(' + field.id + ')">' +
+                                '<i class="fas fa-trash"></i>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                
+                '<div class="row mt-2">' +
+                    '<div class="col-md-4">' +
+                        '<label class="form-label">Placeholder</label>' +
+                        '<input type="text" class="form-control" ' +
+                               'value="' + (field.placeholder || '') + '" ' +
+                               'onchange="updateField(' + field.id + ', \'placeholder\', this.value)"' +
+                               'placeholder="Optional placeholder text">' +
+                    '</div>' +
+                    '<div class="col-md-4">' +
+                        '<label class="form-label">Help Text</label>' +
+                        '<input type="text" class="form-control" ' +
+                               'value="' + (field.help_text || '') + '" ' +
+                               'onchange="updateField(' + field.id + ', \'help_text\', this.value)"' +
+                               'placeholder="Optional help text">' +
+                    '</div>' +
+                    '<div class="col-md-4">' +
+                        '<label class="form-label">Options (for select/radio)</label>' +
+                        '<input type="text" class="form-control" ' +
+                               'value="' + (field.options || '') + '" ' +
+                               'onchange="updateField(' + field.id + ', \'options\', this.value)"' +
+                               'placeholder="Option1,Option2,Option3">' +
+                    '</div>' +
+                '</div>' +
+                
+                '<div class="field-preview">' +
+                    '<strong>Preview:</strong> ' +
+                    '<span class="text-muted">' + generateFieldPreview(field) + '</span>' +
+                '</div>' +
+            '</div>';
+        
+        container.innerHTML += fieldHtml;
+    });
+}
+
+function generateFieldPreview(field) {
+    var typeConfig = fieldTypes[field.type];
+    var preview = (field.label || 'Field Label') + ' (' + typeConfig.label + ')';
+    
+    if (field.required) {
+        preview += ' *';
+    }
+    
+    if (field.placeholder) {
+        preview += ' - "' + field.placeholder + '"';
+    }
+    
+    return preview;
+}
+
+function updateFieldsStructure() {
+    document.getElementById('fieldsStructure').value = JSON.stringify(fields);
+}
+
+// Initialize form if editing
+document.addEventListener('DOMContentLoaded', function() {
+    {% if custom_form and custom_form.fields_structure %}
+        fields = {{ custom_form.fields_structure|safe }};
+        // Calculate max field ID safely
+        var maxId = -1;
+        for (var i = 0; i < fields.length; i++) {
+            if (fields[i].id > maxId) {
+                maxId = fields[i].id;
+            }
+        }
+        fieldCounter = maxId + 1;
+        renderFields();
+        updateFieldsStructure();
+    {% endif %}
+    
+    // Add debug logging
+    console.log('Custom form builder initialized');
+    console.log('Fields:', fields);
+    console.log('Field counter:', fieldCounter);
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    console.log('Form submission started');
+    console.log('Fields:', fields);
+    console.log('Fields structure:', document.getElementById('fieldsStructure').value);
+    
+    if (fields.length === 0) {
+        e.preventDefault();
+        alert('Please add at least one field to your form.');
+        return;
+    }
+    
+    var invalidFields = [];
+    for (var i = 0; i < fields.length; i++) {
+        if (!fields[i].name || !fields[i].label) {
+            invalidFields.push(fields[i]);
+        }
+    }
+    
+    if (invalidFields.length > 0) {
+        e.preventDefault();
+        alert('Please fill in all required field information (name and label).');
+        return;
+    }
+    
+    console.log('Form validation passed, submitting...');
+});
+</script>
+{% endblock %} 

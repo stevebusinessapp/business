@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Test Page</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .success { color: green; font-size: 24px; font-weight: bold; }
+        .info { color: blue; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="success">✅ SIMPLE TEST PAGE LOADED SUCCESSFULLY!</div>
+    <div class="info">If you can see this, the template system is working.</div>
+    <div class="info">Templates count: {{ templates|length|default:"0" }}</div>
+    <div class="info">Selected template: {{ selected_template.name|default:"None" }}</div>
+    <div class="info">User: {{ user.username|default:"Anonymous" }}</div>
+    <div class="info">Time: {% now "Y-m-d H:i:s" %}</div>
+</body>
+</html>

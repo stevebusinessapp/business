@@ -1,0 +1,456 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Personalized Welcome Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card overflow-hidden">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+          <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3 position-relative" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="position-absolute top-0 end-0 p-3">
+              <i class="material-icons text-white opacity-6" style="font-size: 3rem;">emoji_emotions</i>
+            </div>
+            <div class="ps-3">
+              <h4 class="text-white mb-1" id="dynamic-greeting">
+                <span id="greeting-text">Good day</span>, 
+                <span class="fw-bold" id="user-name">{% if user.first_name %}{{ user.first_name }}{% else %}Friend{% endif %}!</span>
+              </h4>
+              <p class="text-white-50 mb-0" id="welcome-message">
+                Welcome back to your business command center
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <div id="motivational-section">
+                <h5 class="text-dark mb-2" id="motivational-title">🚀 Ready to grow your business today?</h5>
+                <p class="text-muted mb-3" id="motivational-text">
+                  You're doing amazing! Every invoice brings you closer to your goals. 
+                  Let's make today productive and profitable.
+                </p>
+
+                <div class="d-flex flex-wrap gap-2">
+
+                  <a href="{% url 'invoices:create' %}" class="btn btn-primary btn-sm">
+                    <i class="material-icons text-sm me-1">add_circle</i>
+                    Create New Invoice
+                  </a>
+
+                  <a href="{% url 'invoices:list' %}" class="btn btn-outline-info btn-sm">
+                    <i class="material-icons text-sm me-1">receipt_long</i>
+                    View All Invoices
+                  </a>
+                  <a href="{% url 'core:bank_accounts' %}" class="btn btn-outline-warning btn-sm">
+                    <i class="material-icons text-sm me-1">account_balance</i>
+                    Add Bank Details
+                  </a>
+                  <button class="btn btn-outline-success btn-sm" onclick="showQuickTip()">
+                    <i class="material-icons text-sm me-1">lightbulb</i>
+                    Quick Tip
+                  </button>
+                </div>
+
+              </div>
+            </div>
+            <div class="col-md-4 text-center">
+              <div class="achievement-badge" id="achievement-badge">
+                <div class="badge-circle bg-gradient-success text-white p-3 rounded-circle mx-auto mb-2" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                  <i class="material-icons" style="font-size: 2rem;" id="achievement-icon">star</i>
+                </div>
+                <h6 class="text-success mb-1" id="achievement-title">Business Owner</h6>
+                <small class="text-muted" id="achievement-desc">Keep up the great work!</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats Overview -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card h-100">
+        <div class="card-body text-center">
+          <div class="icon icon-lg icon-shape bg-gradient-primary shadow text-center border-radius-xl mb-3 mx-auto">
+            <i class="material-icons opacity-10">today</i>
+          </div>
+          <h6 class="mb-1">Today's Focus</h6>
+          <p class="text-sm text-muted mb-2">What's your priority?</p>
+          <span class="badge bg-light text-dark" id="daily-focus">Growing Revenue</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card h-100">
+        <div class="card-body text-center">
+          <div class="icon icon-lg icon-shape bg-gradient-success shadow text-center border-radius-xl mb-3 mx-auto">
+            <i class="material-icons opacity-10">trending_up</i>
+          </div>
+          <h6 class="mb-1">Your Progress</h6>
+          <p class="text-sm text-muted mb-2">This month</p>
+          <div class="progress">
+            <div class="progress-bar bg-success" role="progressbar" style="width: 65%"></div>
+          </div>
+          <small class="text-success">65% Goal Achieved</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card h-100">
+        <div class="card-body text-center">
+          <div class="icon icon-lg icon-shape bg-gradient-warning shadow text-center border-radius-xl mb-3 mx-auto">
+            <i class="material-icons opacity-10">schedule</i>
+          </div>
+          <h6 class="mb-1">Time Saved</h6>
+          <p class="text-sm text-muted mb-2">Using this system</p>
+          <h5 class="text-warning mb-0" id="time-saved">2.5 hours</h5>
+          <small class="text-muted">per week</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card h-100">
+        <div class="card-body text-center">
+          <div class="icon icon-lg icon-shape bg-gradient-info shadow text-center border-radius-xl mb-3 mx-auto">
+            <i class="material-icons opacity-10">celebration</i>
+          </div>
+          <h6 class="mb-1">Streak</h6>
+          <p class="text-sm text-muted mb-2">Days active</p>
+          <h5 class="text-info mb-0" id="login-streak">7</h5>
+          <small class="text-muted">Keep it up! 🔥</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Hub -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header pb-0">
+          <div class="d-flex align-items-center">
+            <div>
+              <h6>⚡ Quick Actions Hub</h6>
+              <p class="text-sm mb-0">Everything you need, right at your fingertips</p>
+            </div>
+            <div class="ms-auto">
+              <button class="btn btn-outline-primary btn-sm" onclick="customizeActions()">
+                <i class="material-icons text-sm">tune</i>
+                Customize
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body pt-3">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="list-group">
+                <div class="list-group-item border-0 px-3 py-2">
+                  <div class="d-flex align-items-center">
+                    <div class="icon icon-sm icon-shape bg-primary text-white rounded-circle me-3">
+                      <i class="material-icons text-xs">receipt</i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">Create Invoice</h6>
+                      <p class="text-sm text-muted mb-0">Generate a new invoice for your clients</p>
+                    </div>
+                    <a href="{% url 'invoices:create' %}" class="btn btn-sm btn-outline-primary">Create</a>
+                  </div>
+                </div>
+                <div class="list-group-item border-0 px-3 py-2">
+                  <div class="d-flex align-items-center">
+                    <div class="icon icon-sm icon-shape bg-success text-white rounded-circle me-3">
+                      <i class="material-icons text-xs">visibility</i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">View Invoices</h6>
+                      <p class="text-sm text-muted mb-0">Manage and track all your invoices</p>
+                    </div>
+                    <a href="{% url 'invoices:list' %}" class="btn btn-sm btn-outline-success">View All</a>
+                  </div>
+                </div>
+                <div class="list-group-item border-0 px-3 py-2">
+                  <div class="d-flex align-items-center">
+                    <div class="icon icon-sm icon-shape bg-warning text-white rounded-circle me-3">
+                      <i class="material-icons text-xs">business</i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h6 class="mb-1">Company Profile</h6>
+                      <p class="text-sm text-muted mb-0">Update your business information</p>
+                    </div>
+                    <a href="#" class="btn btn-sm btn-outline-warning">Update</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="bg-gradient-light border-radius-lg p-3 h-100 d-flex flex-column justify-content-center text-center">
+                <i class="material-icons text-primary mb-2" style="font-size: 3rem;">auto_awesome</i>
+                <h6 class="text-primary">Pro Tip of the Day</h6>
+                <p class="text-sm text-muted mb-3" id="daily-tip">
+                  Set up automated invoice reminders to get paid faster and improve your cash flow!
+                </p>
+                <button class="btn btn-sm btn-primary" onclick="getNewTip()">
+                  <i class="material-icons text-sm me-1">refresh</i>
+                  New Tip
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification for tips -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="tip-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <i class="material-icons text-primary me-2">lightbulb</i>
+      <strong class="me-auto">Quick Tip</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+    </div>
+    <div class="toast-body" id="tip-content">
+      <!-- Tip content goes here -->
+    </div>
+  </div>
+</div>
+
+<style>
+.achievement-badge {
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from { opacity: 0.8; }
+    to { opacity: 1; }
+}
+
+.badge-circle {
+    transition: transform 0.3s ease;
+}
+
+.badge-circle:hover {
+    transform: scale(1.1);
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set time-based greeting
+    setDynamicGreeting();
+    
+    // Set personalized name
+    setPersonalizedName();
+    
+    // Rotate motivational messages
+    rotateDailyMessages();
+    
+    // Initialize random achievements
+    setRandomAchievement();
+    
+    // Update progress bars with animation
+    animateProgressBars();
+});
+
+function setDynamicGreeting() {
+    const hour = new Date().getHours();
+    const greetingElement = document.getElementById('greeting-text');
+    const messageElement = document.getElementById('welcome-message');
+    
+    const greetings = {
+        morning: {
+            text: "Good morning",
+            message: "Ready to start your day strong! ☀️"
+        },
+        afternoon: {
+            text: "Good afternoon", 
+            message: "Hope your day is going great! 🌟"
+        },
+        evening: {
+            text: "Good evening",
+            message: "Time to review your progress! 🌙"
+        }
+    };
+    
+    let greeting;
+    if (hour < 12) greeting = greetings.morning;
+    else if (hour < 17) greeting = greetings.afternoon;
+    else greeting = greetings.evening;
+    
+    greetingElement.textContent = greeting.text;
+    messageElement.textContent = greeting.message;
+}
+
+function setPersonalizedName() {
+    const userNameElement = document.getElementById('user-name');
+    const currentText = userNameElement.textContent;
+    
+    // If it shows "Friend!", try to extract name from email
+    if (currentText === "Friend!") {
+        const userEmail = "{{ user.email }}";
+        if (userEmail && userEmail !== "{{ user.email }}") {
+            // Extract name before @ and capitalize it
+            const emailName = userEmail.split('@')[0];
+            const friendlyName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+            userNameElement.textContent = friendlyName + "!";
+        }
+    }
+}
+
+function rotateDailyMessages() {
+    const messages = [
+        {
+            title: "🚀 Ready to grow your business today?",
+            text: "You're doing amazing! Every invoice brings you closer to your goals. Let's make today productive and profitable."
+        },
+        {
+            title: "💪 Building success, one step at a time!",
+            text: "Your dedication is inspiring! Remember, small consistent actions lead to extraordinary results."
+        },
+        {
+            title: "🎯 Focus on what matters most!",
+            text: "You're in control of your business destiny. Today is another opportunity to excel and thrive."
+        },
+        {
+            title: "⭐ Making a difference with every client!",
+            text: "Your work creates value and serves others. Keep up the excellent work, success is following you!"
+        }
+    ];
+    
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+    document.getElementById('motivational-title').innerHTML = randomMessage.title;
+    document.getElementById('motivational-text').textContent = randomMessage.text;
+}
+
+function setRandomAchievement() {
+    const achievements = [
+        { icon: "star", title: "Business Star", desc: "Keep shining bright!" },
+        { icon: "trending_up", title: "Growth Master", desc: "Your progress is amazing!" },
+        { icon: "verified", title: "Pro Achiever", desc: "Excellence in action!" },
+        { icon: "emoji_events", title: "Top Performer", desc: "Leading by example!" },
+        { icon: "diamond", title: "Premium Pro", desc: "Outstanding dedication!" }
+    ];
+    
+    const randomAchievement = achievements[Math.floor(Math.random() * achievements.length)];
+    document.getElementById('achievement-icon').textContent = randomAchievement.icon;
+    document.getElementById('achievement-title').textContent = randomAchievement.title;
+    document.getElementById('achievement-desc').textContent = randomAchievement.desc;
+}
+
+function animateProgressBars() {
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 2s ease-in-out';
+            bar.style.width = width;
+        }, 500);
+    });
+}
+
+function showQuickTip() {
+    const tips = [
+        "💡 Set up payment terms to get paid faster!",
+        "💡 Use professional invoice templates to impress clients!",
+        "💡 Send invoices immediately after work completion!",
+        "💡 Follow up on overdue invoices politely but persistently!",
+        "💡 Offer multiple payment methods for convenience!",
+        "💡 Keep detailed records for better business insights!",
+        "💡 Set aside time weekly to review your finances!"
+    ];
+    
+    const randomTip = tips[Math.floor(Math.random() * tips.length)];
+    document.getElementById('tip-content').textContent = randomTip;
+    
+    const toast = new bootstrap.Toast(document.getElementById('tip-toast'));
+    toast.show();
+}
+
+function getNewTip() {
+    const tips = [
+        "Set up automated invoice reminders to get paid faster and improve your cash flow!",
+        "Use clear, professional descriptions in your invoices to avoid payment delays.",
+        "Include your payment terms prominently to set clear expectations.",
+        "Send invoices within 24 hours of completing work for the best results.",
+        "Consider offering early payment discounts to encourage faster payments.",
+        "Keep track of your most profitable services and focus on those.",
+        "Regular follow-ups on outstanding invoices can improve your collection rate by 40%!"
+    ];
+    
+    const randomTip = tips[Math.floor(Math.random() * tips.length)];
+    document.getElementById('daily-tip').textContent = randomTip;
+}
+
+function customizeActions() {
+    alert('🎨 Customization feature coming soon! You\'ll be able to personalize your dashboard to fit your workflow perfectly.');
+}
+
+// Add some interactive flair
+document.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.05)';
+    });
+    
+    btn.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1)';
+    });
+});
+
+// Celebration for achievements
+document.getElementById('achievement-badge').addEventListener('click', function() {
+    // Create confetti effect
+    for (let i = 0; i < 50; i++) {
+        createConfetti();
+    }
+});
+
+function createConfetti() {
+    const confetti = document.createElement('div');
+    confetti.innerHTML = '🎉';
+    confetti.style.position = 'fixed';
+    confetti.style.top = '10%';
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.fontSize = '20px';
+    confetti.style.pointerEvents = 'none';
+    confetti.style.zIndex = '9999';
+    confetti.style.animation = 'fall 3s linear forwards';
+    
+    document.body.appendChild(confetti);
+    
+    setTimeout(() => {
+        confetti.remove();
+    }, 3000);
+}
+
+// Add CSS for confetti animation
+const style = document.createElement('style');
+style.textContent = `
+@keyframes fall {
+    to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+`;
+document.head.appendChild(style);
+</script>
+{% endblock content %}

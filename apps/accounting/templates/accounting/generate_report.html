@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Generate Financial Report{% endblock %}
+
+{% block breadcrumb %}Generate Report{% endblock %}
+{% block page_title %}Generate Financial Report{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-form-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+    .report-form-card:hover {
+        transform: translateY(-2px);
+    }
+    .report-type-card {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 10px 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .report-type-card:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    .report-type-card.selected {
+        border-color: #007bff;
+        background-color: #e3f2fd;
+    }
+    .report-type-card input[type="radio"] {
+        margin-right: 10px;
+    }
+    .report-type-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: #007bff;
+    }
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .preview-section {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Generate Financial Report</h1>
+                    <p class="text-muted">Create comprehensive financial reports for your business</p>
+                </div>
+                <div>
+                    <a href="{% url 'accounting:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Report Generation Form -->
+            <div class="card report-form-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Report Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="reportForm">
+                        {% csrf_token %}
+                        
+                        <!-- Report Type Selection -->
+                        <div class="form-section">
+                            <h6 class="mb-3">Select Report Type</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="report-type-card" onclick="selectReportType('income_statement')">
+                                        <input type="radio" name="report_type" value="income_statement" id="income_statement" 
+                                               {% if form.report_type.value == 'income_statement' %}checked{% endif %}>
+                                        <div class="text-center">
+                                            <div class="report-type-icon">
+                                                <i class="fas fa-chart-line"></i>
+                                            </div>
+                                            <h6>Income Statement</h6>
+                                            <small class="text-muted">Revenue, expenses, and net income</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="report-type-card" onclick="selectReportType('balance_sheet')">
+                                        <input type="radio" name="report_type" value="balance_sheet" id="balance_sheet"
+                                               {% if form.report_type.value == 'balance_sheet' %}checked{% endif %}>
+                                        <div class="text-center">
+                                            <div class="report-type-icon">
+                                                <i class="fas fa-balance-scale"></i>
+                                            </div>
+                                            <h6>Balance Sheet</h6>
+                                            <small class="text-muted">Assets, liabilities, and equity</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if form.report_type.errors %}
+                                <div class="text-danger mt-2">
+                                    {{ form.report_type.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Report Details -->
+                        <div class="form-section">
+                            <h6 class="mb-3">Report Details</h6>
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label for="{{ form.title.id_for_label }}" class="form-label">
+                                        <i class="fas fa-heading"></i> Report Title
+                                    </label>
+                                    {{ form.title }}
+                                    {% if form.title.errors %}
+                                        <div class="text-danger mt-1">
+                                            {{ form.title.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Give your report a descriptive name</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="form-section">
+                            <h6 class="mb-3">Date Range</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.start_date.id_for_label }}" class="form-label">
+                                        <i class="fas fa-calendar"></i> Start Date
+                                    </label>
+                                    {{ form.start_date }}
+                                    {% if form.start_date.errors %}
+                                        <div class="text-danger mt-1">
+                                            {{ form.start_date.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.end_date.id_for_label }}" class="form-label">
+                                        <i class="fas fa-calendar"></i> End Date
+                                    </label>
+                                    {{ form.end_date }}
+                                    {% if form.end_date.errors %}
+                                        <div class="text-danger mt-1">
+                                            {{ form.end_date.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if form.non_field_errors %}
+                                <div class="text-danger mt-2">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Generate Button -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-magic"></i> Generate Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Preview/Help -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Report Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="reportInfo">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-lightbulb"></i> How to Generate Reports</h6>
+                            <ol class="mb-0">
+                                <li>Select the type of report you want to generate</li>
+                                <li>Provide a descriptive title for your report</li>
+                                <li>Set the date range for the report period</li>
+                                <li>Click "Generate Report" to create your report</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div id="incomeStatementInfo" style="display: none;">
+                        <h6><i class="fas fa-chart-line"></i> Income Statement</h6>
+                        <p class="text-muted">Shows your business's financial performance over a specific period:</p>
+                        <ul class="text-muted">
+                            <li>Total Revenue</li>
+                            <li>Total Expenses</li>
+                            <li>Net Income/Loss</li>
+                            <li>Profit Margins</li>
+                        </ul>
+                    </div>
+
+                    <div id="balanceSheetInfo" style="display: none;">
+                        <h6><i class="fas fa-balance-scale"></i> Balance Sheet</h6>
+                        <p class="text-muted">Provides a snapshot of your business's financial position:</p>
+                        <ul class="text-muted">
+                            <li>Total Assets</li>
+                            <li>Total Liabilities</li>
+                            <li>Owner's Equity</li>
+                            <li>Financial Ratios</li>
+                        </ul>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Important Notes</h6>
+                        <ul class="mb-0 text-muted">
+                            <li>Reports are generated based on your transaction data</li>
+                            <li>Ensure all transactions are properly recorded</li>
+                            <li>Reports can be exported as PDF or Excel</li>
+                            <li>Generated reports are saved for future reference</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function selectReportType(type) {
+    // Uncheck all radio buttons
+    document.querySelectorAll('input[name="report_type"]').forEach(radio => {
+        radio.checked = false;
+    });
+    
+    // Check the selected one
+    document.getElementById(type).checked = true;
+    
+    // Update visual selection
+    document.querySelectorAll('.report-type-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    // Show/hide info sections
+    document.getElementById('reportInfo').style.display = 'none';
+    document.getElementById('incomeStatementInfo').style.display = 'none';
+    document.getElementById('balanceSheetInfo').style.display = 'none';
+    
+    if (type === 'income_statement') {
+        document.getElementById('incomeStatementInfo').style.display = 'block';
+    } else if (type === 'balance_sheet') {
+        document.getElementById('balanceSheetInfo').style.display = 'block';
+    }
+}
+
+// Initialize form styling
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Bootstrap classes to form fields
+    const formFields = document.querySelectorAll('input, select, textarea');
+    formFields.forEach(field => {
+        if (!field.classList.contains('form-control') && field.type !== 'radio' && field.type !== 'checkbox') {
+            field.classList.add('form-control');
+        }
+    });
+    
+    // Set default dates if not already set
+    const startDate = document.getElementById('{{ form.start_date.id_for_label }}');
+    const endDate = document.getElementById('{{ form.end_date.id_for_label }}');
+    
+    if (!startDate.value) {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        startDate.value = firstDay.toISOString().split('T')[0];
+    }
+    
+    if (!endDate.value) {
+        const today = new Date();
+        endDate.value = today.toISOString().split('T')[0];
+    }
+    
+    // Show info for pre-selected report type
+    const selectedType = document.querySelector('input[name="report_type"]:checked');
+    if (selectedType) {
+        selectReportType(selectedType.value);
+    }
+});
+</script>
+{% endblock %} 

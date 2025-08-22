@@ -1,0 +1,432 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Adjust Stock - {{ product.product_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-light {
+        background-color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-light {
+        color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        background-color: transparent !important;
+    }
+    
+    .adjustment-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        margin-bottom: 30px;
+    }
+    .adjustment-form {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .current-stock {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    .stock-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    .stock-good { background-color: #28a745; }
+    .stock-low { background-color: #ffc107; }
+    .stock-out { background-color: #dc3545; }
+    .adjustment-type-card {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .adjustment-type-card:hover {
+        border-color: #667eea;
+        background-color: #f8f9ff;
+    }
+    .adjustment-type-card.selected {
+        border-color: #667eea;
+        background-color: #e3f2fd;
+    }
+    .adjustment-type-card input[type="radio"] {
+        display: none;
+    }
+    .quantity-preview {
+        background: #e8f5e8;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="adjustment-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h4 class="mb-2">Adjust Stock Level</h4>
+                        <p class="mb-0">{{ product.product_name }} ({{ product.sku_code }})</p>
+                    </div>
+                    <div class="col-auto">
+                                    <a href="{% url 'inventory:detail' product.pk %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Product
+            </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="adjustment-form">
+                <!-- Current Stock Information -->
+                <div class="current-stock">
+                    <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Current Stock Information</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h4 class="mb-1">{{ product.quantity }}</h4>
+                                <small class="text-muted">Current Quantity</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h4 class="mb-1">₦{{ product.total_value|floatformat:2 }}</h4>
+                                <small class="text-muted">Total Value</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <span class="stock-indicator {% if product.status.name == 'in_stock' %}stock-good{% elif product.status.name == 'low_stock' %}stock-low{% else %}stock-out{% endif %}"></span>
+                                <span class="text-capitalize">{{ product.status.display_name }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% with min_threshold=product.get_value.minimum_threshold %}
+                    {% if min_threshold and min_threshold > 0 %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Minimum Threshold:</strong> {{ min_threshold }} units
+                                {% if product.status.name == 'low_stock' %}
+                                    <span class="badge bg-warning ms-2">Low Stock Alert</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- Adjustment Form -->
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Adjustment Type Selection -->
+                    <div class="mb-4">
+                        <h6 class="mb-3"><i class="fas fa-cog me-2"></i>Select Adjustment Type</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="adjustment-type-card" for="add_stock">
+                                    <input type="radio" name="adjustment_type" value="add" id="add_stock" required>
+                                    <div class="text-center">
+                                        <i class="fas fa-plus-circle fa-2x text-success mb-2"></i>
+                                        <h6>Add Stock</h6>
+                                        <small class="text-muted">Increase quantity</small>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="adjustment-type-card" for="subtract_stock">
+                                    <input type="radio" name="adjustment_type" value="subtract" id="subtract_stock">
+                                    <div class="text-center">
+                                        <i class="fas fa-minus-circle fa-2x text-warning mb-2"></i>
+                                        <h6>Subtract Stock</h6>
+                                        <small class="text-muted">Decrease quantity</small>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="adjustment-type-card" for="set_stock">
+                                    <input type="radio" name="adjustment_type" value="set" id="set_stock">
+                                    <div class="text-center">
+                                        <i class="fas fa-equals-circle fa-2x text-info mb-2"></i>
+                                        <h6>Set Stock Level</h6>
+                                        <small class="text-muted">Set exact quantity</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantity Input -->
+                    <div class="mb-4">
+                        <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                            <strong>Quantity</strong>
+                        </label>
+                        <div class="input-group">
+                            {{ form.quantity }}
+                            <span class="input-group-text">units</span>
+                        </div>
+                        {% if form.quantity.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {{ form.quantity.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Enter the quantity to adjust</div>
+                    </div>
+
+                    <!-- Reason -->
+                    <div class="mb-4">
+                        <label for="{{ form.reason.id_for_label }}" class="form-label">
+                            <strong>Reason for Adjustment</strong>
+                        </label>
+                        {{ form.reason }}
+                        {% if form.reason.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {{ form.reason.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Brief explanation for the stock adjustment</div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">
+                            <strong>Additional Notes</strong>
+                        </label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {{ form.notes.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="help-text">Optional additional details</div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="quantity-preview" id="quantityPreview" style="display: none;" 
+                         data-current-qty="{{ product.quantity|default:0 }}" 
+                         data-unit-price="{{ product.unit_price|default:0 }}">
+                        <h6 class="mb-2">Preview</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong>Current:</strong> <span id="currentQty">{{ product.quantity|default:0 }}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Change:</strong> <span id="changeQty">0</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>New Total:</strong> <span id="newQty">{{ product.quantity|default:0 }}</span>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <strong>New Value:</strong> ₦<span id="newValue">{{ product.total_value|floatformat:2 }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'inventory:detail' product.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save"></i> Apply Adjustment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const adjustmentTypeCards = document.querySelectorAll('.adjustment-type-card');
+    const quantityInput = document.getElementById('{{ form.quantity.id_for_label }}');
+    const preview = document.getElementById('quantityPreview');
+    const currentQty = parseFloat(preview.dataset.currentQty) || 0;
+    const unitPrice = parseFloat(preview.dataset.unitPrice) || 0;
+    
+    // Handle adjustment type selection
+    adjustmentTypeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove selection from all cards
+            adjustmentTypeCards.forEach(c => c.classList.remove('selected'));
+            
+            // Add selection to clicked card
+            this.classList.add('selected');
+            
+            // Check the radio button
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            
+            // Update preview
+            updatePreview();
+        });
+    });
+    
+    // Handle quantity input changes
+    quantityInput.addEventListener('input', updatePreview);
+    
+    function updatePreview() {
+        const adjustmentType = document.querySelector('input[name="adjustment_type"]:checked')?.value;
+        const quantity = parseFloat(quantityInput.value) || 0;
+        
+        if (adjustmentType && quantity > 0) {
+            let changeQty = 0;
+            let newQty = currentQty;
+            
+            switch(adjustmentType) {
+                case 'add':
+                    changeQty = quantity;
+                    newQty = currentQty + quantity;
+                    break;
+                case 'subtract':
+                    changeQty = -quantity;
+                    newQty = Math.max(0, currentQty - quantity);
+                    break;
+                case 'set':
+                    changeQty = quantity - currentQty;
+                    newQty = quantity;
+                    break;
+            }
+            
+            const newValue = newQty * unitPrice;
+            
+            // Update preview display
+            document.getElementById('changeQty').textContent = changeQty > 0 ? '+' + changeQty : changeQty;
+            document.getElementById('newQty').textContent = newQty;
+            document.getElementById('newValue').textContent = newValue.toFixed(2);
+            
+            // Show/hide preview
+            preview.style.display = 'block';
+            
+            // Update change quantity color
+            const changeQtyElement = document.getElementById('changeQty');
+            changeQtyElement.className = '';
+            if (changeQty > 0) {
+                changeQtyElement.classList.add('text-success');
+            } else if (changeQty < 0) {
+                changeQtyElement.classList.add('text-danger');
+            } else {
+                changeQtyElement.classList.add('text-muted');
+            }
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const adjustmentType = document.querySelector('input[name="adjustment_type"]:checked');
+        const quantity = quantityInput.value;
+        
+        if (!adjustmentType) {
+            e.preventDefault();
+            alert('Please select an adjustment type.');
+            return;
+        }
+        
+        if (!quantity || quantity <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid quantity.');
+            return;
+        }
+        
+        // Confirm large adjustments
+        const quantityNum = parseFloat(quantity);
+        if (adjustmentType.value === 'subtract' && quantityNum > currentQty) {
+            if (!confirm('You are trying to subtract more stock than currently available. This will set the quantity to 0. Continue?')) {
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        if (adjustmentType.value === 'set' && quantityNum > currentQty * 2) {
+            if (!confirm('You are setting a much higher stock level. Continue?')) {
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

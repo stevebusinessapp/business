@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block extra_head %}
+<meta name="currency-data" content='{"code": "{{ company_profile.currency_code|default:"USD" }}", "symbol": "{{ company_profile.currency_symbol|default:"$" }}"}'>
+{% endblock %}
+
+{% block title %}Inventory Categories{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-light {
+        background-color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-light {
+        color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        background-color: transparent !important;
+    }
+    
+    .category-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+    .category-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px 15px 0 0;
+        padding: 20px;
+        color: white;
+    }
+    .category-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 10px;
+    }
+    .category-stats {
+        background: #f8f9fa;
+        border-radius: 0 0 15px 15px;
+        padding: 15px;
+    }
+    .stat-item {
+        text-align: center;
+        padding: 10px;
+    }
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    .empty-state {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-radius: 15px;
+        padding: 40px;
+        color: white;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-0">Inventory Categories</h6>
+                            <p class="text-sm mb-0">Organize your inventory with categories</p>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'inventory:category_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Category
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State (if no categories) -->
+    {% if not categories %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-tags fa-4x mb-3"></i>
+                <h4>No Categories Yet</h4>
+                <p class="mb-4">Create your first category to start organizing your inventory. Categories help you group similar products together for easier management.</p>
+                <a href="{% url 'inventory:category_create' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus"></i> Create Your First Category
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Categories Grid -->
+    <div class="row">
+        {% for category in categories %}
+        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="category-card" onclick="window.location.href='{% url 'inventory:list' %}?category={{ category.id }}'">
+                <div class="category-header">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="mb-0">
+                            <span class="category-color" data-color="{{ category.color }}"></span>
+                            {{ category.name }}
+                        </h6>
+                    </div>
+                    {% if category.description %}
+                        <p class="mb-0 opacity-75">{{ category.description|truncatechars:100 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="category-stats">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ category.product_count|default:0 }}</div>
+                                    <div class="stat-label">Products</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <div class="stat-number currency-value" data-currency-value="{{ category.total_value|default:0 }}">{{ category.total_value|currency_format_with_symbol:company_profile }}</div>
+                                    <div class="stat-label">Total Value</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white border-0 p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Created {{ category.created_at|timesince }} ago</small>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'inventory:list' %}?category={{ category.id }}" 
+                               class="btn btn-sm btn-primary"
+                               onclick="event.stopPropagation()">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <a href="{% url 'inventory:category_update' category.pk %}" 
+                               class="btn btn-sm btn-warning"
+                               onclick="event.stopPropagation()">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="mb-3">Quick Actions</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:category_create' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-plus"></i> Create Category
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:list' %}" class="btn btn-info w-100">
+                                <i class="fas fa-list"></i> View All Products
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:create' %}" class="btn btn-success w-100">
+                                <i class="fas fa-plus"></i> Add Product
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:import' %}" class="btn btn-warning w-100">
+                                <i class="fas fa-upload"></i> Import Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Category Management Tips</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-lightbulb fa-2x text-warning mb-2"></i>
+                                <h6>Naming Convention</h6>
+                                <p class="text-muted">Use clear, descriptive names for your categories to make them easy to find and understand.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-palette fa-2x text-info mb-2"></i>
+                                <h6>Color Coding</h6>
+                                <p class="text-muted">Assign different colors to categories for quick visual identification and better organization.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-sitemap fa-2x text-success mb-2"></i>
+                                <h6>Logical Grouping</h6>
+                                <p class="text-muted">Group similar products together to streamline inventory management and reporting.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/currency-utils.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set category colors dynamically
+    document.querySelectorAll('.category-color').forEach(function(element) {
+        const color = element.getAttribute('data-color');
+        if (color) {
+            element.style.backgroundColor = color;
+        }
+    });
+    
+    // Add click handlers for category cards
+    const categoryCards = document.querySelectorAll('.category-card');
+    categoryCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const viewLink = this.querySelector('a[href*="list"]');
+            if (viewLink) {
+                window.location.href = viewLink.href;
+            }
+        });
+    });
+    
+    // Prevent event bubbling for action buttons
+    const actionButtons = document.querySelectorAll('.btn-group a');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+    
+    // Add hover effects
+    categoryCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Animate cards on load
+    categoryCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+    
+    // Use the currency manager for handling currency updates
+    if (window.currencyManager) {
+        // Add listener for currency changes
+        window.currencyManager.addListener(function(oldCurrency, newCurrency) {
+            console.log('Currency updated from', oldCurrency, 'to', newCurrency);
+            
+            // Show notification
+            if (typeof showNotification === 'function') {
+                showNotification(`Currency updated to ${newCurrency.code} (${newCurrency.symbol})`, 'success');
+            } else {
+                // Fallback notification
+                const notification = document.createElement('div');
+                notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                notification.innerHTML = `
+                    <strong>Currency Updated!</strong><br>
+                    Changed to ${newCurrency.code} (${newCurrency.symbol})
+                    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                `;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 3000);
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

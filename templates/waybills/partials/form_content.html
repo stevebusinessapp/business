@@ -1,0 +1,301 @@
+{% load static %}
+
+<!-- Dynamic Form Fields -->
+{% if selected_template %}
+<div class="dynamic-form-content">
+    
+    <!-- Basic Fields -->
+    <div class="dynamic-section">
+        <h6>Basic Information</h6>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="delivery_date">Delivery Date</label>
+                <input type="date" id="delivery_date" name="delivery_date" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" class="form-control">
+                    <option value="pending">Pending</option>
+                    <option value="in_transit">In Transit</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="notes">Notes</label>
+            <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="Additional notes or instructions"></textarea>
+        </div>
+    </div>
+    
+    <!-- Custom Fields -->
+    {% if selected_template.custom_fields %}
+    <div class="dynamic-section">
+        <h6>Details</h6>
+        
+        {% for section_key, section_config in selected_template.custom_fields.items %}
+            {% if section_config.type == 'section' %}
+                <div class="form-section-group">
+                    <h6>{{ section_config.label|default:section_key }}</h6>
+                    
+                    {% for field_key, field_config in section_config.fields.items %}
+                        <div class="form-group">
+                            <label for="custom_{{ section_key }}_{{ field_key }}">
+                                {{ field_config.label|default:field_key }}
+                                {% if field_config.required %}*{% endif %}
+                            </label>
+                            
+                            {% if field_config.type == 'text' %}
+                                <input type="text" 
+                                       id="custom_{{ section_key }}_{{ field_key }}" 
+                                       name="custom_{{ section_key }}_{{ field_key }}" 
+                                       class="form-control"
+                                       {% if field_config.required %}required{% endif %}
+                                       {% if field_config.placeholder %}placeholder="{{ field_config.placeholder }}"{% endif %}>
+                            
+                            {% elif field_config.type == 'email' %}
+                                <input type="email" 
+                                       id="custom_{{ section_key }}_{{ field_key }}" 
+                                       name="custom_{{ section_key }}_{{ field_key }}" 
+                                       class="form-control"
+                                       {% if field_config.required %}required{% endif %}
+                                       {% if field_config.placeholder %}placeholder="{{ field_config.placeholder }}"{% endif %}>
+                            
+                            {% elif field_config.type == 'tel' %}
+                                <input type="tel" 
+                                       id="custom_{{ section_key }}_{{ field_key }}" 
+                                       name="custom_{{ section_key }}_{{ field_key }}" 
+                                       class="form-control"
+                                       {% if field_config.required %}required{% endif %}
+                                       {% if field_config.placeholder %}placeholder="{{ field_config.placeholder }}"{% endif %}>
+                            
+                            {% elif field_config.type == 'number' %}
+                                <input type="number" 
+                                       id="custom_{{ section_key }}_{{ field_key }}" 
+                                       name="custom_{{ section_key }}_{{ field_key }}" 
+                                       class="form-control"
+                                       {% if field_config.required %}required{% endif %}
+                                       {% if field_config.placeholder %}placeholder="{{ field_config.placeholder }}"{% endif %}>
+                            
+                            {% elif field_config.type == 'textarea' %}
+                                <textarea id="custom_{{ section_key }}_{{ field_key }}" 
+                                          name="custom_{{ section_key }}_{{ field_key }}" 
+                                          class="form-control" 
+                                          rows="3"
+                                          {% if field_config.required %}required{% endif %}
+                                          {% if field_config.placeholder %}placeholder="{{ field_config.placeholder }}"{% endif %}></textarea>
+                            
+                            {% elif field_config.type == 'select' %}
+                                <select id="custom_{{ section_key }}_{{ field_key }}" 
+                                        name="custom_{{ section_key }}_{{ field_key }}" 
+                                        class="form-control"
+                                        {% if field_config.required %}required{% endif %}>
+                                    {% for option in field_config.options %}
+                                        <option value="{{ option }}">{{ option }}</option>
+                                    {% endfor %}
+                                </select>
+                            
+                            {% else %}
+                                <input type="text" 
+                                       id="custom_{{ section_key }}_{{ field_key }}" 
+                                       name="custom_{{ section_key }}_{{ field_key }}" 
+                                       class="form-control"
+                                       {% if field_config.required %}required{% endif %}
+                                       {% if field_config.placeholder %}placeholder="{{ field_config.placeholder }}"{% endif %}>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Display Options -->
+    <div class="dynamic-section">
+        <h6>Display Options</h6>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="show-company-details" value="1" checked>
+                    Show Company Details
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="show-bank-details" value="1">
+                    Show Bank Details
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Items Section -->
+    <div class="items-container">
+        <h6>Items</h6>
+        
+        <div id="items-container">
+            <!-- Items will be added dynamically -->
+        </div>
+        
+        <button type="button" class="add-item-btn">Add Item</button>
+    </div>
+    
+</div>
+
+{% else %}
+<div class="alert alert-warning">
+    <h6>No Template Selected</h6>
+    <p>Please select a template to continue.</p>
+</div>
+{% endif %}
+
+<style>
+/* Form-specific styles */
+.dynamic-form-content {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.dynamic-section {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #fafafa;
+}
+
+.dynamic-section h6 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group label input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.form-control.is-valid {
+    border-color: #28a745;
+}
+
+.items-container {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+}
+
+.items-container h6 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.item-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.add-item-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.add-item-btn:hover {
+    background-color: #5a6268;
+}
+
+.remove-item-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.remove-item-btn:hover {
+    background-color: #c82333;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .item-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>

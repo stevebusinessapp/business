@@ -1,0 +1,535 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if create %}Create Quotation{% else %}Edit Quotation{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .section-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-header h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .line-item {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .line-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .add-item-btn {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .add-item-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .remove-item-btn {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+    }
+    
+    .remove-item-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .totals-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .total-row:last-child {
+        border-bottom: none;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .preview-section {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .btn-cancel {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .line-total {
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+    
+    .money-input {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="form-container">
+                <form method="post" id="quotationForm">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div class="section-header">
+                        <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.template|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.valid_until|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            {{ form.client|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <!-- Line Items -->
+                    <div class="section-header">
+                        <h5><i class="fas fa-list me-2"></i>Line Items</h5>
+                    </div>
+                    
+                    {{ formset.management_form }}
+                    <div id="lineItemsContainer">
+                        {% for form in formset.forms %}
+                        <div class="line-item" data-form-index="{{ forloop.counter0 }}">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ form.product_service|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form.description|as_crispy_field }}
+                                </div>
+                                <div class="col-md-2">
+                                    {{ form.quantity|as_crispy_field }}
+                                </div>
+                                <div class="col-md-2">
+                                    {{ form.unit_price|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-center">
+                                        <span class="text-muted me-2">Line Total:</span>
+                                        <span class="line-total fw-bold text-primary">{{ user_currency_symbol|default:'$' }}0.00</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    {% if not forloop.first %}
+                                    <button type="button" class="remove-item-btn" onclick="removeLineItem(this)">
+                                        <i class="fas fa-trash"></i>Remove
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {{ form.id }}
+                            {{ form.DELETE|as_crispy_field }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <button type="button" class="add-item-btn" onclick="addLineItem()">
+                            <i class="fas fa-plus me-2"></i>Add Line Item
+                        </button>
+                    </div>
+
+                    <!-- Additional Charges -->
+                    <div class="section-header">
+                        <h5><i class="fas fa-calculator me-2"></i>Additional Charges & Terms</h5>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            {{ form.total_tax|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.total_discount|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.shipping_fee|as_crispy_field }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.other_charges|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.terms|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.notes|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Totals Sidebar -->
+            <div class="col-lg-4">
+                <!-- Preview Section -->
+                <div class="preview-section">
+                    <h6><i class="fas fa-eye me-2"></i>Quotation Preview</h6>
+                    <div id="quotationPreview">
+                        <p class="text-muted mb-2">Add line items to see preview</p>
+                    </div>
+                </div>
+
+                <div class="totals-section">
+                    <h5 class="mb-3">
+                        <i class="fas fa-calculator me-2"></i>Quotation Summary
+                    </h5>
+                    
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">{{ user_currency_symbol|default:'$' }}0.00</span>
+                    </div>
+                    
+                    <div class="total-row">
+                        <span>Tax:</span>
+                        <span id="taxAmount">{{ user_currency_symbol|default:'$' }}0.00</span>
+                    </div>
+                    
+                    <div class="total-row">
+                        <span>Discount:</span>
+                        <span id="discountAmount">{{ user_currency_symbol|default:'$' }}0.00</span>
+                    </div>
+                    
+                    <div class="total-row">
+                        <span>Shipping:</span>
+                        <span id="shippingAmount">{{ user_currency_symbol|default:'$' }}0.00</span>
+                    </div>
+                    
+                    <div class="total-row">
+                        <span>Other Charges:</span>
+                        <span id="otherChargesAmount">{{ user_currency_symbol|default:'$' }}0.00</span>
+                    </div>
+                    
+                    <div class="total-row">
+                        <span>Grand Total:</span>
+                        <span id="grandTotal">{{ user_currency_symbol|default:'$' }}0.00</span>
+                    </div>
+                    
+                    <div class="mt-3 pt-3 border-top border-white">
+                        <div class="text-center">
+                            <small class="opacity-75">Amount in Words:</small>
+                            <div id="amountInWords" class="fw-bold">Zero {{ user_currency_code|default:'USD' }} Only</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-save me-2">
+                        <i class="fas fa-save me-2"></i>
+                        {% if create %}Create Quotation{% else %}Update Quotation{% endif %}
+                    </button>
+                    <a href="{% url 'quotations:quotation_list' %}" class="btn btn-cancel">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+                
+                <!-- Preview Button -->
+                {% if not create %}
+                <div class="text-center mt-3">
+                    <a href="{% url 'quotations:quotation_preview' quotation.pk %}" class="btn btn-outline-info" target="_blank">
+                        <i class="fas fa-eye me-2"></i>Preview
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let formIndex = {{ formset.forms|length }};
+let currencySymbol = '{{ user_currency_symbol|default:"$" }}';
+let currencyCode = '{{ user_currency_code|default:"USD" }}';
+
+// Initialize form
+document.addEventListener('DOMContentLoaded', function() {
+    updateTotals();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Listen for changes in line items
+    document.addEventListener('input', function(e) {
+        if (e.target.name.includes('quantity') || e.target.name.includes('unit_price')) {
+            updateLineTotal(e.target);
+        }
+        if (e.target.name.includes('total_tax') || e.target.name.includes('total_discount') || 
+            e.target.name.includes('shipping_fee') || e.target.name.includes('other_charges')) {
+            updateTotals();
+        }
+    });
+}
+
+function addLineItem() {
+    const container = document.getElementById('lineItemsContainer');
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    const newForm = container.querySelector('.line-item').cloneNode(true);
+    
+    // Update form index
+    newForm.setAttribute('data-form-index', formIndex);
+    
+    // Clear form values
+    newForm.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(input => {
+        input.value = '';
+        input.name = input.name.replace(/form-\d+/, `form-${formIndex}`);
+        input.id = input.id.replace(/form-\d+/, `form-${formIndex}`);
+    });
+    
+    // Update labels
+    newForm.querySelectorAll('label').forEach(label => {
+        label.setAttribute('for', label.getAttribute('for').replace(/form-\d+/, `form-${formIndex}`));
+    });
+    
+    // Show remove button
+    const removeBtn = newForm.querySelector('.remove-item-btn');
+    if (removeBtn) {
+        removeBtn.style.display = 'inline-block';
+    }
+    
+    // Update line total display
+    const lineTotalSpan = newForm.querySelector('.line-total');
+    lineTotalSpan.textContent = currencySymbol + '0.00';
+    
+    container.appendChild(newForm);
+    
+    // Update form count
+    formIndex++;
+    totalForms.value = formIndex;
+}
+
+function removeLineItem(button) {
+    const lineItem = button.closest('.line-item');
+    const deleteField = lineItem.querySelector('input[name$="-DELETE"]');
+    
+    if (deleteField) {
+        deleteField.value = 'on';
+        lineItem.style.display = 'none';
+    } else {
+        lineItem.remove();
+    }
+    
+    updateTotals();
+}
+
+function updateLineTotal(input) {
+    const lineItem = input.closest('.line-item');
+    const quantityInput = lineItem.querySelector('input[name$="-quantity"]');
+    const unitPriceInput = lineItem.querySelector('input[name$="-unit_price"]');
+    const lineTotalSpan = lineItem.querySelector('.line-total');
+    
+    const quantity = parseFloat(quantityInput.value) || 0;
+    const unitPrice = parseFloat(unitPriceInput.value) || 0;
+    const lineTotal = quantity * unitPrice;
+    
+    lineTotalSpan.textContent = currencySymbol + lineTotal.toFixed(2);
+    
+    updateTotals();
+}
+
+function updateTotals() {
+    let subtotal = 0;
+    
+    // Calculate subtotal from line items
+    document.querySelectorAll('.line-item').forEach(item => {
+        if (item.style.display !== 'none') {
+            const quantityInput = item.querySelector('input[name$="-quantity"]');
+            const unitPriceInput = item.querySelector('input[name$="-unit_price"]');
+            
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const unitPrice = parseFloat(unitPriceInput.value) || 0;
+            subtotal += quantity * unitPrice;
+        }
+    });
+    
+    // Get additional charges
+    const tax = parseFloat(document.getElementById('id_total_tax').value) || 0;
+    const discount = parseFloat(document.getElementById('id_total_discount').value) || 0;
+    const shipping = parseFloat(document.getElementById('id_shipping_fee').value) || 0;
+    const otherCharges = parseFloat(document.getElementById('id_other_charges').value) || 0;
+    
+    // Calculate grand total
+    const grandTotal = subtotal + tax - discount + shipping + otherCharges;
+    
+    // Update display
+    document.getElementById('subtotal').textContent = currencySymbol + subtotal.toFixed(2);
+    document.getElementById('taxAmount').textContent = currencySymbol + tax.toFixed(2);
+    document.getElementById('discountAmount').textContent = currencySymbol + discount.toFixed(2);
+    document.getElementById('shippingAmount').textContent = currencySymbol + shipping.toFixed(2);
+    document.getElementById('otherChargesAmount').textContent = currencySymbol + otherCharges.toFixed(2);
+    document.getElementById('grandTotal').textContent = currencySymbol + grandTotal.toFixed(2);
+    
+    // Update amount in words
+    updateAmountInWords(grandTotal);
+    
+    // Update preview
+    updatePreview();
+}
+
+function updateAmountInWords(amount) {
+    const amountInWordsDiv = document.getElementById('amountInWords');
+    if (amount === 0) {
+        amountInWordsDiv.textContent = `Zero ${currencyCode} Only`;
+        return;
+    }
+    
+    // Simple number to words conversion (you can enhance this)
+    const words = numberToWords(amount);
+    amountInWordsDiv.textContent = words + ' ' + currencyCode + ' Only';
+}
+
+function numberToWords(num) {
+    // Simple implementation - you can use a library for better results
+    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    
+    if (num === 0) return 'Zero';
+    if (num < 10) return ones[Math.floor(num)];
+    if (num < 20) return teens[Math.floor(num) - 10];
+    if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + ones[num % 10] : '');
+    if (num < 1000) return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 ? ' and ' + numberToWords(num % 100) : '');
+    if (num < 100000) return numberToWords(Math.floor(num / 1000)) + ' Thousand' + (num % 1000 ? ' ' + numberToWords(num % 1000) : '');
+    if (num < 10000000) return numberToWords(Math.floor(num / 100000)) + ' Lakh' + (num % 100000 ? ' ' + numberToWords(num % 100000) : '');
+    return numberToWords(Math.floor(num / 10000000)) + ' Crore' + (num % 10000000 ? ' ' + numberToWords(num % 10000000) : '');
+}
+
+function updatePreview() {
+    const preview = document.getElementById('quotationPreview');
+    const lineItems = document.querySelectorAll('.line-item');
+    let previewHtml = '';
+    
+    lineItems.forEach((item, index) => {
+        if (item.style.display !== 'none') {
+            const product = item.querySelector('input[name$="-product_service"]').value;
+            const quantity = item.querySelector('input[name$="-quantity"]').value;
+            const unitPrice = item.querySelector('input[name$="-unit_price"]').value;
+            
+            if (product && quantity && unitPrice) {
+                const total = (parseFloat(quantity) || 0) * (parseFloat(unitPrice) || 0);
+                previewHtml += `
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>${product}</span>
+                        <span>${currencySymbol}${total.toFixed(2)}</span>
+                    </div>
+                `;
+            }
+        }
+    });
+    
+    if (previewHtml) {
+        preview.innerHTML = previewHtml;
+    } else {
+        preview.innerHTML = '<p class="text-muted mb-2">Add line items to see preview</p>';
+    }
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,337 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Edit Profile - {{ user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+        <!-- Header -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-1">
+                            <i class="fas fa-user-edit me-2"></i>Edit Profile
+                        </h2>
+                        <p class="text-muted mb-0">Update your personal information and profile picture</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Profile Picture Section -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-camera me-2"></i>Profile Picture
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <div class="profile-picture-preview mb-3">
+                                {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" 
+                                         alt="{{ user.get_full_name }}" 
+                                         id="profile-preview"
+                                         class="rounded-circle border border-3 border-white shadow-lg"
+                                         style="width: 120px; height: 120px; object-fit: cover;">
+                                {% else %}
+                                    <div id="profile-preview" class="rounded-circle border border-3 border-white shadow-lg d-flex align-items-center justify-content-center bg-secondary text-white"
+                                         style="width: 120px; height: 120px; font-size: 2.5rem;">
+                                        {{ user.first_name.0|default:"U" }}{{ user.last_name.0|default:"" }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="{{ form.profile_picture.id_for_label }}" class="form-label">
+                                    <i class="fas fa-upload me-1"></i>Choose Profile Picture
+                                </label>
+                                {{ form.profile_picture }}
+                                {% if form.profile_picture.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.profile_picture.errors %}
+                                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Upload a square image for best results. Any size will be automatically resized and cropped.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Information -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Personal Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-1"></i>First Name *
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.first_name.errors %}
+                                        <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-1"></i>Last Name *
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.last_name.errors %}
+                                        <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email Address
+                            </label>
+                            {{ form.email }}
+                            <small class="form-text text-muted">
+                                <i class="fas fa-lock me-1"></i>Email cannot be changed for security reasons.
+                            </small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.phone.id_for_label }}" class="form-label">
+                                <i class="fas fa-phone me-1"></i>Phone Number
+                            </label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.phone.errors %}
+                                        <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.location.id_for_label }}" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>Location
+                            </label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.location.errors %}
+                                        <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.birth_date.id_for_label }}" class="form-label">
+                                <i class="fas fa-birthday-cake me-1"></i>Birth Date
+                            </label>
+                            {{ form.birth_date }}
+                            {% if form.birth_date.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.birth_date.errors %}
+                                        <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.website.id_for_label }}" class="form-label">
+                            <i class="fas fa-globe me-1"></i>Website
+                        </label>
+                        {{ form.website }}
+                        {% if form.website.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.website.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.bio.id_for_label }}" class="form-label">
+                            <i class="fas fa-quote-left me-1"></i>Bio
+                        </label>
+                        {{ form.bio }}
+                        {% if form.bio.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.bio.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle me-1"></i>Tell us a little about yourself (max 500 characters)
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Errors -->
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-secondary btn-lg w-100">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .profile-picture-preview {
+        position: relative;
+    }
+    
+    .profile-picture-preview img, .profile-picture-preview div {
+        transition: transform 0.3s ease;
+    }
+    
+    .profile-picture-preview:hover img, .profile-picture-preview:hover div {
+        transform: scale(1.05);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+    
+    .btn {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .text-danger {
+        font-size: 0.875rem;
+    }
+    
+    .form-text {
+        font-size: 0.875rem;
+    }
+    
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,0.125);
+    }
+    
+    .bg-primary {
+        background-color: #007bff !important;
+    }
+    
+    .bg-success {
+        background-color: #28a745 !important;
+    }
+</style>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<!-- Image Preview Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('{{ form.profile_picture.id_for_label }}');
+    const preview = document.getElementById('profile-preview');
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (preview.tagName === 'IMG') {
+                        preview.src = e.target.result;
+                    } else {
+                        // Replace the div with an img element
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Profile Preview';
+                        img.id = 'profile-preview';
+                        img.className = 'rounded-circle border border-3 border-white shadow-lg';
+                        img.style.width = '120px';
+                        img.style.height = '120px';
+                        img.style.objectFit = 'cover';
+                        preview.parentNode.replaceChild(img, preview);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

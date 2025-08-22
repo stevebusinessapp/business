@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Multi-Purpose Business App{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block breadcrumb %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="text-white text-capitalize ps-3">{{ title }}</h6>
+            <div class="pe-3">
+              <a href="{% url 'waybills:template_list' %}" class="btn btn-outline-white btn-sm mb-0">
+                <i class="material-icons text-sm">arrow_back</i> Back to Templates
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <form method="post" id="template-form">
+          {% csrf_token %}
+          
+          <!-- Basic Information -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h6 class="mb-0">Basic Information</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-8">
+                  <div class="form-group">
+                    <label class="form-label">Template Name *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                      <div class="text-danger small">{{ form.name.errors }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <div class="form-check form-switch">
+                      {{ form.is_default }}
+                      <label class="form-check-label" for="{{ form.is_default.id_for_label }}">
+                        Set as Default Template
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <div class="text-danger small">{{ form.description.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <!-- Document Settings -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h6 class="mb-0">Document Settings</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-8">
+                  <div class="form-group">
+                    <label class="form-label">Document Title</label>
+                    {{ form.document_title }}
+                    {% if form.document_title.errors %}
+                      <div class="text-danger small">{{ form.document_title.errors }}</div>
+                    {% endif %}
+                    <small class="text-muted">This will appear as the main heading on waybills</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label class="form-label">Number Prefix</label>
+                    {{ form.number_prefix }}
+                    {% if form.number_prefix.errors %}
+                      <div class="text-danger small">{{ form.number_prefix.errors }}</div>
+                    {% endif %}
+                    <small class="text-muted">e.g., WB, SHIP, DEL</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Color Customization -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h6 class="mb-0">Color Customization</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label class="form-label">Primary Color</label>
+                    {{ form.primary_color }}
+                    {% if form.primary_color.errors %}
+                      <div class="text-danger small">{{ form.primary_color.errors }}</div>
+                    {% endif %}
+                    <small class="text-muted">Headers and titles</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label class="form-label">Secondary Color</label>
+                    {{ form.secondary_color }}
+                    {% if form.secondary_color.errors %}
+                      <div class="text-danger small">{{ form.secondary_color.errors }}</div>
+                    {% endif %}
+                    <small class="text-muted">Backgrounds and sections</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group">
+                    <label class="form-label">Text Color</label>
+                    {{ form.text_color }}
+                    {% if form.text_color.errors %}
+                      <div class="text-danger small">{{ form.text_color.errors }}</div>
+                    {% endif %}
+                    <small class="text-muted">Main text color</small>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Color Preview -->
+              <div class="mt-3">
+                <label class="form-label">Preview:</label>
+                <div id="color-preview" class="p-3 border rounded">
+                  <div id="preview-title" class="text-center mb-2" style="color: #FF5900; font-weight: bold; font-size: 18px;">
+                    SAMPLE WAYBILL
+                  </div>
+                  <div id="preview-section" class="p-2 mb-2" style="background-color: #f8f9fa; border-radius: 4px;">
+                    <div style="color: #FF5900; font-weight: bold;">SECTION HEADER</div>
+                    <div id="preview-text" style="color: #333;">Sample text content goes here</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Display Options -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h6 class="mb-0">Display Options</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-check form-switch mb-3">
+                    {{ form.show_company_logo }}
+                    <label class="form-check-label" for="{{ form.show_company_logo.id_for_label }}">
+                      Show Company Logo
+                    </label>
+                  </div>
+                  
+                  <div class="form-check form-switch mb-3">
+                    {{ form.show_company_details }}
+                    <label class="form-check-label" for="{{ form.show_company_details.id_for_label }}">
+                      Show Company Details
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check form-switch mb-3">
+                    {{ form.show_bank_details }}
+                    <label class="form-check-label" for="{{ form.show_bank_details.id_for_label }}">
+                      Show Bank Details
+                    </label>
+                  </div>
+                  
+                  <div class="form-check form-switch mb-3">
+                    {{ form.show_signature }}
+                    <label class="form-check-label" for="{{ form.show_signature.id_for_label }}">
+                      Show Signature Section
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Custom Fields Configuration -->
+          <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">Custom Fields Configuration</h6>
+              <button type="button" class="btn btn-sm btn-outline-primary" onclick="showFieldEditor()">
+                <i class="material-icons text-sm">edit</i> Customize Fields
+              </button>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">
+                Custom fields allow you to create dynamic sections for your waybills.
+                After saving the template, you can customize the fields and table columns.
+              </p>
+              
+              {% if template %}
+              <div class="alert alert-info">
+                <strong>Current Configuration:</strong>
+                <ul class="mb-0">
+                  <li>Custom Fields: {{ template.custom_fields|length }} section{{ template.custom_fields|length|pluralize }}</li>
+                  <li>Table Columns: {{ template.table_columns|length }} column{{ template.table_columns|length|pluralize }}</li>
+                </ul>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Form Actions -->
+          <div class="text-center">
+            <a href="{% url 'waybills:template_list' %}" class="btn btn-outline-secondary me-3">
+              <i class="material-icons text-sm">cancel</i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="material-icons text-sm">save</i> {% if template %}Update Template{% else %}Create Template{% endif %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-control {
+  border: 1px solid #d2d6da;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.form-control:focus {
+  border-color: #e91e63;
+  box-shadow: 0 0 0 0.2rem rgba(233, 30, 99, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: #e91e63;
+  border-color: #e91e63;
+}
+
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+#color-preview {
+  min-height: 120px;
+}
+
+.form-control[type="color"] {
+  width: 60px;
+  height: 40px;
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.text-danger.small {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up color preview
+    updateColorPreview();
+    
+    // Add event listeners for color inputs
+    const colorInputs = ['id_primary_color', 'id_secondary_color', 'id_text_color'];
+    colorInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('change', updateColorPreview);
+            input.addEventListener('input', updateColorPreview);
+        }
+    });
+    
+    // Add event listener for document title
+    const titleInput = document.getElementById('id_document_title');
+    if (titleInput) {
+        titleInput.addEventListener('input', updateColorPreview);
+    }
+});
+
+function updateColorPreview() {
+    const primaryColor = document.getElementById('id_primary_color')?.value || '#FF5900';
+    const secondaryColor = document.getElementById('id_secondary_color')?.value || '#f8f9fa';
+    const textColor = document.getElementById('id_text_color')?.value || '#333333';
+    const documentTitle = document.getElementById('id_document_title')?.value || 'SAMPLE WAYBILL';
+    
+    // Update preview elements
+    const previewTitle = document.getElementById('preview-title');
+    const previewSection = document.getElementById('preview-section');
+    const previewText = document.getElementById('preview-text');
+    
+    if (previewTitle) {
+        previewTitle.style.color = primaryColor;
+        previewTitle.textContent = documentTitle;
+    }
+    
+    if (previewSection) {
+        previewSection.style.backgroundColor = secondaryColor;
+        const sectionHeader = previewSection.querySelector('div:first-child');
+        if (sectionHeader) {
+            sectionHeader.style.color = primaryColor;
+        }
+    }
+    
+    if (previewText) {
+        previewText.style.color = textColor;
+    }
+}
+
+function showFieldEditor() {
+    alert('Field customization will be available after saving the template. You can then edit custom fields and table columns from the template detail page.');
+}
+
+// Form validation
+document.getElementById('template-form').addEventListener('submit', function(e) {
+    const nameInput = document.getElementById('id_name');
+    if (!nameInput.value.trim()) {
+        e.preventDefault();
+        alert('Please enter a template name.');
+        nameInput.focus();
+        return false;
+    }
+    
+    const documentTitle = document.getElementById('id_document_title');
+    if (!documentTitle.value.trim()) {
+        e.preventDefault();
+        alert('Please enter a document title.');
+        documentTitle.focus();
+        return false;
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl+S: Save
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        document.getElementById('template-form').submit();
+    }
+    
+    // Escape: Cancel
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+            window.location.href = '{% url "waybills:template_list" %}';
+        }
+    }
+});
+</script>
+{% endblock %}

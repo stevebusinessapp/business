@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% block title %}PDF Receipt {{ receipt.receipt_no }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Receipt <span class="text-muted">#{{ receipt.receipt_no }}</span></h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4 text-center">
+                        {% if company_logo %}
+                            <img src="{{ company_logo }}" alt="Company Logo" style="max-height: 80px; max-width: 200px;">
+                        {% endif %}
+                        <h3 class="mt-2 mb-0">{{ company_profile.company_name }}</h3>
+                        <div class="text-muted small">
+                            {% if company_profile.address %}<div>{{ company_profile.address }}</div>{% endif %}
+                            {% if company_profile.phone %}<div>Phone: {{ company_profile.phone }}</div>{% endif %}
+                            {% if company_profile.email %}<div>Email: {{ company_profile.email }}</div>{% endif %}
+                            {% if company_profile.website %}<div>Website: {{ company_profile.website }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Invoice Status:</strong>
+                        {% if receipt.invoice.status == 'paid' %}
+                            <span class="fw-bold text-success" style="font-size:1.2em;">Paid</span>
+                        {% elif receipt.invoice.status == 'unpaid' %}
+                            <span class="fw-bold text-danger" style="font-size:1.2em;">Unpaid</span>
+                        {% elif receipt.invoice.status == 'partial' %}
+                            <span class="fw-bold text-warning" style="font-size:1.2em;">Partially Paid</span>
+                        {% elif receipt.invoice.status == 'delivered' %}
+                            <span class="fw-bold text-info" style="font-size:1.2em;">Delivered</span>
+                        {% else %}
+                            <span class="fw-bold text-secondary" style="font-size:1.2em;">{{ receipt.invoice.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <strong>Client Name:</strong> {{ receipt.client_name }}<br>
+                            <strong>Client Phone:</strong> {{ receipt.client_phone }}<br>
+                            <strong>Client Address:</strong> {{ receipt.client_address }}<br>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Invoice Number:</strong> {{ receipt.invoice.invoice_number }}<br>
+                            <strong>Amount Received:</strong> {{ receipt.amount_received|currency_format_with_symbol:company_profile }}<br>
+                            <strong>Amount in Words:</strong> {{ receipt.amount_in_words }}<br>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <strong>Payment Method:</strong> {{ receipt.get_payment_method_display }}<br>
+                            <strong>Transaction ID:</strong> {{ receipt.transaction_id|default:'-' }}<br>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Received By:</strong> {{ receipt.received_by.get_full_name|default:receipt.received_by.email }}<br>
+                            <strong>Date Received:</strong> {{ receipt.date_received }}<br>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Notes:</strong> {{ receipt.notes|default:'-' }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Balance After Payment:</strong> {{ receipt.balance_after_payment|currency_format_with_symbol:company_profile }}
+                    </div>
+                    <div class="mb-2 text-center mt-4">
+                        {% if company_signature %}
+                            <img src="{{ company_signature }}" alt="Signature" style="max-height: 80px; max-width: 200px;">
+                            <div class="text-muted small">Authorized Signature</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

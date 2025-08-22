@@ -1,0 +1,67 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Dashboard - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h3 class="mb-0">Welcome, {{ user.get_full_name|default:user.email }}!</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Account Information</h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Email:</strong> {{ user.email }}</li>
+                            <li><strong>Name:</strong> {{ user.get_full_name|default:"Not provided" }}</li>
+                            <li><strong>Phone:</strong> {{ user.phone|default:"Not provided" }}</li>
+                            <li><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</li>
+                            <li><strong>Last login:</strong> {{ user.last_login|date:"F d, Y g:i A"|default:"Never" }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Quick Actions</h5>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary">Edit Profile</a>
+                            <a href="#" class="btn btn-outline-secondary">Change Password</a>
+                            <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Users</h5>
+                <h2 class="text-primary">1,234</h2>
+                <p class="text-muted">Active users in system</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Your Status</h5>
+                <h2 class="text-success">Active</h2>
+                <p class="text-muted">Account status</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Permissions</h5>
+                <h2 class="text-info">{% if user.is_staff %}Admin{% else %}User{% endif %}</h2>
+                <p class="text-muted">Access level</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

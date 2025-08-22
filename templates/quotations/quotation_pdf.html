@@ -1,0 +1,345 @@
+{% extends 'base_print.html' %}
+{% load static %}
+{% load currency_filters %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation {{ quotation.quotation_number }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #ffffff;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .company-logo {
+            max-width: 150px;
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 5px;
+        }
+        
+        .company-details {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .quotation-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .client-info, .quotation-details {
+            flex: 1;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+        
+        .info-row {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .items-table th {
+            background-color: #1976d2;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .items-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .totals-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .grand-total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1976d2;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        
+        .terms-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .terms-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 15px;
+            }
+            
+            .header, .quotation-info, .items-table, .totals-section, .terms-section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        {% if company_logo %}
+            <img src="{{ company_logo }}" alt="Company Logo" class="company-logo">
+        {% endif %}
+        <div class="company-name">{{ company_profile.company_name }}</div>
+        <div class="company-details">
+            {% if company_profile.address %}{{ company_profile.address|linebreaksbr }}{% endif %}
+            {% if company_profile.phone %}Phone: {{ company_profile.phone }}{% endif %}
+            {% if company_profile.email %}<br>Email: {{ company_profile.email }}{% endif %}
+            {% if company_profile.website %}<br>Website: {{ company_profile.website }}{% endif %}
+        </div>
+    </div>
+
+    <!-- Quotation Info -->
+    <div class="quotation-info">
+        <div class="client-info">
+            <div class="section-title">Bill To:</div>
+            {% if quotation.client %}
+                <div class="info-row">
+                    <span class="info-label">Name:</span> {{ quotation.client.name }}
+                </div>
+                {% if quotation.client.email %}
+                    <div class="info-row">
+                        <span class="info-label">Email:</span> {{ quotation.client.email }}
+                    </div>
+                {% endif %}
+                {% if quotation.client.phone %}
+                    <div class="info-row">
+                        <span class="info-label">Phone:</span> {{ quotation.client.phone }}
+                    </div>
+                {% endif %}
+                {% if quotation.client.address %}
+                    <div class="info-row">
+                        <span class="info-label">Address:</span> {{ quotation.client.address|linebreaksbr }}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="info-row">No client information</div>
+            {% endif %}
+        </div>
+        
+        <div class="quotation-details">
+            <div class="section-title">Quotation Details:</div>
+            <div class="info-row">
+                <span class="info-label">Quotation #:</span> {{ quotation.quotation_number }}
+            </div>
+            <div class="info-row">
+                <span class="info-label">Date:</span> {{ quotation.quotation_date|date:"F j, Y" }}
+            </div>
+            {% if quotation.valid_until %}
+                <div class="info-row">
+                    <span class="info-label">Valid Until:</span> {{ quotation.valid_until|date:"F j, Y" }}
+                </div>
+            {% endif %}
+            <div class="info-row">
+                <span class="info-label">Status:</span> 
+                <span style="color: {% if quotation.status == 'accepted' %}#4caf50{% elif quotation.status == 'declined' %}#f44336{% elif quotation.status == 'sent' %}#2196f3{% else %}#ff9800{% endif %}; font-weight: bold;">
+                    {{ quotation.get_status_display|upper }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="section-title">Items & Services</div>
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 25%;">Item/Service</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 10%;" class="text-center">Qty</th>
+                <th style="width: 15%;" class="text-right">Unit Price</th>
+                <th style="width: 15%;" class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in quotation.items.all %}
+                <tr>
+                    <td>{{ item.product_service|default:"-" }}</td>
+                    <td>{{ item.description|default:"-" }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-right">{{ item.unit_price|currency_format_with_symbol:company_profile }}</td>
+                    <td class="text-right"><strong>{{ item.line_total|currency_format_with_symbol:company_profile }}</strong></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="totals-section">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>{{ quotation.subtotal|currency_format_with_symbol:company_profile }}</span>
+        </div>
+        {% if quotation.total_tax > 0 %}
+            <div class="total-row">
+                <span>Tax:</span>
+                <span>{{ quotation.total_tax|currency_format_with_symbol:company_profile }}</span>
+            </div>
+        {% endif %}
+        {% if quotation.total_discount > 0 %}
+            <div class="total-row">
+                <span>Discount:</span>
+                <span>{{ quotation.total_discount|currency_format_with_symbol:company_profile }}</span>
+            </div>
+        {% endif %}
+        {% if quotation.shipping_fee > 0 %}
+            <div class="total-row">
+                <span>Shipping:</span>
+                <span>{{ quotation.shipping_fee|currency_format_with_symbol:company_profile }}</span>
+            </div>
+        {% endif %}
+        {% if quotation.other_charges > 0 %}
+            <div class="total-row">
+                <span>Other Charges:</span>
+                <span>{{ quotation.other_charges|currency_format_with_symbol:company_profile }}</span>
+            </div>
+        {% endif %}
+        <div class="total-row grand-total">
+            <span>Grand Total:</span>
+            <span>{{ quotation.grand_total|currency_format_with_symbol:company_profile }}</span>
+        </div>
+        <div class="total-row">
+            <span>Amount in Words:</span>
+            <span><em>{{ total_words }}</em></span>
+        </div>
+    </div>
+
+    <!-- Terms and Notes -->
+    {% if quotation.terms or quotation.notes %}
+        <div class="terms-section">
+            <div class="section-title">Terms and Notes</div>
+            <div class="terms-content">
+                {% if quotation.terms %}
+                    <strong>Terms:</strong><br>
+                    {{ quotation.terms|linebreaksbr }}<br><br>
+                {% endif %}
+                {% if quotation.notes %}
+                    <strong>Notes:</strong><br>
+                    {{ quotation.notes|linebreaksbr }}
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Bank Details -->
+    {% if template.show_bank_details and company_profile.bank_name %}
+        <div class="terms-section">
+            <div class="section-title">Payment Information</div>
+            <div class="terms-content">
+                <strong>Bank Details:</strong><br>
+                Bank: {{ company_profile.bank_name }}<br>
+                Account Name: {{ company_profile.account_name }}<br>
+                Account Number: {{ company_profile.account_number }}<br>
+                {% if company_profile.swift_code %}
+                    Swift Code: {{ company_profile.swift_code }}<br>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        {% if template.footer_text %}
+            {{ template.footer_text|linebreaksbr }}
+        {% else %}
+            Thank you for your business!<br>
+            For any questions, please contact us at {{ company_profile.email }} or {{ company_profile.phone }}
+        {% endif %}
+    </div>
+</body>
+</html> 

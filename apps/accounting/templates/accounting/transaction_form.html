@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - Accounting{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .calculation-display {
+        background: #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+    }
+    .amount-preview {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .amount-preview.expense {
+        color: #dc3545;
+    }
+    .currency-input-group {
+        position: relative;
+    }
+    .currency-symbol {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    .currency-input {
+        padding-left: 30px;
+    }
+    .form-floating {
+        position: relative;
+    }
+    .form-floating > .form-control {
+        height: calc(3.5rem + 2px);
+        line-height: 1.25;
+    }
+    .form-floating > label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        padding: 1rem 0.75rem;
+        pointer-events: none;
+        border: 1px solid transparent;
+        transform-origin: 0 0;
+        transition: opacity .1s ease-in-out,transform .1s ease-in-out;
+    }
+    .form-floating > .form-control:focus,
+    .form-floating > .form-control:not(:placeholder-shown) {
+        padding-top: 1.625rem;
+        padding-bottom: 0.625rem;
+    }
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        opacity: .65;
+        transform: scale(.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">{{ title }}</h1>
+                    <p class="text-muted">Enter transaction details and financial information</p>
+                </div>
+                <div>
+                    <a href="{% url 'accounting:transaction_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Transactions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Transaction Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Transaction Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="transactionForm">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="form-section">
+                            <h6 class="mb-3">Basic Information</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.type.id_for_label }}" class="form-label">Transaction Type *</label>
+                                    {{ form.type }}
+                                    {% if form.type.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.type.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.transaction_date.id_for_label }}" class="form-label">Transaction Date *</label>
+                                    {{ form.transaction_date }}
+                                    {% if form.transaction_date.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.transaction_date.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Title *</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.title.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.description.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Financial Details -->
+                        <div class="form-section">
+                            <h6 class="mb-3">Financial Details</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.amount.id_for_label }}" class="form-label">Amount *</label>
+                                    <div class="currency-input-group">
+                                        <span class="currency-symbol" id="currencySymbol">{{ form.currency.value|default:"₦" }}</span>
+                                        {{ form.amount }}
+                                    </div>
+                                    {% if form.amount.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.amount.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.currency.id_for_label }}" class="form-label">Currency</label>
+                                    {{ form.currency }}
+                                    {% if form.currency.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.currency.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.tax.id_for_label }}" class="form-label">Tax Amount</label>
+                                    <div class="currency-input-group">
+                                        <span class="currency-symbol" id="taxCurrencySymbol">{{ form.currency.value|default:"₦" }}</span>
+                                        {{ form.tax }}
+                                    </div>
+                                    {% if form.tax.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.tax.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.discount.id_for_label }}" class="form-label">Discount Amount</label>
+                                    <div class="currency-input-group">
+                                        <span class="currency-symbol" id="discountCurrencySymbol">{{ form.currency.value|default:"₦" }}</span>
+                                        {{ form.discount }}
+                                    </div>
+                                    {% if form.discount.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.discount.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Calculation Preview -->
+                            <div class="calculation-display">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Base Amount:</small>
+                                        <div id="baseAmount">₦0.00</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Tax:</small>
+                                        <div id="taxAmount">₦0.00</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Discount:</small>
+                                        <div id="discountAmount">₦0.00</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Net Amount:</small>
+                                        <div class="amount-preview" id="netAmount">₦0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="form-section">
+                            <h6 class="mb-3">Additional Information</h6>
+                            <div class="mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.notes.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'accounting:transaction_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Transaction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Help and Tips -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Help & Tips</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6><i class="fas fa-info-circle text-info"></i> Transaction Types</h6>
+                        <ul class="list-unstyled small">
+                            <li><strong>Income:</strong> Money received (sales, payments, etc.)</li>
+                            <li><strong>Expense:</strong> Money spent (purchases, bills, etc.)</li>
+                        </ul>
+                    </div>
+                    <div class="mb-3">
+                        <h6><i class="fas fa-calculator text-success"></i> Calculations</h6>
+                        <ul class="list-unstyled small">
+                            <li>Net Amount = Base Amount + Tax - Discount</li>
+                            <li>Tax and discount are optional</li>
+                            <li>All amounts are automatically calculated</li>
+                        </ul>
+                    </div>
+                    <div class="mb-3">
+                        <h6><i class="fas fa-lightbulb text-warning"></i> Tips</h6>
+                        <ul class="list-unstyled small">
+                            <li>Use descriptive titles for easy tracking</li>
+                            <li>Add notes for additional context</li>
+                            <li>Set the correct transaction date</li>
+                            <li>Transactions are automatically synced with ledgers</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            {% if transaction %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Transaction History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <div class="mb-2">
+                            <strong>Created:</strong> {{ transaction.created_at|date:"M d, Y H:i" }}
+                        </div>
+                        {% if transaction.updated_at != transaction.created_at %}
+                        <div class="mb-2">
+                            <strong>Last Updated:</strong> {{ transaction.updated_at|date:"M d, Y H:i" }}
+                        </div>
+                        {% endif %}
+                        <div class="mb-2">
+                            <strong>ID:</strong> {{ transaction.id }}
+                        </div>
+                        {% if transaction.reference_id %}
+                        <div class="mb-2">
+                            <strong>Reference:</strong> {{ transaction.reference_id }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('transactionForm');
+    const amountInput = document.getElementById('{{ form.amount.id_for_label }}');
+    const taxInput = document.getElementById('{{ form.tax.id_for_label }}');
+    const discountInput = document.getElementById('{{ form.discount.id_for_label }}');
+    const currencySelect = document.getElementById('{{ form.currency.id_for_label }}');
+    const transactionTypeSelect = document.getElementById('{{ form.type.id_for_label }}');
+    
+    // Update currency symbols when currency changes
+    currencySelect.addEventListener('change', function() {
+        const currency = this.value;
+        document.getElementById('currencySymbol').textContent = currency;
+        document.getElementById('taxCurrencySymbol').textContent = currency;
+        document.getElementById('discountCurrencySymbol').textContent = currency;
+        updateCalculations();
+    });
+    
+    // Update net amount color based on transaction type
+    transactionTypeSelect.addEventListener('change', function() {
+        updateCalculations();
+    });
+    
+    // Real-time calculations
+    function updateCalculations() {
+        const amount = parseFloat(amountInput.value) || 0;
+        const tax = parseFloat(taxInput.value) || 0;
+        const discount = parseFloat(discountInput.value) || 0;
+        const currency = currencySelect.value;
+        const transactionType = transactionTypeSelect.value;
+        
+        const netAmount = amount + tax - discount;
+        
+        // Update display
+        document.getElementById('baseAmount').textContent = currency + amount.toFixed(2);
+        document.getElementById('taxAmount').textContent = currency + tax.toFixed(2);
+        document.getElementById('discountAmount').textContent = currency + discount.toFixed(2);
+        document.getElementById('netAmount').textContent = currency + netAmount.toFixed(2);
+        
+        // Update color based on transaction type
+        const netAmountElement = document.getElementById('netAmount');
+        if (transactionType === 'income') {
+            netAmountElement.className = 'amount-preview';
+        } else {
+            netAmountElement.className = 'amount-preview expense';
+        }
+    }
+    
+    // Add event listeners for real-time updates
+    [amountInput, taxInput, discountInput].forEach(input => {
+        input.addEventListener('input', updateCalculations);
+        input.addEventListener('blur', updateCalculations);
+    });
+    
+    // Initialize calculations
+    updateCalculations();
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const amount = parseFloat(amountInput.value);
+        if (!amount || amount <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid amount greater than zero.');
+            amountInput.focus();
+            return false;
+        }
+        
+        const transactionType = transactionTypeSelect.value;
+        if (!transactionType) {
+            e.preventDefault();
+            alert('Please select a transaction type.');
+            transactionTypeSelect.focus();
+            return false;
+        }
+        
+        const title = document.getElementById('{{ form.title.id_for_label }}').value.trim();
+        if (!title) {
+            e.preventDefault();
+            alert('Please enter a transaction title.');
+            document.getElementById('{{ form.title.id_for_label }}').focus();
+            return false;
+        }
+    });
+    
+    // Auto-format currency inputs
+    function formatCurrencyInput(input) {
+        let value = input.value.replace(/[^\d.]/g, '');
+        if (value) {
+            const num = parseFloat(value);
+            if (!isNaN(num)) {
+                input.value = num.toFixed(2);
+            }
+        }
+    }
+    
+    [amountInput, taxInput, discountInput].forEach(input => {
+        input.addEventListener('blur', function() {
+            formatCurrencyInput(this);
+            updateCalculations();
+        });
+    });
+});
+</script>
+{% endblock %} 

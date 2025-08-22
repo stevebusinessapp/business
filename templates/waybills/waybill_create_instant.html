@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Multi-Purpose Business App{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block breadcrumb %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* INSTANT LOAD - CRITICAL CSS ONLY */
+.instant-container{display:flex;gap:20px;min-height:60vh}
+.instant-panel{flex:1;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.1);padding:24px}
+.skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:pulse 1.5s infinite;border-radius:4px;height:20px;margin-bottom:10px}
+.skeleton.h40{height:40px}.skeleton.h60{height:60px}.skeleton.w60{width:60%}.skeleton.w80{width:80%}
+@keyframes pulse{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.hidden{display:none!important}
+.fade-in{opacity:0;transition:opacity .3s ease}
+.fade-in.show{opacity:1}
+.btn-primary{background:#e91e63;border:none;color:#fff;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:500;transition:background .2s}
+.btn-primary:hover{background:#c2185b}
+.form-control,.form-select{width:100%;padding:.75rem;border:1px solid #d2d6da;border-radius:8px;margin-bottom:1rem}
+.template-pills{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.pill{padding:6px 12px;border:2px solid #e3e3e3;border-radius:20px;cursor:pointer;font-size:13px;background:#fff;transition:all .2s}
+.pill.active{border-color:#e91e63;background:#e91e63;color:#fff}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Ultra-Fast Template Selector -->
+    <div class="template-pills" id="templatePills">
+        {% for template in templates %}
+        <span class="pill {% if template.id == selected_template.id %}active{% endif %}" 
+              data-template-id="{{ template.id }}">{{ template.name }}</span>
+        {% endfor %}
+    </div>
+    
+    <!-- Instant Content Container -->
+    <div class="instant-container fade-in" id="mainContainer">
+        <!-- Form Panel -->
+        <div class="instant-panel">
+            <h5 style="margin:0 0 20px 0;color:#344767">Waybill Details</h5>
+            
+            <!-- Immediate Form Start -->
+            <form method="POST" id="waybillForm">
+                {% csrf_token %}
+                <input type="hidden" name="template_id" id="selectedTemplateId" value="{{ selected_template.id }}">
+                
+                <!-- Instant Basic Fields -->
+                <input type="date" name="delivery_date" class="form-control" placeholder="Delivery Date">
+                <select name="status" class="form-select">
+                    <option value="pending">Pending</option>
+                    <option value="in_transit">In Transit</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+                
+                <!-- Dynamic Content Placeholder -->
+                <div id="dynamicContent">
+                    <div class="skeleton"></div>
+                    <div class="skeleton w80"></div>
+                    <div class="skeleton w60"></div>
+                </div>
+                
+                <!-- Items Section -->
+                <div id="itemsSection" style="margin-top:20px">
+                    <h6 style="color:#344767;margin-bottom:15px">Items</h6>
+                    <div id="itemsTable">
+                        <div class="skeleton h40"></div>
+                        <div class="skeleton h60"></div>
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <textarea name="notes" class="form-control" rows="3" placeholder="Notes (optional)" style="margin-top:15px"></textarea>
+                
+                <!-- Submit -->
+                <button type="submit" class="btn btn-primary" style="margin-top:15px">Create Waybill</button>
+            </form>
+        </div>
+        
+        <!-- Preview Panel -->
+        <div class="instant-panel">
+            <h5 style="margin:0 0 20px 0;color:#344767">Live Preview</h5>
+            <div id="previewContent">
+                <div class="skeleton h40"></div>
+                <div class="skeleton w60"></div>
+                <div class="skeleton w80"></div>
+                <div class="skeleton h60" style="margin-top:20px"></div>
+                <div class="skeleton w80"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// INSTANT LOAD SCRIPT - MINIMAL & FAST
+(()=>{
+    'use strict';
+    
+    const d=document,
+          gc=s=>d.getElementById(s),
+          qs=s=>d.querySelector(s),
+          ce=t=>d.createElement(t);
+    
+    let currentTemplate={{ selected_template.id }},
+        loaded=false;
+    
+    // Show content immediately
+    gc('mainContainer').classList.add('show');
+    
+    // Fast template switching
+    gc('templatePills').onclick=e=>{
+        if(!e.target.classList.contains('pill'))return;
+        
+        // Update active pill
+        qs('.pill.active').classList.remove('active');
+        e.target.classList.add('active');
+        
+        // Update template
+        currentTemplate=e.target.dataset.templateId;
+        gc('selectedTemplateId').value=currentTemplate;
+        
+        // Load content if needed
+        if(!loaded)loadContent();
+    };
+    
+    // Lazy load content after page render
+    const loadContent=()=>{
+        if(loaded)return;
+        loaded=true;
+        
+        // Load form fields
+        fetch(`/waybills/api/form-content/?template_id=${currentTemplate}`)
+        .then(r=>r.text())
+        .then(html=>{
+            gc('dynamicContent').innerHTML=html;
+        })
+        .catch(()=>{
+            gc('dynamicContent').innerHTML='<input type="text" name="sender_name" class="form-control" placeholder="Sender Name"><input type="text" name="receiver_name" class="form-control" placeholder="Receiver Name">';
+        });
+        
+        // Load items table
+        gc('itemsTable').innerHTML=`
+            <table style="width:100%;border-collapse:collapse">
+                <thead><tr style="background:#e91e63;color:#fff">
+                    <th style="padding:8px;border:1px solid #ddd">Product</th>
+                    <th style="padding:8px;border:1px solid #ddd">Description</th>
+                    <th style="padding:8px;border:1px solid #ddd">Qty</th>
+                    <th style="padding:8px;border:1px solid #ddd">Weight</th>
+                </tr></thead>
+                <tbody id="itemsBody">
+                    <tr><td style="padding:8px;border:1px solid #ddd"><input type="text" name="items[0][product]" style="width:100%;border:none;padding:4px"></td>
+                    <td style="padding:8px;border:1px solid #ddd"><input type="text" name="items[0][description]" style="width:100%;border:none;padding:4px"></td>
+                    <td style="padding:8px;border:1px solid #ddd"><input type="number" name="items[0][quantity]" style="width:100%;border:none;padding:4px"></td>
+                    <td style="padding:8px;border:1px solid #ddd"><input type="number" name="items[0][weight]" style="width:100%;border:none;padding:4px"></td></tr>
+                </tbody>
+            </table>
+            <button type="button" onclick="addRow()" style="margin-top:10px;padding:6px 12px;background:#6c757d;color:#fff;border:none;border-radius:4px">+ Add Item</button>
+        `;
+        
+        // Load preview
+        fetch(`/waybills/api/preview-content/?template_id=${currentTemplate}`)
+        .then(r=>r.text())
+        .then(html=>{
+            gc('previewContent').innerHTML=html;
+        });
+    };
+    
+    // Add row function
+    window.addRow=()=>{
+        const tbody=gc('itemsBody'),
+              rowCount=tbody.children.length,
+              row=ce('tr');
+        row.innerHTML=`
+            <td style="padding:8px;border:1px solid #ddd"><input type="text" name="items[${rowCount}][product]" style="width:100%;border:none;padding:4px"></td>
+            <td style="padding:8px;border:1px solid #ddd"><input type="text" name="items[${rowCount}][description]" style="width:100%;border:none;padding:4px"></td>
+            <td style="padding:8px;border:1px solid #ddd"><input type="number" name="items[${rowCount}][quantity]" style="width:100%;border:none;padding:4px"></td>
+            <td style="padding:8px;border:1px solid #ddd"><input type="number" name="items[${rowCount}][weight]" style="width:100%;border:none;padding:4px"></td>
+        `;
+        tbody.appendChild(row);
+    };
+    
+    // Load content after minimal delay
+    setTimeout(loadContent,100);
+})();
+</script>
+{% endblock %}

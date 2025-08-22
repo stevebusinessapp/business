@@ -1,0 +1,1070 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Multi-Purpose Business App{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block breadcrumb %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        {% if default_template %}
+            --primary-color: {{ default_template.primary_color }};
+            --secondary-color: {{ default_template.secondary_color }};
+            --text-color: {{ default_template.text_color }};
+        {% else %}
+            --primary-color: #FF5900;
+            --secondary-color: #f8f9fa;
+            --text-color: #333333;
+        {% endif %}
+    }
+    
+    .waybill-creator {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .form-section {
+        flex: 1;
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .preview-section {
+        flex: 1;
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #344767;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        resize: vertical; /* Allow vertical resizing for textareas */
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(255, 89, 0, 0.2);
+    }
+    
+    /* Specific styling for item input fields */
+    .item-input {
+        min-height: 40px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        line-height: 1.3;
+        transition: height 0.3s ease;
+    }
+    
+    /* Auto-expanding textarea behavior for item inputs */
+    .item-input:focus {
+        height: auto;
+        min-height: 40px;
+    }
+    
+    /* Textarea-specific styling */
+    .item-input[rows] {
+        resize: vertical;
+        overflow-y: auto;
+        max-height: 120px; /* Limit maximum height */
+        scrollbar-width: thin;
+        scrollbar-color: #ccc #f1f1f1;
+    }
+    
+    .item-input[rows]::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .item-input[rows]::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 2px;
+    }
+    
+    .item-input[rows]::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 2px;
+    }
+    
+    .item-input[rows]::-webkit-scrollbar-thumb:hover {
+        background: #bbb;
+    }
+    
+    .item-row {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 10px 0;
+        background: #f8f9fa;
+    }
+    
+    .remove-item {
+        color: #dc3545;
+        cursor: pointer;
+        float: right;
+        font-size: 1.2em;
+    }
+    
+    .waybill-preview {
+        font-family: Arial, sans-serif;
+        background: white;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+    
+    .waybill-header {
+        border-bottom: 2px solid #e4e4e4;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .company-header-section {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    
+    .company-logo {
+        flex: 0 0 auto;
+        margin-right: 20px;
+    }
+    
+    .company-logo img {
+        max-height: 80px;
+        max-width: 200px;
+        object-fit: contain;
+    }
+    
+    .company-details {
+        flex: 1;
+        text-align: right;
+    }
+    
+    .company-details h3 {
+        margin: 0 0 10px 0;
+        font-size: 1.5em;
+        color: var(--primary-color);
+    }
+    
+    .company-details p {
+        margin: 2px 0;
+        font-size: 0.9em;
+        color: #666;
+    }
+    
+    .waybill-info-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid #ddd;
+    }
+    
+    .waybill-info-section p {
+        margin: 0;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+    
+    .waybill-title {
+        text-align: center;
+        background: var(--primary-color);
+        color: white;
+        padding: 10px;
+        margin: 20px 0;
+        font-size: 1.5em;
+        font-weight: bold;
+        border-radius: 8px;
+    }
+    
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        table-layout: fixed; /* Fixed layout for consistent column widths */
+    }
+    
+    .items-table th,
+    .items-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+        vertical-align: top;
+        word-wrap: break-word; /* Break long words */
+        word-break: break-word; /* Break long words */
+        overflow-wrap: break-word; /* Modern browsers */
+        hyphens: auto; /* Add hyphens where appropriate */
+        white-space: normal; /* Allow text to wrap */
+        line-height: 1.4; /* Better line spacing */
+    }
+    
+    .items-table th {
+        background: var(--primary-color);
+        color: white;
+        font-weight: bold;
+        white-space: nowrap; /* Keep headers on one line */
+    }
+    
+    /* Column-specific widths and wrapping */
+    .items-table th:nth-child(1),
+    .items-table td:nth-child(1) {
+        width: 8%; /* S/N column */
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    .items-table th:nth-child(2),
+    .items-table td:nth-child(2) {
+        width: 25%; /* Product/Service column */
+        max-width: 0; /* Force wrapping */
+    }
+    
+    .items-table th:nth-child(3),
+    .items-table td:nth-child(3) {
+        width: 35%; /* Description column */
+        max-width: 0; /* Force wrapping */
+    }
+    
+    .items-table th:nth-child(4),
+    .items-table td:nth-child(4) {
+        width: 16%; /* Quantity column */
+        max-width: 0; /* Force wrapping */
+    }
+    
+    .items-table th:nth-child(5),
+    .items-table td:nth-child(5) {
+        width: 16%; /* Weight column */
+        max-width: 0; /* Force wrapping */
+    }
+    
+    /* Responsive table improvements */
+    @media (max-width: 768px) {
+        .items-table {
+            font-size: 12px;
+        }
+        
+        .items-table th,
+        .items-table td {
+            padding: 6px;
+        }
+        
+        /* Adjust column widths for mobile */
+        .items-table th:nth-child(1),
+        .items-table td:nth-child(1) {
+            width: 10%;
+        }
+        
+        .items-table th:nth-child(2),
+        .items-table td:nth-child(2) {
+            width: 22%;
+        }
+        
+        .items-table th:nth-child(3),
+        .items-table td:nth-child(3) {
+            width: 35%;
+        }
+        
+        .items-table th:nth-child(4),
+        .items-table td:nth-child(4) {
+            width: 16%;
+        }
+        
+        .items-table th:nth-child(5),
+        .items-table td:nth-child(5) {
+            width: 17%;
+        }
+    }
+    
+    .signature-section {
+        margin: 40px 0;
+        text-align: center;
+    }
+    
+    .bank-details {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    @media (max-width: 768px) {
+        .waybill-creator {
+            flex-direction: column;
+        }
+    }
+    
+    /* Print-specific styles for proper text wrapping */
+    @media print {
+        .items-table {
+            table-layout: fixed !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+            page-break-inside: auto;
+        }
+        
+        .items-table th,
+        .items-table td {
+            border: 1px solid #333 !important;
+            padding: 8px !important;
+            vertical-align: top !important;
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+            line-height: 1.3 !important;
+            font-size: 11px !important;
+        }
+        
+        .items-table th {
+            background: var(--primary-color) !important;
+            color: white !important;
+            font-weight: bold !important;
+            white-space: nowrap !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        /* Maintain column widths in print */
+        .items-table th:nth-child(1),
+        .items-table td:nth-child(1) {
+            width: 8% !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+        }
+        
+        .items-table th:nth-child(2),
+        .items-table td:nth-child(2) {
+            width: 25% !important;
+            max-width: 0 !important;
+        }
+        
+        .items-table th:nth-child(3),
+        .items-table td:nth-child(3) {
+            width: 35% !important;
+            max-width: 0 !important;
+        }
+        
+        .items-table th:nth-child(4),
+        .items-table td:nth-child(4) {
+            width: 16% !important;
+            max-width: 0 !important;
+        }
+        
+        .items-table th:nth-child(5),
+        .items-table td:nth-child(5) {
+            width: 16% !important;
+            max-width: 0 !important;
+        }
+        
+        /* Prevent table rows from breaking across pages */
+        .items-table tbody tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        /* Ensure table header repeats on each page */
+        .items-table thead {
+            display: table-header-group;
+        }
+        
+        /* Hide form section when printing */
+        .form-section {
+            display: none !important;
+        }
+        
+        .card-header {
+            display: none !important;
+        }
+        
+        .waybill-creator {
+            display: block !important;
+        }
+        
+        .preview-section {
+            width: 100% !important;
+            max-height: none !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .waybill-preview {
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card my-4">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="text-white text-capitalize ps-3">{{ title }}</h6>
+                            <div class="pe-3">
+
+
+                                <button id="download-btn" class="btn btn-outline-white btn-sm me-2" disabled>
+                                    <i class="material-icons text-sm">print</i> Download & Print Waybill
+                                </button>
+                                
+                                <button id="save-btn" class="btn btn-outline-white btn-sm">
+                                    <i class="material-icons text-sm">save</i> Save Waybill
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="waybill-creator">
+                        <!-- Form Section -->
+                        <div class="form-section">
+                            <h5 class="mb-4">Waybill Details</h5>
+                            
+                            <form id="waybill-form" method="post">
+                                {% csrf_token %}
+                                
+                                <!-- Company Details Toggle -->
+                                <div class="form-group">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="show-company-details" 
+                                               {% if company_profile %}checked{% endif %}>
+                                        <label class="form-check-label" for="show-company-details">
+                                            Show company details
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bank Details Toggle -->
+                                <div class="form-group">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="show-bank-details"
+                                               {% if default_bank_account %}checked{% endif %}>
+                                        <label class="form-check-label" for="show-bank-details">
+                                            Show bank details
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Waybill Number -->
+                                <div class="form-group">
+                                    <label class="form-label">Waybill Number</label>
+                                    <input type="text" id="waybill_number" name="waybill_number" class="form-control"
+                                           placeholder="Auto-generated">
+                                </div>
+                                
+                                <!-- Sender Information -->
+                                <div class="form-group">
+                                    <label class="form-label">Sender Name</label>
+                                    <input type="text" id="sender_name" name="custom_sender_info_sender_name" class="form-control"
+                                           placeholder="Enter sender name">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Sender Phone</label>
+                                    <input type="text" id="sender_phone" name="custom_sender_info_sender_phone" class="form-control"
+                                           placeholder="Enter sender phone">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Sender Address</label>
+                                    <textarea id="sender_address" name="custom_sender_info_sender_address" class="form-control"
+                                              placeholder="Enter sender address" rows="3"></textarea>
+                                </div>
+                                
+                                <!-- Recipient Information -->
+                                <div class="form-group">
+                                    <label class="form-label">Recipient Name</label>
+                                    <input type="text" id="recipient_name" name="custom_receiver_info_receiver_name" class="form-control"
+                                           placeholder="Enter recipient name">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Recipient Phone</label>
+                                    <input type="text" id="recipient_phone" name="custom_receiver_info_receiver_phone" class="form-control"
+                                           placeholder="Enter recipient phone">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Recipient Address</label>
+                                    <textarea id="recipient_address" name="custom_receiver_info_receiver_address" class="form-control"
+                                              placeholder="Enter recipient address" rows="3"></textarea>
+                                </div>
+                                
+                                <!-- Items Section -->
+                                <div class="form-group">
+                                    <label class="form-label">Items</label>
+                                    <div id="items-container"></div>
+                                    <button type="button" class="btn btn-success btn-sm mt-2" onclick="addItem()">
+                                        <i class="material-icons text-sm">add</i> Add Item
+                                    </button>
+                                </div>
+                                
+                                <!-- Notes -->
+                                <div class="form-group">
+                                    <label class="form-label">Notes</label>
+                                    <textarea id="notes" name="notes" class="form-control" rows="3"
+                                              placeholder="Additional notes"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Preview Section -->
+                        <div class="preview-section">
+                            <h5 class="mb-3">Live Preview</h5>
+                            <div class="waybill-preview" id="waybill-preview">
+                                <!-- Preview will be generated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let itemCounter = 1;
+let companyProfile = null;
+let bankAccount = null;
+
+// Utility function to escape HTML and handle text wrapping
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Utility function to truncate text for preview if too long
+function truncateText(text, maxLength = 100) {
+    if (!text) return '';
+    const cleanText = text.toString().trim();
+    if (cleanText.length <= maxLength) return cleanText;
+    return cleanText.substring(0, maxLength) + '...';
+}
+
+// Auto-expand textarea function
+function autoExpandTextarea(textarea) {
+    if (textarea.tagName !== 'TEXTAREA') return;
+    
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Calculate new height based on content
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, 40), 120); // Min 40px, max 120px
+    
+    // Set the new height
+    textarea.style.height = newHeight + 'px';
+}
+
+// Initialize company profile data
+{% if company_profile %}
+companyProfile = {
+    company_name: "{{ company_profile.company_name|default:''|escapejs }}",
+    email: "{{ company_profile.email|default:''|escapejs }}",
+    phone: "{{ company_profile.phone|default:''|escapejs }}",
+    address: "{{ company_profile.address|default:''|escapejs }}",
+    website: "{{ company_profile.website|default:''|escapejs }}",
+    logo: {% if company_profile.logo %}"{{ company_profile.logo.url|escapejs }}"{% else %}null{% endif %},
+    signature: {% if company_profile.signature %}"{{ company_profile.signature.url|escapejs }}"{% else %}null{% endif %}
+};
+{% endif %}
+
+// Initialize bank account data
+{% if default_bank_account %}
+bankAccount = {
+    bank_name: "{{ default_bank_account.bank_name|default:''|escapejs }}",
+    account_number: "{{ default_bank_account.account_number|default:''|escapejs }}",
+    account_name: "{{ default_bank_account.account_name|default:''|escapejs }}"
+};
+{% endif %}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Generate waybill number
+    generateWaybillNumber();
+    
+    // Add initial item
+    addItem();
+    
+    // Auto-populate company details if available
+    // if (companyProfile) {
+    //     const companyToggle = document.getElementById('show-company-details');
+    //     if (companyToggle) {
+    //         companyToggle.checked = true;
+    //         console.log('Company toggle enabled');
+    //     }
+    //     if (companyProfile.company_name && document.getElementById('sender_name')) {
+    //         document.getElementById('sender_name').value = companyProfile.company_name;
+    //     }
+    //     if (companyProfile.phone && document.getElementById('sender_phone')) {
+    //         document.getElementById('sender_phone').value = companyProfile.phone;
+    //     }
+    //     if (companyProfile.address && document.getElementById('sender_address')) {
+    //         document.getElementById('sender_address').value = companyProfile.address;
+    //     }
+    // }
+    
+    // Auto-enable bank details toggle if bank account is available
+    if (bankAccount) {
+        const bankToggle = document.getElementById('show-bank-details');
+        if (bankToggle) {
+            bankToggle.checked = true;
+            console.log('Bank toggle enabled');
+        }
+    }
+    
+    // Attach event listeners
+    attachEventListeners();
+    
+    // Initial preview update
+    updatePreview();
+});
+
+function generateWaybillNumber() {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const waybillNumber = `WB-${timestamp.toString().slice(-6)}${random}`;
+    document.getElementById('waybill_number').value = waybillNumber;
+}
+
+function attachEventListeners() {
+    // Real-time updates
+    const inputs = document.querySelectorAll('#waybill-form input, #waybill-form textarea, #waybill-form select');
+    inputs.forEach(input => {
+        input.addEventListener('input', updatePreview);
+        input.addEventListener('change', updatePreview);
+    });
+    
+    // Toggle events
+    const companyToggle = document.getElementById('show-company-details');
+    const bankToggle = document.getElementById('show-bank-details');
+    
+    if (companyToggle) {
+        companyToggle.addEventListener('change', function() {
+            console.log('Company toggle changed:', this.checked);
+            updatePreview();
+        });
+    }
+    
+    if (bankToggle) {
+        bankToggle.addEventListener('change', function() {
+            console.log('Bank toggle changed:', this.checked);
+            updatePreview();
+        });
+    }
+    
+    // Button events
+    document.getElementById('download-btn').addEventListener('click', function() {
+        if (this.disabled) {
+            alert('Please save the waybill first before printing.');
+            return;
+        }
+        // This will be set after waybill is saved
+        const printUrl = this.getAttribute('data-print-url');
+        if (printUrl) {
+            window.location.href = printUrl;
+        }
+    });
+    document.getElementById('save-btn').addEventListener('click', saveWaybill);
+}
+
+function addItem() {
+    const container = document.getElementById('items-container');
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'item-row';
+    itemDiv.setAttribute('data-index', itemCounter);
+    
+    itemDiv.innerHTML = `
+        <span class="remove-item" onclick="removeItem(${itemCounter})">×</span>
+        <div class="row">
+            <div class="col-md-1">
+                <label class="form-label">S/N</label>
+                <input type="text" class="form-control" value="${itemCounter}" readonly>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Product/Service</label>
+                <textarea name="items[${itemCounter}][product_service]" class="form-control item-input" 
+                          placeholder="Product or service" rows="2" style="resize: vertical;"></textarea>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Description</label>
+                <textarea name="items[${itemCounter}][description]" class="form-control item-input" 
+                          placeholder="Item description" rows="2" style="resize: vertical;"></textarea>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Quantity</label>
+                <input type="text" name="items[${itemCounter}][quantity]" class="form-control item-input" 
+                       placeholder="e.g. 5 pcs">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Weight</label>
+                <input type="text" name="items[${itemCounter}][weight]" class="form-control item-input" 
+                       placeholder="e.g. 2.5 kg">
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(itemDiv);
+    
+    // Add event listeners to new inputs
+    const newInputs = itemDiv.querySelectorAll('.item-input');
+    newInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updatePreview();
+            autoExpandTextarea(this);
+        });
+        input.addEventListener('change', updatePreview);
+        
+        // Auto-expand on focus if it's a textarea
+        if (input.tagName === 'TEXTAREA') {
+            input.addEventListener('focus', () => autoExpandTextarea(input));
+            autoExpandTextarea(input); // Initial sizing
+        }
+    });
+    
+    itemCounter++;
+    updateRemoveButtons();
+    updatePreview();
+}
+
+function removeItem(index) {
+    const item = document.querySelector(`[data-index="${index}"]`);
+    if (item) {
+        item.remove();
+        updateRemoveButtons();
+        updatePreview();
+    }
+}
+
+function updateRemoveButtons() {
+    const items = document.querySelectorAll('.item-row');
+    const removeButtons = document.querySelectorAll('.remove-item');
+    
+    removeButtons.forEach(btn => {
+        btn.style.display = items.length > 1 ? 'block' : 'none';
+    });
+}
+
+function updatePreview() {
+    // Get toggle states
+    const showCompanyDetailsToggle = document.getElementById('show-company-details');
+    const showBankDetailsToggle = document.getElementById('show-bank-details');
+    
+    const showCompanyDetails = showCompanyDetailsToggle ? showCompanyDetailsToggle.checked : false;
+    const showBankDetails = showBankDetailsToggle ? showBankDetailsToggle.checked : false;
+    
+    // Debug logging
+    console.log('Toggle states:', {
+        showCompanyDetails,
+        showBankDetails,
+        companyProfile: !!companyProfile,
+        bankAccount: !!bankAccount
+    });
+    
+    // Get form values
+    const formData = {
+        waybill_number: document.getElementById('waybill_number').value || 'WB-000000',
+        sender_name: document.getElementById('sender_name').value || 'Sender Name',
+        sender_phone: document.getElementById('sender_phone').value || 'Sender Phone',
+        sender_address: document.getElementById('sender_address').value || 'Sender Address',
+        recipient_name: document.getElementById('recipient_name').value || 'Recipient Name',
+        recipient_phone: document.getElementById('recipient_phone').value || 'Recipient Phone',
+        recipient_address: document.getElementById('recipient_address').value || 'Recipient Address',
+        notes: document.getElementById('notes').value || ''
+    };
+    
+    // Get items data
+    const itemsData = getItemsData();
+    
+    // Generate preview HTML
+    let previewHTML = `
+        <div class="waybill-header">
+            ${showCompanyDetails && companyProfile ? `
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; width: 100%;">
+                    <!-- Logo on the left -->
+                    <div style="flex: 0 0 auto; margin-right: 20px;">
+                        ${companyProfile.logo ? `<img src="${companyProfile.logo}" alt="Company Logo" style="max-height: 80px; max-width: 200px;">` : ''}
+                    </div>
+                    
+                    <!-- Company details on the right -->
+                    <div style="flex: 1; text-align: right;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.5em;">${companyProfile.company_name}</h3>
+                        <p style="margin: 2px 0; font-size: 0.9em;">${companyProfile.address}</p>
+                        <p style="margin: 2px 0; font-size: 0.9em;">Phone: ${companyProfile.phone}</p>
+                        <p style="margin: 2px 0; font-size: 0.9em;">Email: ${companyProfile.email}</p>
+                        ${companyProfile.website ? `<p style="margin: 2px 0; font-size: 0.9em;">Website: ${companyProfile.website}</p>` : ''}
+                    </div>
+                </div>
+            ` : `
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; width: 100%;">
+                    <!-- Empty logo space -->
+                    <div style="flex: 0 0 auto; margin-right: 20px;">
+                        <div style="width: 80px; height: 80px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #666;">Logo</div>
+                    </div>
+                    
+                    <!-- Default company details -->
+                    <div style="flex: 1; text-align: right;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 1.5em;">Company Name</h3>
+                        <p style="margin: 2px 0; font-size: 0.9em;">Company Address</p>
+                        <p style="margin: 2px 0; font-size: 0.9em;">Phone: Company Phone</p>
+                        <p style="margin: 2px 0; font-size: 0.9em;">Email: company@email.com</p>
+                    </div>
+                </div>
+            `}
+            
+            <!-- Waybill info below header -->
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <p style="margin: 0; font-size: 0.9em;"><strong>Waybill #:</strong> ${formData.waybill_number}</p>
+                </div>
+                <div>
+                    <p style="margin: 0; font-size: 0.9em;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="waybill-title">SHIPPING WAYBILL</div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h4>SENDER INFORMATION</h4>
+                <p><strong>Name:</strong> ${escapeHtml(formData.sender_name)}</p>
+                <p><strong>Phone:</strong> ${escapeHtml(formData.sender_phone)}</p>
+                <p><strong>Address:</strong> ${escapeHtml(formData.sender_address).replace(/\n/g, '<br>')}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>RECIPIENT INFORMATION</h4>
+                <p><strong>Name:</strong> ${escapeHtml(formData.recipient_name)}</p>
+                <p><strong>Phone:</strong> ${escapeHtml(formData.recipient_phone)}</p>
+                <p><strong>Address:</strong> ${escapeHtml(formData.recipient_address).replace(/\n/g, '<br>')}</p>
+            </div>
+        </div>
+        
+        <h4>ITEMS</h4>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>S/N</th>
+                    <th>Product/Service</th>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Weight</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    if (itemsData.length > 0) {
+        itemsData.forEach((item, index) => {
+            previewHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(item.product_service || '')}</td>
+                    <td>${escapeHtml(item.description || '')}</td>
+                    <td>${escapeHtml(item.quantity || '')}</td>
+                    <td>${escapeHtml(item.weight || '')}</td>
+                </tr>
+            `;
+        });
+    } else {
+        previewHTML += '<tr><td colspan="5" style="text-align: center;">No items added</td></tr>';
+    }
+    
+    previewHTML += `
+            </tbody>
+        </table>
+        
+        ${formData.notes ? `<p><strong>Notes:</strong> ${escapeHtml(formData.notes).replace(/\n/g, '<br>')}</p>` : ''}
+        
+        ${showBankDetails ? `
+            <div class="bank-details">
+                <h4>BANK DETAILS</h4>
+                ${bankAccount ? `
+                    <p><strong>Bank:</strong> ${bankAccount.bank_name}</p>
+                    <p><strong>Account Name:</strong> ${bankAccount.account_name}</p>
+                    <p><strong>Account Number:</strong> ${bankAccount.account_number}</p>
+                ` : `
+                    <p><strong>Bank:</strong> Your Bank Name</p>
+                    <p><strong>Account Name:</strong> Your Account Name</p>
+                    <p><strong>Account Number:</strong> Your Account Number</p>
+                `}
+            </div>
+        ` : ''}
+        
+        <div class="signature-section">
+            <p><strong>Authorized Signature:</strong></p>
+            ${showCompanyDetails && companyProfile && companyProfile.signature ? `
+                <div style="text-align: center; margin: 20px 0;">
+                    <img src="${companyProfile.signature}" alt="Company Signature" style="max-width: 200px; max-height: 80px;">
+                </div>
+                <div style="border-top: 1px solid #333; width: 200px; margin: 20px auto; padding-top: 10px; text-align: center;">
+                    <small>Authorized Signature</small>
+                </div>
+            ` : `
+                <div style="height: 60px; border-top: 1px solid #333; width: 200px; margin: 20px auto; padding-top: 10px; text-align: center;">
+                    <small>Signature</small>
+                </div>
+            `}
+        </div>
+    `;
+    
+    document.getElementById('waybill-preview').innerHTML = previewHTML;
+}
+
+function getItemsData() {
+    const items = [];
+    const itemRows = document.querySelectorAll('.item-row');
+    
+    itemRows.forEach(row => {
+        const product_service = row.querySelector('[name*="[product_service]"]')?.value || '';
+        const description = row.querySelector('[name*="[description]"]')?.value || '';
+        const quantity = row.querySelector('[name*="[quantity]"]')?.value || '';
+        const weight = row.querySelector('[name*="[weight]"]')?.value || '';
+        
+        if (product_service || description || quantity || weight) {
+            items.push({ product_service, description, quantity, weight });
+        }
+    });
+    
+    return items;
+}
+
+function downloadWaybill() {
+    updatePreview();
+    setTimeout(() => {
+        window.print();
+    }, 100);
+}
+
+function saveWaybill() {
+    const form = document.getElementById('waybill-form');
+    const formData = new FormData(form);
+    
+    // Add items data
+    const itemsData = getItemsData();
+    formData.append('items_data', JSON.stringify(itemsData));
+    
+    // Add toggle states (checkboxes are outside the form, so add them manually)
+    const companyToggle = document.getElementById('show-company-details');
+    const bankToggle = document.getElementById('show-bank-details');
+    
+    if (companyToggle) {
+        formData.append('show-company-details', companyToggle.checked ? 'on' : 'off');
+    }
+    
+    if (bankToggle) {
+        formData.append('show-bank-details', bankToggle.checked ? 'on' : 'off');
+    }
+    
+    // Debug logging
+    console.log('Saving waybill with toggle states:', {
+        companyDetails: companyToggle ? companyToggle.checked : false,
+        bankDetails: bankToggle ? bankToggle.checked : false
+    });
+    
+    // Show loading state
+    const btn = document.getElementById('save-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="material-icons text-sm">hourglass_empty</i> Saving...';
+    btn.disabled = true;
+    
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Try to parse as JSON, fallback to text if it fails
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                // If not JSON, it's likely a redirect response
+                return { success: true, message: 'Waybill saved successfully!', waybill_id: null };
+            }
+        } else {
+            console.error('Response not ok:', response.status, response.statusText);
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+    })
+    .then(data => {
+        console.log('Received data:', data);
+        if (data.success) {
+            // Enable the download button and set the print URL if waybill_id is available
+            const downloadBtn = document.getElementById('download-btn');
+            if (downloadBtn) {
+                if (data.waybill_id) {
+                    downloadBtn.disabled = false;
+                    downloadBtn.setAttribute('data-print-url', `/waybills/${data.waybill_id}/print/`);
+                } else {
+                    // If no waybill_id, disable the button but show success
+                    downloadBtn.disabled = true;
+                    downloadBtn.innerHTML = '<i class="material-icons text-sm">check</i> Saved Successfully';
+                }
+            }
+            
+            // Redirect to waybill list after a short delay
+            setTimeout(() => {
+                window.location.href = '/waybills/';
+            }, 1500);
+        } else {
+            console.error('Data indicates failure:', data);
+            alert('Error saving waybill. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving waybill. Please try again.');
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+</script>
+{% endblock %}

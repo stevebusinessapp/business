@@ -1,0 +1,762 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load inventory_extras %}
+
+{% block title %}{{ product.product_name }} - Inventory Detail{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-light {
+        background-color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-light {
+        color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        background-color: transparent !important;
+    }
+    
+    .product-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 30px;
+        color: white;
+        margin-bottom: 30px;
+    }
+    .detail-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .detail-card .card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 15px 15px 0 0;
+        font-weight: 600;
+    }
+    .stock-status {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    .stock-in {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .stock-low {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .stock-out {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .activity-item {
+        border-left: 3px solid #667eea;
+        padding-left: 15px;
+        margin-bottom: 15px;
+    }
+    .activity-time {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    .quantity-change {
+        font-weight: 600;
+    }
+    .quantity-change.positive {
+        color: #28a745;
+    }
+    .quantity-change.negative {
+        color: #dc3545;
+    }
+    .quantity-change.neutral {
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Product Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="product-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h4 class="mb-2">{{ product.product_name }}</h4>
+                        <p class="mb-0 opacity-75">SKU: {{ product.sku_code }}</p>
+                        <small class="text-light opacity-75">
+                            <i class="fas fa-circle text-success" id="status-indicator"></i>
+                            <span id="status-text">Auto-updating every 30 seconds</span>
+                        </small>
+                        {% with category=processed_data.category %}
+                        {% if category %}
+                            {% if category.name %}
+                                <span class="badge bg-light text-dark me-2">{{ category.name }}</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark me-2">{{ category }}</span>
+                            {% endif %}
+                        {% endif %}
+                        {% endwith %}
+                        <span class="stock-status stock-{{ product.status.name }}" id="header-status" style="background-color: {{ product.status.color }}; color: white;">
+                            {{ product.status.display_name }}
+                        </span>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'inventory:update' product.pk %}" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'inventory:stock_adjustment' product.pk %}" class="btn btn-info">
+                                <i class="fas fa-plus-minus"></i> Adjust Stock
+                            </a>
+                            <a href="{% url 'inventory:delete' product.pk %}" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Product Details -->
+        <div class="col-lg-8">
+            <div class="row">
+                <!-- Basic Information -->
+                <div class="col-md-6">
+                    <div class="card detail-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Basic Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Product Name:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {{ product.product_name }}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>SKU Code:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <code>{{ product.sku_code }}</code>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Category:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {% with category=processed_data.category %}
+                                    {% if category %}
+                                        {% if category.name %}
+                                            <span class="badge bg-primary">{{ category.name }}</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">{{ category }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">No category assigned</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            {% with description=processed_data.description %}
+                            {% if description %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Description:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {{ description|linebreaks }}
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Status:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <span class="badge" id="basic-status-display" style="background-color: {{ product.status.color }}; color: white;">
+                                        {{ product.status.display_name }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Information -->
+                <div class="col-md-6">
+                    <div class="card detail-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-boxes me-2"></i>Stock Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Quantity:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <span class="h5" id="quantity-display">{{ product.quantity|floatformat:2 }}</span>
+                                    {% with minimum_threshold=processed_data.minimum_threshold %}
+                                    {% if product.quantity and minimum_threshold and product.quantity <= minimum_threshold %}
+                                        <span class="badge bg-warning ms-2">Low Stock</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Unit Price:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <span class="h5 text-success" id="unit-price-display">{{ user_currency_symbol }}{{ product.unit_price|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Total Value:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <span class="h5 text-primary" id="total-value-display">{{ user_currency_symbol }}{{ product.total_value|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Min Threshold:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {% with minimum_threshold=processed_data.minimum_threshold %}
+                                    {% if minimum_threshold %}
+                                        {{ minimum_threshold }}
+                                    {% else %}
+                                        <span class="text-muted">No threshold set</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="col-md-6">
+                    <div class="card detail-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Additional Information</h6>
+                        </div>
+                        <div class="card-body">
+                            {% with supplier=processed_data.supplier %}
+                            {% if supplier %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Supplier:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {% if supplier.name %}
+                                        {{ supplier.name }}
+                                    {% else %}
+                                        {{ supplier }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Supplier:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <span class="text-muted">No supplier specified</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                            {% with location=processed_data.location %}
+                            {% if location %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Location:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {{ location }}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Location:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <span class="text-muted">No location specified</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                            {% with expiry_date=processed_data.expiry_date %}
+                            {% if expiry_date %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Expiry Date:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {{ expiry_date }}
+                                    {% if expiry_date < today %}
+                                        <span class="badge bg-danger ms-2">Expired</span>
+                                    {% elif expiry_date < next_month %}
+                                        <span class="badge bg-warning ms-2">Expiring Soon</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Expiry Date:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <span class="text-muted">No expiry date set</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                            {% with notes=processed_data.notes %}
+                            {% if notes %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Notes:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {{ notes }}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Notes:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <span class="text-muted">No notes available</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timestamps -->
+                <div class="col-md-6">
+                    <div class="card detail-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Timestamps</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Date Added:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {{ product.created_at|date:"M d, Y H:i" }}
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Last Updated:</strong>
+                                </div>
+                                <div class="col-8">
+                                    <span id="last-updated-display">{{ product.updated_at|date:"M d, Y H:i" }}</span>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Status:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {% if product.is_active %}
+                                        <span class="badge bg-success" id="active-status">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary" id="active-status">Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-4">
+            <div class="card detail-card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_logs %}
+                        {% for log in recent_logs %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">{{ log.get_log_type_display }}</h6>
+                                    <p class="mb-1">{{ log.description }}</p>
+                                </div>
+                                <div class="text-end">
+                                    <div class="activity-time">{{ log.created_at|timesince }} ago</div>
+                                    {% if log.quantity_change %}
+                                        <span class="quantity-change {% if log.quantity_change > 0 %}positive{% elif log.quantity_change < 0 %}negative{% else %}neutral{% endif %}">
+                                            {% if log.quantity_change > 0 %}+{% endif %}{{ log.quantity_change }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if log.details %}
+                                <small class="text-muted">
+                                    {% for key, value in log.details.items %}
+                                        <strong>{{ key|title }}:</strong> {{ value }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle text-muted fa-2x mb-3"></i>
+                            <p class="text-muted">No recent activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card detail-card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'inventory:stock_adjustment' product.pk %}" class="btn btn-primary">
+                            <i class="fas fa-plus-minus"></i> Adjust Stock
+                        </a>
+                        <a href="{% url 'inventory:update' product.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Product
+                        </a>
+                        <button type="button" id="refresh-status-btn" class="btn btn-info">
+                            <i class="fas fa-sync-alt"></i> Refresh Status
+                        </button>
+                        <button type="button" id="test-status-btn" class="btn btn-warning">
+                            <i class="fas fa-bug"></i> Test Status
+                        </button>
+                        <button type="button" id="force-reload-btn" class="btn btn-dark">
+                            <i class="fas fa-redo"></i> Force Reload
+                        </button>
+                        <a href="{% url 'inventory:list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add some interactivity
+    const activityItems = document.querySelectorAll('.activity-item');
+    activityItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'transparent';
+        });
+    });
+
+    // Real-time status update functionality
+    const itemId = {{ product.pk }};
+    let lastUpdateTime = '{{ product.updated_at.isoformat }}';
+    let updateInterval;
+
+    console.log('=== Inventory Detail Page Loaded ===');
+    console.log('Item ID:', itemId);
+    console.log('Initial Last Update Time:', lastUpdateTime);
+    console.log('Current Status:', '{{ product.status.name }}');
+    console.log('Current Status Display:', '{{ product.status.display_name }}');
+
+    // Function to update status display
+    function updateStatusDisplay(data) {
+        console.log('Updating status display with data:', data);
+        
+        // Update header status
+        const headerStatus = document.getElementById('header-status');
+        console.log('Header status element:', headerStatus);
+        if (headerStatus) {
+            const newClassName = `stock-status stock-${data.status_name}`;
+            console.log('Setting header status class to:', newClassName);
+            console.log('Setting header status text to:', data.status_display_name);
+            headerStatus.className = newClassName;
+            headerStatus.textContent = data.status_display_name;
+            // Update the background color dynamically
+            headerStatus.style.backgroundColor = data.status_color;
+            headerStatus.style.color = 'white';
+        }
+
+        // Update basic status display
+        const basicStatus = document.getElementById('basic-status-display');
+        if (basicStatus) {
+            basicStatus.textContent = data.status_display_name;
+            basicStatus.style.backgroundColor = data.status_color;
+            basicStatus.style.color = 'white';
+        }
+
+        // Update active/inactive status
+        const activeStatus = document.getElementById('active-status');
+        if (activeStatus) {
+            if (data.is_active) {
+                activeStatus.className = 'badge bg-success';
+                activeStatus.textContent = 'Active';
+            } else {
+                activeStatus.className = 'badge bg-secondary';
+                activeStatus.textContent = 'Inactive';
+            }
+        }
+
+        // Update quantity
+        const quantityElement = document.getElementById('quantity-display');
+        if (quantityElement) {
+            quantityElement.textContent = parseFloat(data.quantity).toFixed(2);
+        }
+
+        // Update unit price
+        const unitPriceElement = document.getElementById('unit-price-display');
+        if (unitPriceElement) {
+            unitPriceElement.textContent = `₦${parseFloat(data.unit_price).toFixed(2)}`;
+        }
+
+        // Update total value
+        const totalValueElement = document.getElementById('total-value-display');
+        if (totalValueElement) {
+            totalValueElement.textContent = `₦${parseFloat(data.total_value).toFixed(2)}`;
+        }
+
+        // Update last updated time
+        const lastUpdatedElement = document.getElementById('last-updated-display');
+        if (lastUpdatedElement) {
+            const updateTime = new Date(data.last_updated);
+            lastUpdatedElement.textContent = updateTime.toLocaleString();
+        }
+
+        // Show update notification
+        showUpdateNotification('Status updated successfully!');
+    }
+
+    // Function to fetch current status
+    function fetchCurrentStatus() {
+        // Update status indicator to show checking
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        if (statusIndicator && statusText) {
+            statusIndicator.className = 'fas fa-spinner fa-spin text-warning';
+            statusText.textContent = 'Checking for updates...';
+        }
+
+        console.log('Fetching status for item:', itemId);
+        
+        fetch(`{% url 'inventory:ajax_get_item_status' product.pk %}`)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                if (data.success) {
+                    console.log('Current lastUpdateTime:', lastUpdateTime);
+                    console.log('New lastUpdateTime:', data.last_updated);
+                    
+                    // Check if there's been an update
+                    if (data.last_updated !== lastUpdateTime) {
+                        console.log('Update detected! Updating display...');
+                        lastUpdateTime = data.last_updated;
+                        updateStatusDisplay(data);
+                    } else {
+                        console.log('No update detected');
+                    }
+                    
+                    // Update status indicator to show success
+                    if (statusIndicator && statusText) {
+                        statusIndicator.className = 'fas fa-circle text-success';
+                        statusText.textContent = 'Auto-updating every 30 seconds';
+                    }
+                } else {
+                    console.error('API returned success: false', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching status:', error);
+                // Update status indicator to show error
+                if (statusIndicator && statusText) {
+                    statusIndicator.className = 'fas fa-circle text-danger';
+                    statusText.textContent = 'Update failed';
+                }
+            });
+    }
+
+    // Function to show update notification
+    function showUpdateNotification(message) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+
+    // Manual refresh button functionality
+    const refreshBtn = document.getElementById('refresh-status-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            
+            // Force immediate update by clearing lastUpdateTime
+            lastUpdateTime = '';
+            fetchCurrentStatus();
+            
+            setTimeout(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Status';
+            }, 1000);
+        });
+    }
+
+    // Start automatic updates every 30 seconds
+    updateInterval = setInterval(fetchCurrentStatus, 30000);
+
+    // Clean up interval when page is unloaded
+    window.addEventListener('beforeunload', function() {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+    });
+
+    // Make functions available globally for testing
+    window.testStatusUpdate = function() {
+        console.log('Testing status update...');
+        lastUpdateTime = '';
+        fetchCurrentStatus();
+    };
+
+    // Debug function to check current status
+    window.debugCurrentStatus = function() {
+        console.log('=== DEBUG: Current Status ===');
+        console.log('Item ID:', itemId);
+        console.log('Last Update Time:', lastUpdateTime);
+        
+        const headerStatus = document.getElementById('header-status');
+        if (headerStatus) {
+            console.log('Header Status Element:', headerStatus);
+            console.log('Header Status Class:', headerStatus.className);
+            console.log('Header Status Text:', headerStatus.textContent);
+        }
+        
+        console.log('=== END DEBUG ===');
+    };
+
+    // Test button functionality
+    const testBtn = document.getElementById('test-status-btn');
+    if (testBtn) {
+        testBtn.addEventListener('click', function() {
+            console.log('Test button clicked');
+            window.testStatusUpdate();
+        });
+    }
+
+    // Force reload button functionality
+    const forceReloadBtn = document.getElementById('force-reload-btn');
+    if (forceReloadBtn) {
+        forceReloadBtn.addEventListener('click', function() {
+            console.log('Force reload clicked');
+            window.location.reload();
+        });
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Invoices{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card my-4">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+                        <h6 class="text-white text-capitalize ps-3">Invoices ({{ total_invoices }})</h6>
+                    </div>
+                </div>
+                <div class="card-body px-0 pb-2">
+                    <!-- Filters -->
+                    <div class="row px-3 mb-3">
+                        <div class="col-12">
+                            <form method="get" class="row g-3">
+                                <div class="col-md-2">
+                                    {% render_field form.status class="form-control" %}
+                                </div>
+                                <div class="col-md-3">
+                                    {% render_field form.client_name %}
+                                </div>
+                                <div class="col-md-2">
+                                    {% render_field form.date_from %}
+                                </div>
+                                <div class="col-md-2">
+                                    {% render_field form.date_to %}
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                                    <a href="{% url 'invoices:list' %}" class="btn btn-secondary btn-sm">Clear</a>
+                                </div>
+                                <div class="col-md-1">
+                                    <a href="{% url 'invoices:create' %}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-plus"></i> New
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Invoice</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Client</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Due Date</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Amount</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                    <th class="text-secondary opacity-7">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in page_obj %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{ invoice.invoice_number }}</h6>
+                                                <p class="text-xs text-secondary mb-0">{{ invoice.created_at|date:"M d, Y" }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ invoice.client_name }}</p>
+                                        <p class="text-xs text-secondary mb-0">{{ invoice.client_email }}</p>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="text-secondary text-xs font-weight-bold">{{ invoice.invoice_date|date:"M d, Y" }}</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">{{ invoice.due_date|date:"M d, Y" }}</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="text-secondary text-xs font-weight-bold">₦{{ invoice.grand_total|floatformat:2 }}</span>
+                                        {% if invoice.balance_due > 0 %}
+                                        <br><small class="text-danger">Due: ₦{{ invoice.balance_due|floatformat:2 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        {% if invoice.status == 'paid' %}
+                                        <span class="badge badge-sm bg-gradient-success">Paid</span>
+                                        {% elif invoice.status == 'partial' %}
+                                        <span class="badge badge-sm bg-gradient-warning">Partial</span>
+                                        {% else %}
+                                        <span class="badge badge-sm bg-gradient-danger">Unpaid</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="dropdown">
+                                            <button class="btn btn-link text-secondary mb-0" type="button" data-bs-toggle="dropdown">
+                                                <i class="fa fa-ellipsis-v text-xs"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="{% url 'invoices:detail' invoice.pk %}">View</a></li>
+                                                <li><a class="dropdown-item" href="{% url 'invoices:edit' invoice.pk %}">Edit</a></li>
+                                                <li><a class="dropdown-item" href="{% url 'invoices:pdf' invoice.pk %}">Download PDF</a></li>
+                                                <li><a class="dropdown-item" href="{% url 'invoices:duplicate' invoice.pk %}">Duplicate</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="{% url 'invoices:delete' invoice.pk %}">Delete</a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <p class="text-secondary mb-0">No invoices found.</p>
+                                        <a href="{% url 'invoices:create' %}" class="btn btn-primary btn-sm mt-2">Create your first invoice</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.client_name %}&client_name={{ request.GET.client_name }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Previous</a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.client_name %}&client_name={{ request.GET.client_name }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.client_name %}&client_name={{ request.GET.client_name }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">Next</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

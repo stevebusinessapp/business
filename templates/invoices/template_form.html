@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Multi-Purpose Business App{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block breadcrumb %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .color-preview-box {
+        width: 100%;
+        height: 200px;
+        border-radius: 0.5rem;
+        border: 1px solid #dee2e6;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .color-input-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .color-input {
+        width: 50px;
+        height: 35px;
+        border: none;
+        border-radius: 0.375rem;
+        cursor: pointer;
+    }
+    
+    .color-label {
+        font-weight: 500;
+        min-width: 120px;
+    }
+    
+    .color-value {
+        font-family: monospace;
+        font-size: 0.9em;
+        color: #666;
+        background: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        min-width: 80px;
+        text-align: center;
+    }
+    
+    .preview-header {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .preview-content {
+        padding: 1rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+    }
+    
+    .preview-footer {
+        position: absolute;
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e3e6f0;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #344767;
+        border-bottom: 2px solid #e3e6f0;
+        padding-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-lg-flex">
+                        <div>
+                            <h5 class="mb-0">{{ title }}</h5>
+                            <p class="text-sm mb-0">
+                                Customize your invoice colors and styling options
+                            </p>
+                        </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <a href="{% url 'invoices:template_list' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="material-icons text-sm">arrow_back</i>&nbsp;&nbsp;Back to Templates
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Form Fields -->
+                            <div class="col-lg-7">
+                                
+                                <!-- Basic Information -->
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="material-icons text-sm me-2">info</i>Template Information
+                                    </h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="input-group input-group-outline mb-3">
+                                                <label class="form-label">Template Name</label>
+                                                {{ form.name }}
+                                            </div>
+                                            {% if form.name.errors %}
+                                                <div class="text-danger small">{{ form.name.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="input-group input-group-outline mb-3">
+                                                <label class="form-label">Document Title</label>
+                                                {{ form.document_title }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="input-group input-group-outline mb-3">
+                                                <label class="form-label">Number Prefix</label>
+                                                {{ form.number_prefix }}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch mb-3">
+                                                {{ form.is_default }}
+                                                <label class="form-check-label" for="{{ form.is_default.id_for_label }}">
+                                                    Set as Default Template
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="input-group input-group-outline mb-3">
+                                        <label class="form-label">Description</label>
+                                        {{ form.description }}
+                                    </div>
+                                </div>
+                                
+                                <!-- Color Customization -->
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="material-icons text-sm me-2">palette</i>Color Customization
+                                    </h6>
+                                    
+                                    <div class="color-input-group">
+                                        <label class="color-label">Primary Color:</label>
+                                        {{ form.primary_color }}
+                                        <span class="color-value" id="primary-value">#FF5900</span>
+                                    </div>
+                                    
+                                    <div class="color-input-group">
+                                        <label class="color-label">Secondary Color:</label>
+                                        {{ form.secondary_color }}
+                                        <span class="color-value" id="secondary-value">#f8f9fa</span>
+                                    </div>
+                                    
+                                    <div class="color-input-group">
+                                        <label class="color-label">Text Color:</label>
+                                        {{ form.text_color }}
+                                        <span class="color-value" id="text-value">#333333</span>
+                                    </div>
+                                    
+                                    <div class="color-input-group">
+                                        <label class="color-label">Accent Color:</label>
+                                        {{ form.accent_color }}
+                                        <span class="color-value" id="accent-value">#e9ecef</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Display Options -->
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="material-icons text-sm me-2">visibility</i>Display Options
+                                    </h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch mb-3">
+                                                {{ form.show_company_logo }}
+                                                <label class="form-check-label" for="{{ form.show_company_logo.id_for_label }}">
+                                                    Show Company Logo
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="form-check form-switch mb-3">
+                                                {{ form.show_company_details }}
+                                                <label class="form-check-label" for="{{ form.show_company_details.id_for_label }}">
+                                                    Show Company Details
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch mb-3">
+                                                {{ form.show_bank_details }}
+                                                <label class="form-check-label" for="{{ form.show_bank_details.id_for_label }}">
+                                                    Show Bank Details
+                                                </label>
+                                            </div>
+                                            
+                                            <div class="form-check form-switch mb-3">
+                                                {{ form.show_signature }}
+                                                <label class="form-check-label" for="{{ form.show_signature.id_for_label }}">
+                                                    Show Signature
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Terms and Footer -->
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="material-icons text-sm me-2">article</i>Terms & Footer
+                                    </h6>
+                                    
+                                    <div class="input-group input-group-outline mb-3">
+                                        <label class="form-label">Default Payment Terms</label>
+                                        {{ form.default_payment_terms }}
+                                    </div>
+                                    
+                                    <div class="input-group input-group-outline mb-3">
+                                        <label class="form-label">Footer Text</label>
+                                        {{ form.footer_text }}
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                            <!-- Live Preview -->
+                            <div class="col-lg-5">
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="material-icons text-sm me-2">preview</i>Live Preview
+                                    </h6>
+                                    
+                                    <div class="color-preview-box" id="preview-box">
+                                        <div class="preview-header" id="preview-header">
+                                            INVOICE
+                                        </div>
+                                        
+                                        <div class="preview-content" id="preview-content">
+                                            <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                                <strong>Invoice #:</strong> INV-2025-01-0001
+                                            </div>
+                                            <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                                <strong>Date:</strong> January 06, 2025
+                                            </div>
+                                            <div style="font-size: 0.9rem;">
+                                                <strong>Amount:</strong> $1,500.00
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="preview-footer" id="preview-footer">
+                                            Thank you for your business!
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="text-end">
+                            <a href="{% url 'invoices:template_list' %}" class="btn btn-outline-secondary me-2">
+                                <i class="material-icons text-sm">close</i>&nbsp;&nbsp;Cancel
+                            </a>
+                            <button type="submit" class="btn bg-gradient-primary">
+                                <i class="material-icons text-sm">save</i>&nbsp;&nbsp;Save Template
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Color input elements
+    const primaryColor = document.getElementById('{{ form.primary_color.id_for_label }}');
+    const secondaryColor = document.getElementById('{{ form.secondary_color.id_for_label }}');
+    const textColor = document.getElementById('{{ form.text_color.id_for_label }}');
+    const accentColor = document.getElementById('{{ form.accent_color.id_for_label }}');
+    
+    // Value display elements
+    const primaryValue = document.getElementById('primary-value');
+    const secondaryValue = document.getElementById('secondary-value');
+    const textValue = document.getElementById('text-value');
+    const accentValue = document.getElementById('accent-value');
+    
+    // Preview elements
+    const previewBox = document.getElementById('preview-box');
+    const previewHeader = document.getElementById('preview-header');
+    const previewContent = document.getElementById('preview-content');
+    const previewFooter = document.getElementById('preview-footer');
+    
+    // Document title input
+    const documentTitle = document.getElementById('{{ form.document_title.id_for_label }}');
+    
+    // Update preview function
+    function updatePreview() {
+        const primary = primaryColor.value;
+        const secondary = secondaryColor.value;
+        const text = textColor.value;
+        const accent = accentColor.value;
+        const title = documentTitle.value || 'INVOICE';
+        
+        // Update color values
+        primaryValue.textContent = primary;
+        secondaryValue.textContent = secondary;
+        textValue.textContent = text;
+        accentValue.textContent = accent;
+        
+        // Update preview
+        previewBox.style.borderColor = accent;
+        previewHeader.style.color = primary;
+        previewHeader.textContent = title;
+        previewContent.style.backgroundColor = secondary;
+        previewContent.style.color = text;
+        previewFooter.style.backgroundColor = accent;
+        previewFooter.style.color = text;
+    }
+    
+    // Add event listeners
+    primaryColor.addEventListener('change', updatePreview);
+    secondaryColor.addEventListener('change', updatePreview);
+    textColor.addEventListener('change', updatePreview);
+    accentColor.addEventListener('change', updatePreview);
+    documentTitle.addEventListener('input', updatePreview);
+    
+    // Initial preview update
+    updatePreview();
+});
+</script>
+{% endblock %}

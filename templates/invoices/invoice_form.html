@@ -1,0 +1,1312 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Multi-Purpose Business App{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block breadcrumb %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.item-row {
+  border-bottom: 1px solid #e9ecef;
+  padding: 10px 0;
+}
+.delete-row {
+  color: #dc3545;
+  cursor: pointer;
+}
+.calculation-summary {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Fix overlapping labels and placeholders */
+.input-group-outline {
+  position: relative;
+  background-color: transparent;
+  border-radius: 0.375rem;
+}
+
+.input-group-outline .form-label {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.75rem;
+  padding: 0 0.375rem;
+  background-color: white;
+  color: #67748e;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.25;
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.2s ease-in-out;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.input-group-outline .form-control,
+.input-group-outline .form-select {
+  position: relative;
+  background-color: transparent !important;
+  border: 1px solid #d2d6da;
+  border-radius: 0.375rem;
+  padding: 0.75rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: #495057;
+  z-index: 2;
+}
+
+.input-group-outline .form-control:focus,
+.input-group-outline .form-select:focus {
+  border-color: #e91e63;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(233, 30, 99, 0.25);
+}
+
+.input-group-outline .form-control:focus + .form-label,
+.input-group-outline .form-control:not(:placeholder-shown) + .form-label,
+.input-group-outline .form-control[value]:not([value=""]) + .form-label,
+.input-group-outline .form-select:focus + .form-label {
+  transform: translateY(-1.5rem) scale(0.8);
+  color: #e91e63;
+  background-color: white;
+}
+
+/* Fix for filled inputs */
+.input-group-outline .form-control:not(:placeholder-shown),
+.input-group-outline .form-control[value]:not([value=""]),
+.input-group-outline .form-control:focus {
+  padding-top: 1.125rem;
+  padding-bottom: 0.375rem;
+}
+
+/* Ensure placeholder is always hidden when using floating labels */
+.input-group-outline .form-control::placeholder {
+  color: transparent;
+  opacity: 0;
+}
+
+/* Better handling for empty inputs with space placeholder */
+.input-group-outline .form-control[placeholder=" "]:placeholder-shown + .form-label {
+  transform: translateY(0) scale(1);
+  color: #67748e;
+}
+
+/* Fix for dynamically added rows */
+.item-row {
+  border-bottom: 1px solid #e9ecef;
+  padding: 15px 0;
+  margin-bottom: 10px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.item-row:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Ensure new rows are visible */
+.item-row .form-control {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.delete-row {
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.delete-row:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Fix for textarea */
+.input-group-outline textarea.form-control {
+  min-height: 2.5rem;
+  resize: vertical;
+}
+
+/* Fix for date inputs */
+.input-group-outline input[type="date"] {
+  color-scheme: light;
+  padding-right: 0.75rem;
+}
+
+.input-group-outline input[type="date"]:focus,
+.input-group-outline input[type="date"]:not([value=""]) {
+  padding-top: 1.125rem;
+  padding-bottom: 0.375rem;
+}
+
+.input-group-outline input[type="date"]:focus + .form-label,
+.input-group-outline input[type="date"]:not([value=""]) + .form-label,
+.input-group-outline input[type="date"]:valid + .form-label {
+  transform: translateY(-1.5rem) scale(0.8);
+  color: #e91e63;
+  background-color: white;
+}
+
+/* Static input group for read-only fields */
+.input-group-static {
+  position: relative;
+  background-color: transparent;
+  border-radius: 0.375rem;
+}
+
+.input-group-static .form-label {
+  position: absolute;
+  top: -0.75rem;
+  left: 0.75rem;
+  padding: 0 0.375rem;
+  background-color: white;
+  color: #67748e;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.input-group-static .form-control {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #6c757d;
+  cursor: not-allowed;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+/* Better spacing for form rows */
+.mb-3 {
+  margin-bottom: 1.5rem !important;
+}
+
+/* Fix for number spinner overlap */
+.input-group-outline input[type="number"]::-webkit-outer-spin-button,
+.input-group-outline input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-group-outline input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Fix for autofill overlap */
+.input-group-outline input:-webkit-autofill {
+  -webkit-text-fill-color: #495057 !important;
+  -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+.input-group-outline input:-webkit-autofill + .form-label {
+  transform: translateY(-1.5rem) scale(0.8) !important;
+  color: #e91e63 !important;
+  background-color: white !important;
+}
+
+/* Fix for disabled inputs */
+.input-group-outline input:disabled + .form-label {
+  color: #6c757d !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .input-group-outline .form-label {
+    font-size: 0.75rem;
+  }
+  
+  .input-group-outline .form-control {
+    font-size: 0.8rem;
+  }
+  
+  .input-group-static .form-label {
+    font-size: 0.7rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3">{{ title }}</h6>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <form method="post" id="invoice-form">
+          {% csrf_token %}
+          
+          <!-- Client Information -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="mb-3">Client Information</h6>
+            </div>
+            <div class="col-md-6">
+              <div class="input-group input-group-outline mb-3">
+                {% with form.client_name as field %}
+                  <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                         name="{{ field.name }}" 
+                         class="form-control" 
+                         id="{{ field.id_for_label }}"
+                         value="{{ field.value|default:'' }}"
+                         placeholder=" "
+                         {% if field.field.required %}required{% endif %}>
+                {% endwith %}
+                <label class="form-label">Client Name *</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="input-group input-group-outline mb-3">
+                {% with form.client_phone as field %}
+                  <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                         name="{{ field.name }}" 
+                         class="form-control" 
+                         id="{{ field.id_for_label }}"
+                         value="{{ field.value|default:'' }}"
+                         placeholder=" ">
+                {% endwith %}
+                <label class="form-label">Phone Number</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="input-group input-group-outline mb-3">
+                {% with form.client_email as field %}
+                  <input type="email" 
+                         name="{{ field.name }}" 
+                         class="form-control" 
+                         id="{{ field.id_for_label }}"
+                         value="{{ field.value|default:'' }}"
+                         placeholder=" ">
+                {% endwith %}
+                <label class="form-label">Email Address</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="input-group input-group-outline mb-3">
+                {% with form.due_date as field %}
+                  <input type="date" 
+                         name="{{ field.name }}" 
+                         class="form-control" 
+                         id="{{ field.id_for_label }}"
+                         value="{{ field.value|default:'' }}"
+                         placeholder=" ">
+                {% endwith %}
+                <label class="form-label">Due Date</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="input-group input-group-outline mb-3">
+                {% with form.client_address as field %}
+                  <textarea name="{{ field.name }}" 
+                            class="form-control" 
+                            id="{{ field.id_for_label }}"
+                            rows="3"
+                            placeholder=" ">{{ field.value|default:'' }}</textarea>
+                {% endwith %}
+                <label class="form-label">Client Address</label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Invoice Items -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="mb-3">Invoice Items</h6>
+              <div id="formset-container">
+                {{ formset.management_form }}
+                {% for form in formset %}
+                  <div class="item-row" data-form-index="{{ forloop.counter0 }}">
+                    {% for hidden in form.hidden_fields %}
+                      {{ hidden }}
+                    {% endfor %}
+                    
+                    <div class="row align-items-end">
+                      <div class="col-md-3">
+                        <div class="input-group input-group-outline mb-3">
+                          {{ form.product_service }}
+                          <label class="form-label">Product/Service</label>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="input-group input-group-outline mb-3">
+                          {{ form.description }}
+                          <label class="form-label">Description</label>
+                        </div>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="input-group input-group-outline mb-3">
+                          {{ form.quantity }}
+                          <label class="form-label">Quantity</label>
+                        </div>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="input-group input-group-outline mb-3">
+                          {{ form.unit_price }}
+                          <label class="form-label">Unit Price</label>
+                        </div>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="input-group input-group-static mb-3">
+                          <label class="form-label">Line Total</label>
+                          <div class="form-control">
+                            <span class="line-total">0.00</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-1">
+                        {% if form.DELETE %}
+                          {{ form.DELETE }}
+                          <i class="material-icons delete-row" onclick="deleteRow(this)">delete</i>
+                        {% else %}
+                          <i class="material-icons delete-row" onclick="deleteRow(this)">delete</i>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+              
+              <div class="d-flex justify-content-between align-items-center">
+              <button type="button" id="add-item-btn" class="btn btn-primary btn-sm" onclick="addNewRow()">
+              <i class="material-icons text-sm me-1">add_circle</i> Add New Item
+              </button>
+              <small class="text-muted">
+              <i class="material-icons text-xs">info</i>
+              Click to add more items to this invoice
+              </small>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Calculations -->
+          <div class="row mb-4">
+            <div class="col-md-8">
+              <div class="input-group input-group-outline mb-3">
+                {% with form.notes as field %}
+                  <textarea name="{{ field.name }}" 
+                            class="form-control" 
+                            id="{{ field.id_for_label }}"
+                            rows="4"
+                            placeholder=" ">{{ field.value|default:'' }}</textarea>
+                {% endwith %}
+                <label class="form-label">Notes</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="calculation-summary">
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Subtotal:</span>
+                  <span>{{ currency_symbol }}<span id="subtotal">0.00</span></span>
+                </div>
+                
+                <div class="input-group input-group-outline mb-2">
+                  {% with form.total_tax as field %}
+                    <input type="text" 
+                           name="{{ field.name }}" 
+                           class="form-control" 
+                           id="{{ field.id_for_label }}"
+                           value="{{ field.value|default:'' }}"
+                           placeholder=" ">
+                  {% endwith %}
+                  <label class="form-label">Tax</label>
+                </div>
+                
+                <div class="input-group input-group-outline mb-2">
+                  {% with form.total_discount as field %}
+                    <input type="text" 
+                           name="{{ field.name }}" 
+                           class="form-control" 
+                           id="{{ field.id_for_label }}"
+                           value="{{ field.value|default:'' }}"
+                           placeholder=" ">
+                  {% endwith %}
+                  <label class="form-label">Discount</label>
+                </div>
+                
+                <div class="input-group input-group-outline mb-2">
+                  {% with form.shipping_fee as field %}
+                    <input type="text" 
+                           name="{{ field.name }}" 
+                           class="form-control" 
+                           id="{{ field.id_for_label }}"
+                           value="{{ field.value|default:'' }}"
+                           placeholder=" ">
+                  {% endwith %}
+                  <label class="form-label">Shipping Fee</label>
+                </div>
+                
+                <div class="input-group input-group-outline mb-3">
+                  {% with form.other_charges as field %}
+                    <input type="text" 
+                           name="{{ field.name }}" 
+                           class="form-control" 
+                           id="{{ field.id_for_label }}"
+                           value="{{ field.value|default:'' }}"
+                           placeholder=" ">
+                  {% endwith %}
+                  <label class="form-label">Other Charges</label>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                  <strong>Grand Total:</strong>
+                  <strong>{{ currency_symbol }}<span id="grand-total">0.00</span></strong>
+                </div>
+                
+                <div class="input-group input-group-outline">
+                  {% with form.amount_paid as field %}
+                    <input type="text" 
+                           name="{{ field.name }}" 
+                           class="form-control" 
+                           id="{{ field.id_for_label }}"
+                           value="{{ field.value|default:'' }}"
+                           placeholder=" ">
+                  {% endwith %}
+                  <label class="form-label">Amount Paid</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Form Actions -->
+          <div class="row">
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary">Save Invoice</button>
+              <a href="{% url 'invoices:list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Empty form template for adding new rows -->
+<div id="empty-form" style="display: none;">
+  <div class="item-row" data-form-index="__prefix__">
+    <!-- Hidden fields for formset management -->
+    <input type="hidden" name="{{ formset_prefix }}-__prefix__-id" id="id_{{ formset_prefix }}-__prefix__-id">
+    <input type="hidden" name="{{ formset_prefix }}-__prefix__-DELETE" id="id_{{ formset_prefix }}-__prefix__-DELETE">
+    
+    <div class="row align-items-end">
+      <div class="col-md-3">
+        <div class="input-group input-group-outline mb-3">
+          <input type="text" 
+                 name="{{ formset_prefix }}-__prefix__-product_service" 
+                 class="form-control" 
+                 id="id_{{ formset_prefix }}-__prefix__-product_service"
+                 placeholder=" ">
+          <label class="form-label">Product/Service</label>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="input-group input-group-outline mb-3">
+          <input type="text" 
+                 name="{{ formset_prefix }}-__prefix__-description" 
+                 class="form-control" 
+                 id="id_{{ formset_prefix }}-__prefix__-description"
+                 placeholder=" ">
+          <label class="form-label">Description</label>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="input-group input-group-outline mb-3">
+          <input type="text" 
+                 name="{{ formset_prefix }}-__prefix__-quantity" 
+                 class="form-control" 
+                 id="id_{{ formset_prefix }}-__prefix__-quantity"
+                 placeholder=" ">
+          <label class="form-label">Quantity</label>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="input-group input-group-outline mb-3">
+          <input type="text" 
+                 name="{{ formset_prefix }}-__prefix__-unit_price" 
+                 class="form-control" 
+                 id="id_{{ formset_prefix }}-__prefix__-unit_price"
+                 placeholder=" ">
+          <label class="form-label">Unit Price</label>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="input-group input-group-static mb-3">
+          <label class="form-label">Line Total</label>
+          <div class="form-control">
+            <span class="line-total">0.00</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-1">
+        <i class="material-icons delete-row text-danger" onclick="deleteRow(this)" title="Delete Item" style="cursor: pointer; font-size: 20px;">delete</i>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  
+  // Debug: Check what field names Django generated
+  console.log('=== DEBUG: Checking existing form field names ===');
+  const existingInputs = document.querySelectorAll('#formset-container input');
+  console.log(`Found ${existingInputs.length} existing inputs:`);
+  existingInputs.forEach(input => {
+    if (input.name) {
+      console.log(`  ${input.name} = "${input.value}"`);
+    }
+  });
+  console.log('=== END DEBUG ===');
+  
+  // Debug: Add form submission listener
+  const form = document.getElementById('invoice-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      console.log('=== FORM SUBMISSION DEBUG ===');
+      const formData = new FormData(form);
+      console.log('Form data being submitted:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key} = "${value}"`);
+      }
+      console.log('=== END FORM SUBMISSION DEBUG ===');
+    });
+  }
+  
+  // --- Enhanced Smart Number Parsing ---
+  // Parses complex strings like "10k", "1.5m", "-500", "₦1,000", "80 nires", "3+2", "45n", "N 20"
+  function parseSmartNumber(input) {
+    if (!input || input === '') return 0;
+    
+    // Convert to string and trim
+    let str = input.toString().trim();
+    
+    // Handle empty or minimal strings
+    if (str === '' || str === '-' || str === '+') return 0;
+    
+    // Remove common currency symbols and commas first
+    str = str.replace(/[₦$€£¥₹,\s]/g, '');
+    
+    // Handle percentage - convert to decimal
+    if (str.includes('%')) {
+      const percentMatch = str.match(/-?\d*\.?\d+/);
+      if (percentMatch) {
+        const percentValue = parseFloat(percentMatch[0]);
+        return isNaN(percentValue) ? 0 : percentValue / 100;
+      }
+      return 0;
+    }
+    
+    // Handle 'k' for thousands and 'm' for millions
+    if (str.toLowerCase().endsWith('k')) {
+      const baseValue = parseFloat(str.slice(0, -1));
+      return isNaN(baseValue) ? 0 : baseValue * 1000;
+    }
+    
+    if (str.toLowerCase().endsWith('m')) {
+      const baseValue = parseFloat(str.slice(0, -1));
+      return isNaN(baseValue) ? 0 : baseValue * 1000000;
+    }
+    
+    // Extract all numbers (including negative numbers and decimals)
+    const numberMatches = str.match(/-?\d*\.?\d+/g);
+    
+    if (!numberMatches || numberMatches.length === 0) return 0;
+    
+    // If only one number, return it
+    if (numberMatches.length === 1) {
+      return parseFloat(numberMatches[0]) || 0;
+    }
+    
+    // If multiple numbers, perform basic arithmetic operations
+    let result = parseFloat(numberMatches[0]) || 0;
+    
+    for (let i = 1; i < numberMatches.length; i++) {
+      const currentNum = parseFloat(numberMatches[i]) || 0;
+      const prevIndex = str.indexOf(numberMatches[i-1]) + numberMatches[i-1].length;
+      const currentIndex = str.indexOf(numberMatches[i], prevIndex);
+      const operator = str.substring(prevIndex, currentIndex);
+      
+      // Determine operation based on symbols between numbers
+      if (operator.includes('+') || operator.toLowerCase().includes('plus') || operator.toLowerCase().includes('add')) {
+        result += currentNum;
+      } else if (operator.includes('-') || operator.toLowerCase().includes('minus') || operator.toLowerCase().includes('subtract')) {
+        result -= currentNum;
+      } else if (operator.includes('*') || operator.includes('x') || operator.toLowerCase().includes('times') || operator.toLowerCase().includes('multiply')) {
+        result *= currentNum;
+      } else if (operator.includes('/') || operator.toLowerCase().includes('divide') || operator.toLowerCase().includes('div')) {
+        result = currentNum !== 0 ? result / currentNum : result;
+      } else {
+        // Default to addition if no clear operator
+        result += currentNum;
+      }
+    }
+    
+    return Math.round(result * 100) / 100; // Round to 2 decimal places
+  }
+
+  // --- Main Calculation Logic ---
+  // Recalculates all totals for the invoice.
+  function calculateTotals() {
+    let subtotal = 0;
+    
+    document.querySelectorAll('#formset-container .item-row').forEach(row => {
+      // Skip rows marked for deletion
+      const deleteInput = row.querySelector('input[name$="-DELETE"]');
+      if (deleteInput && deleteInput.checked) {
+        return;
+      }
+
+      // Use improved selectors to find quantity and price inputs
+      const quantityInput = row.querySelector('input[name$="-quantity"]') || 
+                           row.querySelector('input[name*="quantity"]') ||
+                           row.querySelector('input[id*="quantity"]');
+      const priceInput = row.querySelector('input[name$="-unit_price"]') || 
+                        row.querySelector('input[name*="unit_price"]') ||
+                        row.querySelector('input[id*="unit_price"]') ||
+                        row.querySelector('input[name*="price"]');
+      
+      if (!quantityInput || !priceInput) return;
+
+      const quantity = parseSmartNumber(quantityInput.value);
+      const unitPrice = parseSmartNumber(priceInput.value);
+      
+      const lineTotal = quantity * unitPrice;
+      
+      const lineTotalSpan = row.querySelector('.line-total');
+      if (lineTotalSpan) {
+        lineTotalSpan.textContent = lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      
+      subtotal += lineTotal;
+    });
+    
+    document.getElementById('subtotal').textContent = subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    const tax = parseSmartNumber(document.querySelector('input[name="total_tax"]').value);
+    const discount = parseSmartNumber(document.querySelector('input[name="total_discount"]').value);
+    const shipping = parseSmartNumber(document.querySelector('input[name="shipping_fee"]').value);
+    const other = parseSmartNumber(document.querySelector('input[name="other_charges"]').value);
+    
+    const grandTotal = subtotal + tax - discount + shipping + other;
+    
+    document.getElementById('grand-total').textContent = grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // --- Material Input Initialization ---
+  // Fixes floating labels for dynamically added fields.
+  function initializeFloatingLabels(context = document) {
+    context.querySelectorAll('.input-group-outline').forEach(group => {
+      const input = group.querySelector('.form-control, .form-select');
+      const label = group.querySelector('.form-label');
+      
+      if (input && label) {
+        // Check if input has value and update label position
+        function updateLabel() {
+          const hasValue = input.value && input.value.trim() !== '';
+          const isDate = input.type === 'date';
+          const isTextarea = input.tagName.toLowerCase() === 'textarea';
+          
+          // For date inputs, also check if the input is valid
+          const shouldMoveLabel = hasValue || (isDate && input.validity && input.validity.valid);
+          
+          if (shouldMoveLabel || document.activeElement === input) {
+            label.style.transform = 'translateY(-1.5rem) scale(0.8)';
+            label.style.color = '#e91e63';
+            label.style.backgroundColor = 'white';
+            
+            // Adjust padding for filled inputs
+            if (hasValue || isDate) {
+              if (!isTextarea) {
+                input.style.paddingTop = '1.125rem';
+                input.style.paddingBottom = '0.375rem';
+              }
+            }
+          } else {
+            label.style.transform = 'translateY(0) scale(1)';
+            label.style.color = '#67748e';
+            label.style.backgroundColor = 'transparent';
+            
+            // Reset padding for empty inputs
+            if (!hasValue && !isDate) {
+              input.style.paddingTop = '';
+              input.style.paddingBottom = '';
+            }
+          }
+        }
+        
+        // Initial check
+        updateLabel();
+        
+        // Add event listeners
+        input.addEventListener('focus', function() {
+          label.style.transform = 'translateY(-1.5rem) scale(0.8)';
+          label.style.color = '#e91e63';
+          label.style.backgroundColor = 'white';
+        });
+        
+        input.addEventListener('blur', updateLabel);
+        input.addEventListener('input', updateLabel);
+        
+        // Special handling for date inputs
+        if (input.type === 'date') {
+          input.addEventListener('change', updateLabel);
+        }
+      }
+    });
+  }
+
+  // --- Dynamic Row Management ---
+  function addNewRow() {
+    console.log('Add New Row button clicked!'); // Debug log
+    
+    const container = document.getElementById('formset-container');
+    console.log('Container found:', container);
+    
+    // Get the formset prefix from Django
+    const formsetPrefix = '{{ formset_prefix }}';
+    console.log('Formset prefix:', formsetPrefix);
+    
+    // Try multiple possible IDs for the management form using the correct prefix
+    let totalFormsInput = document.getElementById(`id_${formsetPrefix}-TOTAL_FORMS`) ||
+                         document.getElementById('id_form-TOTAL_FORMS') ||
+                         document.getElementById('id_items-TOTAL_FORMS') ||
+                         document.querySelector('input[name*="TOTAL_FORMS"]') ||
+                         document.querySelector('input[name$="-TOTAL_FORMS"]');
+    
+    console.log('Total forms input found:', totalFormsInput);
+    console.log('Total forms input name:', totalFormsInput ? totalFormsInput.name : 'none');
+    console.log('Total forms input value:', totalFormsInput ? totalFormsInput.value : 'none');
+    
+    // Debug: Show all management form inputs
+    const allManagementInputs = document.querySelectorAll('input[type="hidden"]');
+    console.log('All hidden inputs found:', allManagementInputs.length);
+    allManagementInputs.forEach(input => {
+      console.log('Hidden input:', input.name, '=', input.value);
+    });
+    
+    if (!container) {
+      console.error('Container not found');
+      showToast('Error: Form container not found', 'error');
+      return;
+    }
+    
+    if (!totalFormsInput) {
+      console.error('Total forms input not found');
+      showToast('Error: Cannot determine form count', 'error');
+      return;
+    }
+    
+    let formIndex = parseInt(totalFormsInput.value, 10);
+    
+    // Fallback: if form index is invalid, count existing rows
+    if (isNaN(formIndex)) {
+      formIndex = container.querySelectorAll('.item-row').length;
+      console.log('Fallback form index:', formIndex);
+    } else {
+      console.log('Current form index:', formIndex);
+    }
+    
+    let newRow;
+    
+    const emptyFormTemplate = document.getElementById('empty-form');
+    if (emptyFormTemplate) {
+      // Use template approach
+      console.log('Using empty form template');
+      const templateHtml = emptyFormTemplate.innerHTML;
+      console.log('Original template HTML (first 200 chars):', templateHtml.substring(0, 200));
+      const newFormHtml = templateHtml.replace(/__prefix__/g, formIndex);
+      console.log('New form HTML (first 200 chars):', newFormHtml.substring(0, 200));
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = newFormHtml;
+      newRow = tempDiv.firstElementChild;
+      console.log('Created row from template');
+    } else {
+      // Fallback: create row manually
+      console.log('Empty form template not found, creating row manually');
+      newRow = createManualRow(formIndex);
+    }
+    
+    if (!newRow) {
+      console.error('Failed to create new row');
+      showToast('Error: Failed to create new row', 'error');
+      return;
+    }
+    
+    // Clear default styling and ensure visibility
+    newRow.style.cssText = 'display: block; opacity: 1; visibility: visible;';
+    
+    // Ensure all inputs are visible
+    newRow.querySelectorAll('.form-control').forEach(input => {
+      input.style.cssText = 'display: block; visibility: visible; opacity: 1;';
+    });
+    
+    // Add to container
+    container.appendChild(newRow);
+    
+    // Update total forms count if possible
+    if (totalFormsInput) {
+      totalFormsInput.value = formIndex + 1;
+      console.log('Updated total forms to:', totalFormsInput.value);
+    } else {
+      console.log('Could not update total forms count - will work anyway');
+    }
+    
+    // Debug: Check the field names in the new row
+    const inputs = newRow.querySelectorAll('input');
+    console.log('New row input field names:');
+    inputs.forEach(input => {
+      if (input.name) {
+        console.log(`  ${input.name}`);
+      }
+    });
+    
+    console.log('New row added, total forms now:', totalFormsInput.value);
+    
+    // Initialize floating labels and event listeners
+    setTimeout(() => {
+      initializeFloatingLabels(newRow);
+      attachRowEventListeners(newRow);
+      
+      // Focus on the first input
+      const firstInput = newRow.querySelector('input[name$="-description"]');
+      if (firstInput) {
+        firstInput.focus();
+        console.log('Focused on first input');
+      }
+      
+      // Show success feedback
+      showToast('New item row added successfully!', 'success');
+      
+      // Scroll to new row
+      newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+  
+  // Manual row creation fallback
+  function createManualRow(formIndex) {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.setAttribute('data-form-index', formIndex);
+    
+    row.innerHTML = `
+      <input type="hidden" name="${formsetPrefix}-${formIndex}-id" id="id_${formsetPrefix}-${formIndex}-id">
+      <input type="hidden" name="${formsetPrefix}-${formIndex}-DELETE" id="id_${formsetPrefix}-${formIndex}-DELETE">
+      
+      <div class="row align-items-end">
+        <div class="col-md-3">
+          <div class="input-group input-group-outline mb-3">
+            <input type="text" 
+                   name="${formsetPrefix}-${formIndex}-product_service" 
+                   class="form-control" 
+                   id="id_${formsetPrefix}-${formIndex}-product_service"
+                   placeholder=" ">
+            <label class="form-label">Product/Service</label>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="input-group input-group-outline mb-3">
+            <input type="text" 
+                   name="${formsetPrefix}-${formIndex}-description" 
+                   class="form-control" 
+                   id="id_${formsetPrefix}-${formIndex}-description"
+                   placeholder=" ">
+            <label class="form-label">Description</label>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="input-group input-group-outline mb-3">
+            <input type="text" 
+                   name="${formsetPrefix}-${formIndex}-quantity" 
+                   class="form-control" 
+                   id="id_${formsetPrefix}-${formIndex}-quantity"
+                   placeholder=" ">
+            <label class="form-label">Quantity</label>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="input-group input-group-outline mb-3">
+            <input type="text" 
+                   name="${formsetPrefix}-${formIndex}-unit_price" 
+                   class="form-control" 
+                   id="id_${formsetPrefix}-${formIndex}-unit_price"
+                   placeholder=" ">
+            <label class="form-label">Unit Price</label>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="input-group input-group-static mb-3">
+            <label class="form-label">Line Total</label>
+            <div class="form-control">
+              <span class="line-total">0.00</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-1">
+          <i class="material-icons delete-row text-danger" onclick="deleteRow(this)" title="Delete Item" style="cursor: pointer; font-size: 20px;">delete</i>
+        </div>
+      </div>
+    `;
+    
+    return row;
+  }
+
+  // Make function globally accessible
+  window.addNewRow = addNewRow;
+  window.addRow = addNewRow; // Keep old name for compatibility
+  window.createManualRow = createManualRow;
+
+  window.deleteRow = function(button) {
+    const rowToDelete = button.closest('.item-row');
+    const deleteInput = rowToDelete.querySelector('input[name$="-DELETE"]');
+    
+    if (deleteInput) {
+      // If it's a saved form from the server, mark for deletion
+      deleteInput.checked = true;
+      rowToDelete.style.display = 'none';
+    } else {
+      // If it's a new form added on the client, just remove it
+      rowToDelete.remove();
+    }
+    
+    // Recalculate totals after deletion
+    calculateTotals();
+  }
+
+  // --- Event Listener Setup ---
+  function attachRowEventListeners(row) {
+    // Find all relevant inputs with multiple selector patterns
+    const allInputs = row.querySelectorAll('input[type="text"], input[type="number"]');
+    const relevantInputs = [];
+    
+    allInputs.forEach(input => {
+      const name = input.name || '';
+      const id = input.id || '';
+      
+      // Check if this input is for product, description, quantity, or price
+      if (name.includes('product_service') || id.includes('product_service') ||
+          name.includes('description') || id.includes('description') ||
+          name.includes('quantity') || id.includes('quantity') ||
+          name.includes('unit_price') || name.includes('price') || id.includes('price')) {
+        relevantInputs.push(input);
+      }
+    });
+    
+    console.log(`Attached listeners to ${relevantInputs.length} inputs in row`);
+    relevantInputs.forEach(input => {
+      input.addEventListener('input', calculateTotals);
+    });
+  }
+
+  // --- Toast Notification Function ---
+  function showToast(message, type = 'info') {
+    // Remove existing toast if any
+    const existingToast = document.querySelector('.custom-toast');
+    if (existingToast) existingToast.remove();
+    
+    // Determine alert class and icon
+    let alertClass = 'alert-info';
+    let icon = 'info';
+    
+    if (type === 'success') {
+      alertClass = 'alert-success';
+      icon = 'check_circle';
+    } else if (type === 'error') {
+      alertClass = 'alert-danger';
+      icon = 'error';
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `custom-toast alert ${alertClass} position-fixed`;
+    toast.style.cssText = `
+      top: 20px; right: 20px; z-index: 9999; 
+      min-width: 300px; animation: slideIn 0.3s ease-out;
+    `;
+    toast.innerHTML = `
+      <div class="d-flex align-items-center">
+        <i class="material-icons me-2">${icon}</i>
+        ${message}
+        <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+      </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Auto remove after 3 seconds (longer for errors)
+    const timeout = type === 'error' ? 5000 : 3000;
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => toast.remove(), 300);
+      }
+    }, timeout);
+  }
+
+  // Add CSS animations for toast
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // --- Initial Setup on Page Load ---
+  
+  // 1. Initialize floating labels for all existing fields
+  initializeFloatingLabels(document.getElementById('invoice-form'));
+  
+  // 1.1 Force update all labels after a short delay to handle autofill and pre-filled values
+  setTimeout(() => {
+    document.querySelectorAll('.input-group-outline').forEach(group => {
+      const input = group.querySelector('.form-control, .form-select');
+      const label = group.querySelector('.form-label');
+      
+      if (input && label && input.value && input.value.trim() !== '') {
+        label.style.transform = 'translateY(-1.5rem) scale(0.8)';
+        label.style.color = '#e91e63';
+        label.style.backgroundColor = 'white';
+        
+        if (input.type !== 'textarea') {
+          input.style.paddingTop = '1.125rem';
+          input.style.paddingBottom = '0.375rem';
+        }
+      }
+    });
+  }, 500);
+  
+  // 2. Attach calculation listeners to all existing item rows
+  document.querySelectorAll('#formset-container .item-row').forEach(attachRowEventListeners);
+  
+  // 3. Attach calculation listeners to summary fields
+  const summaryInputs = ['total_tax', 'total_discount', 'shipping_fee', 'other_charges', 'amount_paid'];
+  summaryInputs.forEach(name => {
+    const input = document.querySelector(`input[name="${name}"]`);
+    if (input) {
+      input.addEventListener('input', calculateTotals);
+    }
+  });
+
+  // 4. Ensure Add New Item button is working (it already has onclick)
+  const addButton = document.getElementById('add-item-btn');
+  if (addButton) {
+      console.log('Add Item button found and ready');
+      // Button already has onclick="addNewRow()" so no additional listener needed
+  } else {
+      console.error('Add Item button not found!');
+  }
+  
+  // 5. Ensure all delete buttons are wired up correctly
+  document.querySelectorAll('.delete-row').forEach(button => {
+      button.onclick = function() { deleteRow(this); };
+  });
+
+  // 6. Debug and calculate line totals for existing items
+  console.log('=== EXISTING INVOICE DATA DEBUG ===');
+  const existingRows = document.querySelectorAll('#formset-container .item-row');
+  console.log(`Found ${existingRows.length} existing rows`);
+  
+  existingRows.forEach((row, index) => {
+    console.log(`\n--- Row ${index + 1} ---`);
+    
+    // Try multiple possible field name patterns
+    const productInput = row.querySelector('input[name$="-product_service"]') || 
+                         row.querySelector('input[name*="product_service"]') ||
+                         row.querySelector('input[id*="product_service"]');
+    const descInput = row.querySelector('input[name$="-description"]') || 
+                     row.querySelector('input[name*="description"]') ||
+                     row.querySelector('input[id*="description"]');
+    const quantityInput = row.querySelector('input[name$="-quantity"]') || 
+                         row.querySelector('input[name*="quantity"]') ||
+                         row.querySelector('input[id*="quantity"]');
+    const priceInput = row.querySelector('input[name$="-unit_price"]') || 
+                      row.querySelector('input[name*="unit_price"]') ||
+                      row.querySelector('input[id*="unit_price"]') ||
+                      row.querySelector('input[name*="price"]');
+    const lineTotalSpan = row.querySelector('.line-total');
+    
+    // Debug: Show all input fields in this row
+    const allInputs = row.querySelectorAll('input');
+    console.log(`Found ${allInputs.length} input fields in row:`)
+    allInputs.forEach((input, i) => {
+      console.log(`  Input ${i + 1}: name="${input.name}", id="${input.id}", value="${input.value}"`);
+    });
+    
+    console.log('Product:', productInput ? `"${productInput.value}" (${productInput.name})` : 'NOT FOUND');
+    console.log('Description:', descInput ? `"${descInput.value}" (${descInput.name})` : 'NOT FOUND');
+    console.log('Quantity:', quantityInput ? `"${quantityInput.value}" (${quantityInput.name})` : 'NOT FOUND');
+    console.log('Price:', priceInput ? `"${priceInput.value}" (${priceInput.name})` : 'NOT FOUND');
+    console.log('Line Total Span:', lineTotalSpan ? 'FOUND' : 'NOT FOUND');
+    
+    if (quantityInput && priceInput && lineTotalSpan) {
+      const quantity = parseSmartNumber(quantityInput.value || '0');
+      const unitPrice = parseSmartNumber(priceInput.value || '0');
+      const lineTotal = quantity * unitPrice;
+      
+      lineTotalSpan.textContent = lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      console.log(`Calculated: ${quantity} × ${unitPrice} = ${lineTotal}`);
+      
+      // Visual feedback for populated rows
+      if (lineTotal > 0) {
+        row.style.backgroundColor = '#f0fff4';
+        setTimeout(() => {
+          row.style.backgroundColor = '';
+        }, 2000);
+      }
+    } else {
+      console.log('Missing required elements for calculation');
+    }
+  });
+  
+  console.log('=== END DEBUG ===\n');
+  
+  // 7. Run initial calculation to populate totals
+  calculateTotals();
+  
+  // 8. Force another calculation after a delay to ensure all data is loaded
+  setTimeout(() => {
+    calculateTotals();
+    console.log('Forced recalculation completed');
+  }, 1000);
+  
+  // 9. Show welcome message with input examples and debug info
+  setTimeout(() => {
+    const container = document.getElementById('formset-container');
+    const totalForms = document.querySelector('input[name*="TOTAL_FORMS"]');
+    const existingRows = container ? container.querySelectorAll('.item-row').length : 0;
+    const populatedRows = container ? container.querySelectorAll('.item-row').length : 0;
+    
+    // Count rows with actual data
+    let rowsWithData = 0;
+    if (container) {
+      container.querySelectorAll('.item-row').forEach(row => {
+        const qty = row.querySelector('input[name$="-quantity"]');
+        const price = row.querySelector('input[name$="-unit_price"]');
+        if ((qty && qty.value) || (price && price.value)) {
+          rowsWithData++;
+        }
+      });
+    }
+    
+    let message = `Form ready! ${existingRows} rows loaded, ${rowsWithData} with data. Try inputs like "80 nires", "3+2", "₦1,500", "2.5k"`;
+    
+    if (!totalForms) {
+      message += ` (Fallback mode active)`;
+    }
+    
+    showToast(message, 'info');
+  }, 1500);
+  
+  // 10. Add click debugging for the button
+  document.addEventListener('click', function(e) {
+    if (e.target.id === 'add-item-btn' || e.target.closest('#add-item-btn')) {
+      console.log('Add Item button clicked via event listener');
+    }
+  });
+  
+  // 11. Add a global function to debug current form state
+  window.debugInvoiceForm = function() {
+    console.log('\n=== CURRENT FORM STATE ===');
+    
+    // Show main invoice fields
+    const clientName = document.querySelector('input[name="client_name"]');
+    const dueDate = document.querySelector('input[name="due_date"]');
+    console.log('Client Name:', clientName ? clientName.value : 'NOT FOUND');
+    console.log('Due Date:', dueDate ? dueDate.value : 'NOT FOUND');
+    
+    // Show financial totals
+    const subtotal = document.getElementById('subtotal');
+    const grandTotal = document.getElementById('grand-total');
+    console.log('Displayed Subtotal:', subtotal ? subtotal.textContent : 'NOT FOUND');
+    console.log('Displayed Grand Total:', grandTotal ? grandTotal.textContent : 'NOT FOUND');
+    
+    // Show all item rows
+    const rows = document.querySelectorAll('#formset-container .item-row');
+    console.log(`\nFound ${rows.length} item rows:`);
+    
+    rows.forEach((row, index) => {
+      const product = row.querySelector('input[name$="-product_service"]') || 
+                     row.querySelector('input[name*="product_service"]') ||
+                     row.querySelector('input[id*="product_service"]');
+      const desc = row.querySelector('input[name$="-description"]') || 
+                  row.querySelector('input[name*="description"]') ||
+                  row.querySelector('input[id*="description"]');
+      const qty = row.querySelector('input[name$="-quantity"]') || 
+                 row.querySelector('input[name*="quantity"]') ||
+                 row.querySelector('input[id*="quantity"]');
+      const price = row.querySelector('input[name$="-unit_price"]') || 
+                   row.querySelector('input[name*="unit_price"]') ||
+                   row.querySelector('input[id*="unit_price"]') ||
+                   row.querySelector('input[name*="price"]');
+      const total = row.querySelector('.line-total');
+      
+      console.log(`Row ${index + 1}:`);
+      console.log(`  Product: "${product ? product.value : 'N/A'}"`);
+      console.log(`  Description: "${desc ? desc.value : 'N/A'}"`);
+      console.log(`  Quantity: "${qty ? qty.value : 'N/A'}"`);
+      console.log(`  Price: "${price ? price.value : 'N/A'}"`);
+      console.log(`  Line Total: "${total ? total.textContent : 'N/A'}"`);
+    });
+    
+    console.log('=== END FORM STATE ===\n');
+    
+    // Also run a fresh calculation
+    calculateTotals();
+  };
+  
+  console.log('Invoice form debugging ready! Type debugInvoiceForm() in console to see current state.');
+  
+  // 12. Add function to show all form elements
+  window.showAllFormElements = function() {
+    console.log('\n=== ALL FORM ELEMENTS ===');
+    
+    const container = document.getElementById('formset-container');
+    if (container) {
+      console.log('Formset container HTML:');
+      console.log(container.innerHTML.substring(0, 1000) + '...');
+      
+      const managementForm = container.querySelector('input[name*="TOTAL_FORMS"]') || 
+                            document.querySelector('input[name*="TOTAL_FORMS"]');
+      console.log('Management form:', managementForm ? managementForm.outerHTML : 'NOT FOUND');
+      
+      const allFormInputs = container.querySelectorAll('input, select, textarea');
+      console.log(`\nFound ${allFormInputs.length} form elements total:`);
+      
+      allFormInputs.forEach((input, i) => {
+        if (input.type !== 'hidden') {
+          console.log(`${i + 1}. ${input.tagName} - name: "${input.name}", id: "${input.id}", type: "${input.type}", value: "${input.value}"`);
+        }
+      });
+    }
+    
+    console.log('=== END ALL FORM ELEMENTS ===\n');
+  };
+  
+  console.log('Additional debug: Type showAllFormElements() to see complete form structure.');
+});
+</script>
+{% endblock %}

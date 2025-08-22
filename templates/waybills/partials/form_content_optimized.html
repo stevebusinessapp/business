@@ -1,0 +1,96 @@
+{% if selected_template %}
+<!-- Custom Fields based on template -->
+{% with custom_fields=selected_template.get_default_custom_fields %}
+    {% for section_key, section_config in custom_fields.items %}
+        {% if section_config.type == 'section' %}
+        <div class="section-group" style="margin-bottom: 24px;">
+            <h6 style="color: {{ selected_template.primary_color }}; border-bottom: 2px solid {{ selected_template.primary_color }}; padding-bottom: 8px; margin-bottom: 16px;">
+                {{ section_config.label }}
+            </h6>
+            
+            {% for field_key, field_config in section_config.fields.items %}
+            <div class="form-group">
+                <label class="form-label">
+                    {{ field_config.label }}
+                    {% if field_config.required %}<span style="color: red;">*</span>{% endif %}
+                </label>
+                
+                {% if field_config.type == 'textarea' %}
+                    <textarea 
+                        name="custom_{{ section_key }}_{{ field_key }}" 
+                        class="form-control" 
+                        rows="3"
+                        {% if field_config.required %}required{% endif %}
+                        placeholder="Enter {{ field_config.label|lower }}">{% if form_data.custom_data and form_data.custom_data|get_item:section_key and form_data.custom_data|get_item:section_key|get_item:field_key %}{{ form_data.custom_data|get_item:section_key|get_item:field_key }}{% endif %}</textarea>
+                {% else %}
+                    <input 
+                        type="{{ field_config.type|default:'text' }}" 
+                        name="custom_{{ section_key }}_{{ field_key }}" 
+                        class="form-control"
+                        {% if field_config.required %}required{% endif %}
+                        placeholder="Enter {{ field_config.label|lower }}"
+                        value="{% if form_data.custom_data and form_data.custom_data|get_item:section_key and form_data.custom_data|get_item:section_key|get_item:field_key %}{{ form_data.custom_data|get_item:section_key|get_item:field_key }}{% endif %}">
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endwith %}
+
+<!-- User Preferences -->
+<div class="section-group">
+    <h6 style="color: {{ selected_template.primary_color }};">Display Options</h6>
+    
+    <div class="form-check">
+        <input type="checkbox" name="show-company-details" id="show-company-details" class="form-check-input" 
+               {% if selected_template.show_company_details %}checked{% endif %}>
+        <label for="show-company-details" class="form-check-label">Show company details</label>
+    </div>
+    
+    <div class="form-check">
+        <input type="checkbox" name="show-bank-details" id="show-bank-details" class="form-check-input"
+               {% if selected_template.show_bank_details %}checked{% endif %}>
+        <label for="show-bank-details" class="form-check-label">Show bank account details</label>
+    </div>
+</div>
+
+<style>
+.section-group {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid {{ selected_template.primary_color }};
+}
+
+.form-check {
+    margin-bottom: 10px;
+}
+
+.form-check-input {
+    margin-right: 8px;
+}
+
+.form-check-label {
+    color: #344767;
+    font-weight: 500;
+}
+</style>
+
+{% else %}
+<!-- Fallback content -->
+<div class="form-group">
+    <label class="form-label">Sender Name</label>
+    <input type="text" name="sender_name" class="form-control" placeholder="Enter sender name">
+</div>
+
+<div class="form-group">
+    <label class="form-label">Receiver Name</label>
+    <input type="text" name="receiver_name" class="form-control" placeholder="Enter receiver name">
+</div>
+
+<div class="form-group">
+    <label class="form-label">Destination</label>
+    <input type="text" name="destination" class="form-control" placeholder="Enter destination">
+</div>
+{% endif %}

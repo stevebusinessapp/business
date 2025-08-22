@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .header {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .company-info {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .company-logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .invoice-details {
+            float: right;
+            text-align: right;
+            width: 300px;
+        }
+        .invoice-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .client-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .items-table th,
+        .items-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .items-table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        .total-section {
+            float: right;
+            width: 300px;
+            margin-top: 20px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .total-row.grand-total {
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 2px solid #007bff;
+            padding-top: 10px;
+        }
+        .user-signature {
+            margin-top: 40px;
+            text-align: right;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 200px;
+            margin: 20px 0 5px auto;
+        }
+        .clearfix {
+            clear: both;
+        }
+        .footer {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            {% if company_logo %}
+                <img src="{{ company_logo }}" alt="Company Logo" class="company-logo">
+            {% endif %}
+            {% if company_profile %}
+                <h2>{{ company_profile.company_name }}</h2>
+                <p>{{ company_profile.address|default:"" }}</p>
+                <p>{{ company_profile.city|default:"" }}{% if company_profile.state %}, {{ company_profile.state }}{% endif %}</p>
+                <p>Email: {{ company_profile.email }}</p>
+                <p>Phone: {{ company_profile.phone|default:"" }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="invoice-details">
+            <div class="invoice-title">INVOICE</div>
+            <p><strong>Invoice #:</strong> {{ invoice.invoice_number }}</p>
+            <p><strong>Date:</strong> {{ invoice.invoice_date|date:"M d, Y" }}</p>
+            {% if invoice.due_date %}
+                <p><strong>Due Date:</strong> {{ invoice.due_date|date:"M d, Y" }}</p>
+            {% endif %}
+        </div>
+        <div class="clearfix"></div>
+    </div>
+
+    <div class="client-info">
+        <h3>Bill To:</h3>
+        <p><strong>{{ invoice.client_name }}</strong></p>
+        {% if invoice.client_address %}
+            <p>{{ invoice.client_address }}</p>
+        {% endif %}
+        {% if invoice.client_phone %}
+            <p>Phone: {{ invoice.client_phone }}</p>
+        {% endif %}
+        {% if invoice.client_email %}
+            <p>Email: {{ invoice.client_email }}</p>
+        {% endif %}
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items.all %}
+                <tr>
+                    <td>
+                        {% if item.product_service %}
+                            <strong>{{ item.product_service }}</strong><br>
+                        {% endif %}
+                        {{ item.description }}
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ currency_symbol }}{{ item.unit_price }}</td>
+                    <td>{{ currency_symbol }}{{ item.line_total }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>{{ currency_symbol }}{{ invoice.subtotal }}</span>
+        </div>
+        {% if invoice.total_discount > 0 %}
+            <div class="total-row">
+                <span>Discount:</span>
+                <span>-{{ currency_symbol }}{{ invoice.total_discount }}</span>
+            </div>
+        {% endif %}
+        {% if invoice.total_tax > 0 %}
+            <div class="total-row">
+                <span>Tax:</span>
+                <span>{{ currency_symbol }}{{ invoice.total_tax }}</span>
+            </div>
+        {% endif %}
+        {% if invoice.shipping_fee > 0 %}
+            <div class="total-row">
+                <span>Shipping:</span>
+                <span>{{ currency_symbol }}{{ invoice.shipping_fee }}</span>
+            </div>
+        {% endif %}
+        {% if invoice.other_charges > 0 %}
+            <div class="total-row">
+                <span>Other Charges:</span>
+                <span>{{ currency_symbol }}{{ invoice.other_charges }}</span>
+            </div>
+        {% endif %}
+        <div class="total-row grand-total">
+            <span>Grand Total:</span>
+            <span>{{ currency_symbol }}{{ invoice.grand_total }}</span>
+        </div>
+    </div>
+    
+    <div class="clearfix"></div>
+
+    {% if invoice.notes %}
+        <div style="margin-top: 30px;">
+            <h4>Notes:</h4>
+            <p>{{ invoice.notes }}</p>
+        </div>
+    {% endif %}
+
+    <!-- User/Account Details Section -->
+    {% if user_profile %}
+        <div class="user-signature">
+            {% if company_signature %}
+                <img src="{{ company_signature }}" alt="Signature" style="max-width: 150px; height: auto;">
+            {% endif %}
+            <div class="signature-line"></div>
+            <p><strong>{{ user_profile.full_name|default:"Authorized Signature" }}</strong></p>
+            {% if user_profile.phone %}
+                <p>Phone: {{ user_profile.phone }}</p>
+            {% endif %}
+            {% if user_profile.email %}
+                <p>Email: {{ user_profile.email }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- Bank Account Details -->
+    {% if default_bank_account %}
+        <div class="footer">
+            <h4>Payment Information</h4>
+            <p><strong>Bank:</strong> {{ default_bank_account.bank_name }}</p>
+            <p><strong>Account Name:</strong> {{ default_bank_account.account_name }}</p>
+            <p><strong>Account Number:</strong> {{ default_bank_account.account_number }}</p>
+        </div>
+    {% endif %}
+</body>
+</html>

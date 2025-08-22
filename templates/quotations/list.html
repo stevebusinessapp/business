@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Quotations</h2>
+    <div class="mb-3">
+        <a href="{% url 'quotations:quotation_create' %}" class="btn btn-primary">Create New Quotation</a>
+    </div>
+    <form method="get" class="form-inline mb-3">
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search..." class="form-control mr-2">
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+    </form>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Number</th>
+                <th>Client</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for quotation in quotations %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ quotation.number }}</td>
+                <td>{{ quotation.client }}</td>
+                <td>{{ quotation.get_status_display }}</td>
+                <td>{{ quotation.total }}</td>
+                <td>{{ quotation.date }}</td>
+                <td>
+                    <a href="{% url 'quotations:quotation_detail' quotation.pk %}" class="btn btn-sm btn-info">View</a>
+                    <a href="{% url 'quotations:quotation_edit' quotation.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                    <a href="{% url 'quotations:quotation_delete' quotation.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7">No quotations found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <nav>
+        <ul class="pagination">
+            {% if quotations.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ quotations.previous_page_number }}">Previous</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">Page {{ quotations.number }} of {{ quotations.paginator.num_pages }}</span></li>
+            {% if quotations.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ quotations.next_page_number }}">Next</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endblock %} 

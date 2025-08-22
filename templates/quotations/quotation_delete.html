@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Delete Quotation - {{ quotation.quotation_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Delete Quotation
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Warning!
+                        </h5>
+                        <p class="mb-0">
+                            You are about to delete the quotation <strong>{{ quotation.quotation_number }}</strong>. 
+                            This action cannot be undone.
+                        </p>
+                    </div>
+
+                    <div class="quotation-details">
+                        <h6 class="text-muted mb-3">Quotation Details:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Quotation Number:</strong> {{ quotation.quotation_number }}</p>
+                                <p><strong>Date:</strong> {{ quotation.quotation_date|date:"F j, Y" }}</p>
+                                <p><strong>Status:</strong> 
+                                    <span class="badge bg-{% if quotation.status == 'accepted' %}success{% elif quotation.status == 'declined' %}danger{% elif quotation.status == 'sent' %}info{% else %}warning{% endif %}">
+                                        {{ quotation.get_status_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Client:</strong> 
+                                    {% if quotation.client %}
+                                        {{ quotation.client.name }}
+                                    {% else %}
+                                        <span class="text-muted">No client</span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Valid Until:</strong> 
+                                    {% if quotation.valid_until %}
+                                        {{ quotation.valid_until|date:"F j, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">No expiry</span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Total Amount:</strong> 
+                                    <span class="text-primary fw-bold">
+                                        {{ quotation.grand_total|currency_format_with_symbol:company_profile }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        {% if quotation.items.exists %}
+                        <div class="mt-4">
+                            <h6 class="text-muted mb-3">Line Items:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Qty</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in quotation.items.all %}
+                                        <tr>
+                                            <td>{{ item.product_service|default:"-" }}</td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td>{{ item.unit_price|currency_format_with_symbol:company_profile }}</td>
+                                            <td>{{ item.line_total|currency_format_with_symbol:company_profile }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'quotations:quotation_detail' quotation.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Delete Quotation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

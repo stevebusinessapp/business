@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Clients - Business App{% endblock %}
+
+{% block extra_css %}
+<style>
+    .client-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .client-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .action-buttons .btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .client-name {
+        font-weight: 600;
+        color: #1976d2;
+        font-size: 1.1rem;
+    }
+    
+    .client-email {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .client-phone {
+        color: #28a745;
+        font-weight: 500;
+    }
+    
+    .client-address {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-style: italic;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    
+    .search-highlight {
+        background-color: #fff3cd;
+        padding: 0.1rem 0.2rem;
+        border-radius: 3px;
+    }
+    
+    .dropdown-toggle {
+        min-width: 80px;
+        white-space: nowrap;
+        font-size: 0.875rem;
+        font-weight: 500;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .dropdown-toggle:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        color: white;
+    }
+    
+    .dropdown-toggle:focus {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        color: white;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .dropdown-toggle .fas {
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-users text-primary me-2"></i>
+                        Clients
+                    </h2>
+                    <p class="text-muted mb-0">Manage your client database</p>
+                </div>
+                <div class="action-buttons">
+                    <a href="{% url 'clients:client_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add New Client
+                    </a>
+                    <a href="{% url 'quotations:quotation_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>Back to Quotations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ clients.count|default:0 }}</h4>
+                        <p class="mb-0 opacity-75">Total Clients</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ active_clients_count|default:0 }}</h4>
+                        <p class="mb-0 opacity-75">Active Clients</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-check fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ recent_clients_count|default:0 }}</h4>
+                        <p class="mb-0 opacity-75">Recent (30 days)</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ total_quotations|default:0 }}</h4>
+                        <p class="mb-0 opacity-75">Total Quotations</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-invoice fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row">
+        <div class="col-12">
+            <div class="filter-card">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search Clients</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ request.GET.search }}" placeholder="Search by name, email, or phone...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sort" class="form-label">Sort By</label>
+                        <select class="form-select" id="sort" name="sort">
+                            <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                            <option value="-name" {% if request.GET.sort == '-name' %}selected{% endif %}>Name (Z-A)</option>
+                            <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Date Created (Oldest)</option>
+                            <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Date Created (Newest)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary" style="min-width: 80px; white-space: nowrap;">
+                                <i class="fas fa-search me-1"></i>Search
+                            </button>
+                            <a href="{% url 'clients:client_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients List -->
+    <div class="row">
+        {% for client in clients %}
+        <div class="col-xl-4 col-lg-6 col-md-6">
+            <div class="card client-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="flex-grow-1">
+                            <h5 class="client-name mb-1">{{ client.name }}</h5>
+                            <p class="client-email mb-1">
+                                <i class="fas fa-envelope me-1"></i>{{ client.email }}
+                            </p>
+                            {% if client.phone %}
+                            <p class="client-phone mb-1">
+                                <i class="fas fa-phone me-1"></i>{{ client.phone }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v me-1"></i>Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'clients:client_detail' client.pk %}">
+                                    <i class="fas fa-eye me-2"></i>View Details
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'clients:client_edit' client.pk %}">
+                                    <i class="fas fa-edit me-2"></i>Edit Client
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" 
+                                       onclick="confirmDelete('{{ client.name }}', '{% url 'clients:client_delete' client.pk %}')">
+                                    <i class="fas fa-trash me-2"></i>Delete Client
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    {% if client.address %}
+                    <div class="client-address">
+                        <i class="fas fa-map-marker-alt me-1"></i>{{ client.address }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <small class="text-muted">Quotations</small>
+                                <div class="fw-bold text-primary">{{ client.quotation_set.count|default:0 }}</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Created</small>
+                                <div class="fw-bold">{{ client.created_at|date:"M d, Y" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h4 class="text-muted">No clients found</h4>
+                <p class="text-muted">Start by adding your first client to the database.</p>
+                <a href="{% url 'clients:client_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Your First Client
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Clients pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the client "<span id="clientName"></span>"?</p>
+                <p class="text-danger"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="deleteConfirmBtn" class="btn btn-danger">Delete Client</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(clientName, deleteUrl) {
+    document.getElementById('clientName').textContent = clientName;
+    document.getElementById('deleteConfirmBtn').href = deleteUrl;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+// Client list functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any client list specific functionality here
+});
+</script>
+{% endblock %} 

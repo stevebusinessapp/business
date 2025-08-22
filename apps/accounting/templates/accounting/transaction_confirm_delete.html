@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Delete Transaction - Accounting{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Transaction Deletion
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-info-circle"></i> Important Notice</h6>
+                        <p class="mb-0">
+                            You are about to void the transaction "<strong>{{ transaction.title }}</strong>". 
+                            This action will mark the transaction as void but will not permanently delete it from the system.
+                        </p>
+                    </div>
+
+                    <div class="transaction-details mb-4">
+                        <h6>Transaction Details:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Title:</strong><br>
+                                {{ transaction.title }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Type:</strong><br>
+                                <span class="badge {% if transaction.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ transaction.get_type_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <strong>Amount:</strong><br>
+                                <span class="{% if transaction.type == 'income' %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                    {{ transaction.currency }}{{ transaction.net_amount|floatformat:2|intcomma }}
+                                </span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Date:</strong><br>
+                                {{ transaction.transaction_date|date:"M d, Y" }}
+                            </div>
+                        </div>
+                        {% if transaction.description %}
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <strong>Description:</strong><br>
+                                {{ transaction.description }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if transaction.source_app != 'manual' %}
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <strong>Source:</strong><br>
+                                {{ transaction.get_source_app_display }}
+                                {% if transaction.reference_id %}
+                                    (Ref: {{ transaction.reference_id }})
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'accounting:transaction_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Void Transaction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Information -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">What happens when you void a transaction?</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="fas fa-check text-success"></i> The transaction will be marked as void</li>
+                        <li><i class="fas fa-check text-success"></i> It will no longer appear in financial calculations</li>
+                        <li><i class="fas fa-check text-success"></i> The transaction record is preserved for audit purposes</li>
+                        <li><i class="fas fa-check text-success"></i> Ledger totals will be automatically recalculated</li>
+                        <li><i class="fas fa-info text-info"></i> You can view voided transactions in the admin panel</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Bank Account{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex align-items-center">
+                        <p class="mb-0">Delete Bank Account</p>
+                        <a href="{% url 'core:bank_accounts' %}" class="btn btn-sm btn-outline-secondary ms-auto">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Bank Accounts
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="icon icon-shape icon-lg bg-gradient-danger shadow mx-auto">
+                            <i class="fas fa-exclamation-triangle text-white"></i>
+                        </div>
+                        <h4 class="mt-3 mb-2">Are you sure?</h4>
+                        <p class="text-muted">This action cannot be undone. This will permanently delete the bank account and remove all associated data.</p>
+                    </div>
+                    
+                    <!-- Account Details Card -->
+                    <div class="card border">
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar avatar-sm me-3 bg-gradient-primary">
+                                            <span class="text-white font-weight-bold text-xs">
+                                                {{ bank_account.bank_name|first|upper }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 text-sm">{{ bank_account.bank_name }}</h6>
+                                            <p class="text-xs text-secondary mb-0">Bank Name</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6 class="mb-0 text-sm">{{ bank_account.account_name }}</h6>
+                                    <p class="text-xs text-secondary mb-0">Account Name</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6 class="mb-0 text-sm">****{{ bank_account.account_number|slice:"-4:" }}</h6>
+                                    <p class="text-xs text-secondary mb-0">Account Number</p>
+                                    {% if bank_account.is_default %}
+                                        <span class="badge badge-sm bg-gradient-success mt-1">Default Account</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if bank_account.is_default %}
+                    <div class="alert alert-warning mt-3" role="alert">
+                        <div class="d-flex">
+                            <div>
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                            </div>
+                            <div>
+                                <strong>Warning:</strong> This is your default bank account. Deleting it will remove the default status. You may want to set another account as default before deleting this one.
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-center gap-3">
+                                <a href="{% url 'core:bank_accounts' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </a>
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-trash me-1"></i>Yes, Delete Account
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-hide messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert-success, .alert-danger');
+        alerts.forEach(alert => {
+            alert.classList.remove('show');
+            setTimeout(() => alert.parentElement.remove(), 300);
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

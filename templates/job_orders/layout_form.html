@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}{% if edit %}Edit Layout{% else %}Create Layout{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">{% if edit %}Edit Layout{% else %}Create Layout{% endif %}</h4>
+        </div>
+        <div class="card-body">
+          <form method="post" id="layout-form">
+            {% csrf_token %}
+            {{ form.name|as_crispy_field }}
+            <div class="mb-3">
+              <label class="form-label">Columns (Fields)</label>
+              <div class="table-responsive">
+                <table class="table table-bordered align-middle" id="columns-table">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Field Name</th>
+                      <th>Label</th>
+                      <th>Type</th>
+                      <th>Required</th>
+                      <th>Order</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="columns-tbody">
+                  </tbody>
+                </table>
+              </div>
+              <button type="button" class="btn btn-outline-success btn-sm" id="add-column-btn">Add Column</button>
+              {{ form.instance.structure|default:"[]"|json_script:"layout-structure-data" }}
+              <input type="hidden" name="structure" id="id_structure">
+              <div class="form-text mt-2">Define the columns for your job order table. You can add, remove, and reorder fields. <br>Field name must be unique and use only letters, numbers, and underscores.</div>
+            </div>
+            <div class="mt-3 d-flex justify-content-between">
+              <button type="submit" class="btn btn-success">Save</button>
+              <a href="{% url 'job_orders:layout_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+          <div class="mt-4">
+            <h6>Live Preview</h6>
+            <div class="table-responsive">
+              <table class="table table-striped" id="preview-table">
+                <thead><tr id="preview-header"></tr></thead>
+                <tbody><tr id="preview-row"></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal for Add/Edit Column (moved inside .container) -->
+  <div class="modal fade" id="columnModal" tabindex="-1" aria-labelledby="columnModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="columnModalLabel">Add/Edit Column</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="column-form">
+            <div class="mb-3">
+              <label for="col-name" class="form-label">Field Name</label>
+              <input type="text" class="form-control" id="col-name" required pattern="^[a-zA-Z_][a-zA-Z0-9_]*$">
+              <div class="form-text">Unique, no spaces, use underscores.</div>
+            </div>
+            <div class="mb-3">
+              <label for="col-label" class="form-label">Label</label>
+              <input type="text" class="form-control" id="col-label" required>
+            </div>
+            <div class="mb-3">
+              <label for="col-type" class="form-label">Type</label>
+              <select class="form-select" id="col-type" required>
+                <option value="char">Text</option>
+                <option value="int">Integer</option>
+                <option value="decimal">Decimal</option>
+                <option value="date">Date</option>
+              </select>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="col-required">
+              <label class="form-check-label" for="col-required">Required</label>
+            </div>
+            <input type="hidden" id="col-index">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="save-column-btn">Save Column</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// --- Layout columns state ---
+let columns = [];
+
+function ensureBootstrapReady(callback, retries = 10) {
+  if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+    callback();
+  } else if (retries > 0) {
+    setTimeout(() => ensureBootstrapReady(callback, retries - 1), 100);
+  } else {
+    let msg = document.createElement('div');
+    msg.className = 'alert alert-danger';
+    msg.innerHTML = '<b>Bootstrap JavaScript is not loaded.</b> Please check your static files and base.html.';
+    var container = document.querySelector('.container');
+    if (container) container.prepend(msg);
+    var addBtn = document.getElementById('add-column-btn');
+    if (addBtn) addBtn.disabled = true;
+  }
+}
+
+function renderColumnsTable() {
+  const tbody = document.getElementById('columns-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  columns.forEach((col, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${col.name}</td>
+      <td>${col.label}</td>
+      <td>${col.type}</td>
+      <td>${col.required ? 'Yes' : 'No'}</td>
+      <td>
+        <button type="button" class="btn btn-outline-secondary btn-sm move-up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''}>&uarr;</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm move-down" data-idx="${idx}" ${idx === columns.length-1 ? 'disabled' : ''}>&darr;</button>
+      </td>
+      <td>
+        <button type="button" class="btn btn-warning btn-sm edit-col" data-idx="${idx}">Edit</button>
+        <button type="button" class="btn btn-danger btn-sm remove-col" data-idx="${idx}">Remove</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  var struct = document.getElementById('id_structure');
+  if (struct) struct.value = JSON.stringify(columns);
+  renderPreview();
+}
+
+function renderPreview() {
+  const header = document.getElementById('preview-header');
+  const row = document.getElementById('preview-row');
+  if (!header || !row) return;
+  header.innerHTML = '';
+  row.innerHTML = '';
+  columns.forEach(col => {
+    const th = document.createElement('th');
+    th.textContent = col.label;
+    header.appendChild(th);
+    const td = document.createElement('td');
+    td.textContent = col.type === 'date' ? 'YYYY-MM-DD' : col.type === 'decimal' ? '0.00' : col.type === 'int' ? '0' : 'Text';
+    row.appendChild(td);
+  });
+}
+
+function resetColumnForm() {
+  var name = document.getElementById('col-name');
+  var label = document.getElementById('col-label');
+  var type = document.getElementById('col-type');
+  var required = document.getElementById('col-required');
+  var idx = document.getElementById('col-index');
+  if (name) name.value = '';
+  if (label) label.value = '';
+  if (type) type.value = 'char';
+  if (required) required.checked = false;
+  if (idx) idx.value = '';
+}
+
+function openColumnModal(col = null, idx = null) {
+  resetColumnForm();
+  var name = document.getElementById('col-name');
+  var label = document.getElementById('col-label');
+  var type = document.getElementById('col-type');
+  var required = document.getElementById('col-required');
+  var index = document.getElementById('col-index');
+  if (col) {
+    if (name) name.value = col.name;
+    if (label) label.value = col.label;
+    if (type) type.value = col.type;
+    if (required) required.checked = col.required;
+    if (index) index.value = idx;
+  }
+  var modalEl = document.getElementById('columnModal');
+  if (modalEl && typeof bootstrap !== 'undefined') {
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+  } else {
+    console.error('Bootstrap Modal element not found.');
+  }
+}
+
+function setupLayoutForm() {
+  const structureElem = document.getElementById('layout-structure-data');
+  if (structureElem) {
+    try {
+      columns = JSON.parse(structureElem.textContent);
+    } catch (e) { columns = []; }
+  } else {
+    columns = [
+      {name: 'description', label: 'Description', type: 'char', required: true},
+      {name: 'quantity', label: 'Quantity', type: 'int', required: true},
+      {name: 'unit_price', label: 'Unit Price', type: 'decimal', required: true}
+    ];
+  }
+  renderColumnsTable();
+
+  var addBtn = document.getElementById('add-column-btn');
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      openColumnModal();
+    });
+  }
+
+  var saveBtn = document.getElementById('save-column-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function() {
+      var name = document.getElementById('col-name');
+      var label = document.getElementById('col-label');
+      var type = document.getElementById('col-type');
+      var required = document.getElementById('col-required');
+      var idx = document.getElementById('col-index');
+      if (!name || !label || !type || !required || !idx) return;
+      // Validate
+      if (!name.value.trim().match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
+        alert('Field name must be unique, use only letters, numbers, and underscores, and not start with a number.');
+        return;
+      }
+      if (!label.value.trim()) {
+        alert('Label is required.');
+        return;
+      }
+      if (columns.some((col, i) => col.name === name.value.trim() && i != idx.value)) {
+        alert('Field name must be unique.');
+        return;
+      }
+      const colObj = {name: name.value.trim(), label: label.value.trim(), type: type.value, required: required.checked};
+      if (idx.value === '' || idx.value === null || idx.value === undefined) {
+        columns.push(colObj);
+      } else {
+        columns[idx.value] = colObj;
+      }
+      renderColumnsTable();
+      var modalEl = document.getElementById('columnModal');
+      if (modalEl && typeof bootstrap !== 'undefined') {
+        var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.hide();
+      }
+    });
+  }
+
+  var columnsTbody = document.getElementById('columns-tbody');
+  if (columnsTbody) {
+    columnsTbody.addEventListener('click', function(e) {
+      const idx = e.target.getAttribute('data-idx');
+      if (e.target.classList.contains('edit-col')) {
+        openColumnModal(columns[idx], idx);
+      } else if (e.target.classList.contains('remove-col')) {
+        if (confirm('Remove this column?')) {
+          columns.splice(idx, 1);
+          renderColumnsTable();
+        }
+      } else if (e.target.classList.contains('move-up')) {
+        if (idx > 0) {
+          [columns[idx-1], columns[idx]] = [columns[idx], columns[idx-1]];
+          renderColumnsTable();
+        }
+      } else if (e.target.classList.contains('move-down')) {
+        if (idx < columns.length-1) {
+          [columns[idx], columns[parseInt(idx)+1]] = [columns[parseInt(idx)+1], columns[idx]];
+          renderColumnsTable();
+        }
+      }
+    });
+  }
+
+  var layoutForm = document.getElementById('layout-form');
+  if (layoutForm) {
+    layoutForm.addEventListener('submit', function(e) {
+      if (columns.length === 0) {
+        alert('Please add at least one column.');
+        e.preventDefault();
+        return false;
+      }
+      var struct = document.getElementById('id_structure');
+      if (struct) struct.value = JSON.stringify(columns);
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  ensureBootstrapReady(setupLayoutForm);
+});
+</script>
+{% endblock %} 

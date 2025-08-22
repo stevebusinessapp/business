@@ -1,0 +1,652 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Waybills - Multi-Purpose Business App{% endblock %}
+{% block page_title %}Waybills{% endblock %}
+{% block breadcrumb %}Waybills{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="text-white text-capitalize ps-3">Waybill Management</h6>
+            <div class="pe-3">
+              <a href="{% url 'waybills:create_original' %}" class="btn btn-outline-white btn-sm mb-0 me-2">
+                <i class="material-icons text-sm">add</i> Create Waybill
+              </a>
+              <span class="text-white-50">|</span>
+              <a href="{% url 'waybills:template_list' %}" class="btn btn-outline-white btn-sm mb-0 ms-2">
+                <i class="material-icons text-sm">design_services</i> Manage Templates
+              </a>
+              <span class="text-white-50">|</span>
+              <a href="{% url 'waybills:export_excel' %}" class="btn btn-success btn-sm mb-0 ms-2">
+                <i class="material-icons text-sm">table_view</i> Export as Excel
+              </a>
+              <a href="{% url 'waybills:export_pdf' %}" class="btn btn-danger btn-sm mb-0 ms-2" target="_blank">
+                <i class="material-icons text-sm">picture_as_pdf</i> Export as PDF
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-body px-0 pb-2">
+        <!-- Stats Cards -->
+        <div class="row px-3 mb-3">
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons opacity-10">local_shipping</i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Total Waybills</p>
+                  <h4 class="mb-0">{{ total_waybills }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons opacity-10">pending</i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Pending</p>
+                  <h4 class="mb-0">{{ pending_count }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons opacity-10">airport_shuttle</i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">In Transit</p>
+                  <h4 class="mb-0">{{ in_transit_count }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-xl-3 col-sm-6">
+            <div class="card">
+              <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons opacity-10">check_circle</i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Delivered</p>
+                  <h4 class="mb-0">{{ delivered_count }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Filter Form -->
+        <div class="row px-3 mb-3">
+          <div class="col-12">
+            <form method="get" class="row g-3">
+              <div class="col-md-3">
+                {{ filter_form.search }}
+              </div>
+              <div class="col-md-2">
+                {{ filter_form.status }}
+              </div>
+              <div class="col-md-2">
+                {{ filter_form.template }}
+              </div>
+              <div class="col-md-2">
+                {{ filter_form.date_from }}
+              </div>
+              <div class="col-md-1">
+                {{ filter_form.date_to }}
+              </div>
+              <div class="col-md-2">
+                <button type="submit" class="btn btn-primary mb-0">Filter</button>
+                <a href="{% url 'waybills:list' %}" class="btn btn-outline-secondary mb-0">Clear</a>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Waybills Table -->
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="width: 5%;">S/N</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Waybill</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Receiver's Name</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Sender's Name</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Delivery Date</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                <th class="text-secondary opacity-7">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for waybill in page_obj %}
+              <tr>
+                <td class="serial-number">
+                  <div class="d-flex px-2 py-1 justify-content-center">
+                    <span class="text-secondary text-xs font-weight-bold">{{ page_obj.start_index|add:forloop.counter0 }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex px-2 py-1">
+                    <div class="d-flex flex-column justify-content-center">
+                      <h6 class="mb-0 text-sm">{{ waybill.waybill_number }}</h6>
+                      <p class="text-xs text-secondary mb-0">
+                        {% if waybill.custom_data.receiver_info.receiver_name %}
+                          To: {{ waybill.custom_data.receiver_info.receiver_name }}
+                        {% elif waybill.custom_data.receiver_name %}
+                          To: {{ waybill.custom_data.receiver_name }}
+                        {% endif %}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="text-xs font-weight-bold mb-0">
+                    {% if waybill.custom_data.receiver_info.receiver_name %}
+                      {{ waybill.custom_data.receiver_info.receiver_name }}
+                    {% elif waybill.custom_data.receiver_name %}
+                      {{ waybill.custom_data.receiver_name }}
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </p>
+                </td>
+                <td>
+                  <p class="text-xs font-weight-bold mb-0">
+                    {% if waybill.custom_data.sender_info.sender_name %}
+                      {{ waybill.custom_data.sender_info.sender_name }}
+                    {% elif waybill.custom_data.sender_name %}
+                      {{ waybill.custom_data.sender_name }}
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </p>
+                </td>
+                <td class="align-middle text-center text-sm">
+                  <span class="text-secondary text-xs font-weight-bold">{{ waybill.waybill_date|date:"M d, Y" }}</span>
+                </td>
+                <td class="align-middle text-center text-sm">
+                  <span class="text-secondary text-xs font-weight-bold">
+                    {% if waybill.delivery_date %}{{ waybill.delivery_date|date:"M d, Y" }}{% else %}-{% endif %}
+                  </span>
+                </td>
+                <td class="align-middle text-center text-sm">
+                  <select class="form-select form-select-sm status-select" 
+                          data-waybill-id="{{ waybill.pk }}" 
+                          data-current-status="{{ waybill.status }}"
+                          onchange="updateWaybillStatus(this)"
+                          style="width: auto; min-width: 120px;">
+                    <option value="delivered" {% if waybill.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                    <option value="pending" {% if waybill.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="processing" {% if waybill.status == 'processing' %}selected{% endif %}>Processing</option>
+                    <option value="dispatched" {% if waybill.status == 'dispatched' %}selected{% endif %}>Dispatched / In Transit</option>
+                    <option value="not_delivered" {% if waybill.status == 'not_delivered' %}selected{% endif %}>Not Delivered</option>
+                    <option value="returned" {% if waybill.status == 'returned' %}selected{% endif %}>Returned</option>
+                    <option value="cancelled" {% if waybill.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    <option value="on_hold" {% if waybill.status == 'on_hold' %}selected{% endif %}>On Hold</option>
+                    <option value="awaiting_pickup" {% if waybill.status == 'awaiting_pickup' %}selected{% endif %}>Awaiting Pickup</option>
+                  </select>
+                  <!-- Debug info -->
+                  <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                    DB: "{{ waybill.status }}" | ID: {{ waybill.pk }}
+                  </div>
+                </td>
+                <td class="align-middle">
+                  <div class="d-flex gap-1">
+                    <!-- View Button -->
+                    <a href="{% url 'waybills:detail' waybill.pk %}" 
+                       class="btn btn-sm btn-outline-info mb-0" 
+                       title="View Waybill Details"
+                       data-bs-toggle="tooltip">
+                      <i class="material-icons text-sm">visibility</i>
+                    </a>
+                    
+                    <!-- Edit Button -->
+                    <a href="{% url 'waybills:edit' waybill.pk %}" 
+                       class="btn btn-sm btn-outline-warning mb-0" 
+                       title="Edit Waybill"
+                       data-bs-toggle="tooltip">
+                      <i class="material-icons text-sm">edit</i>
+                    </a>
+                    
+                    <!-- More Actions Dropdown -->
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary mb-0" 
+                              type="button" 
+                              data-bs-toggle="dropdown"
+                              title="More Actions">
+                        <i class="material-icons text-sm">more_vert</i>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                          <h6 class="dropdown-header">Export Options</h6>
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="{% url 'waybills:print' waybill.pk %}" target="_blank">
+                            <i class="material-icons text-sm me-2">print</i>
+                            Download / Print Waybill
+                          </a>
+                        </li>
+                        
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                          <a class="dropdown-item text-danger" 
+                             href="#" 
+                             onclick="confirmDeleteAjax('{{ waybill.waybill_number }}', {{ waybill.pk }})">
+                            <i class="material-icons text-sm me-2">delete</i>
+                            Delete Waybill
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4">
+                  <p class="text-secondary mb-0">No waybills found.</p>
+                  <a href="{% url 'waybills:create_original' %}" class="btn btn-primary btn-sm mt-2">Create your first waybill</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="d-flex justify-content-center mt-3">
+          <nav aria-label="Page navigation">
+            <ul class="pagination">
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+              {% endif %}
+              
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+              
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Custom styles for action buttons */
+.d-flex.gap-1 {
+    gap: 0.25rem !important;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.dropdown-menu .dropdown-header {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #67748e;
+    padding: 0.5rem 1rem 0.25rem;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+}
+
+.dropdown-item i {
+    opacity: 0.8;
+}
+
+.dropdown-item:hover i {
+    opacity: 1;
+}
+
+/* Tooltip customization */
+.tooltip {
+    font-size: 0.75rem;
+}
+
+/* Serial number styling */
+.serial-number {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.serial-number span {
+    font-weight: 600;
+    color: #67748e;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// AJAX delete function with smooth row removal
+function confirmDeleteAjax(waybillNumber, waybillId) {
+    if (confirm(`Are you sure you want to delete waybill ${waybillNumber}? This action cannot be undone.`)) {
+        // Find the table row
+        const deleteButton = event.target.closest('a');
+        const tableRow = deleteButton.closest('tr');
+        
+        // Show loading state
+        const originalText = deleteButton.innerHTML;
+        deleteButton.innerHTML = '<i class="material-icons text-sm me-2">hourglass_empty</i>Deleting...';
+        deleteButton.classList.add('disabled');
+        
+        // Make AJAX request to delete
+        fetch(`/waybills/${waybillId}/delete-ajax/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                showNotification(data.message, 'success');
+                
+                // Simple and effective approach: Quick fade then immediate removal
+                tableRow.style.transition = 'opacity 0.3s ease-out';
+                tableRow.style.opacity = '0';
+                
+                // Remove immediately after fade to prevent layout issues
+                setTimeout(() => {
+                    // Remove the row completely
+                    tableRow.remove();
+                    
+                    // Recalculate serial numbers for remaining rows
+                    recalculateSerialNumbers();
+                    
+                    // Check if table is empty and show empty state
+                    const tbody = document.querySelector('tbody');
+                    if (tbody.children.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <p class="text-secondary mb-0">No waybills found.</p>
+                                    <a href="{% url 'waybills:create_original' %}" class="btn btn-primary btn-sm mt-2">Create your first waybill</a>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    // Update stats immediately
+                    updateStatsAfterDelete();
+                }, 300);
+            } else {
+                showNotification('Error deleting waybill: ' + (data.error || 'Unknown error'), 'error');
+                // Restore button
+                deleteButton.innerHTML = originalText;
+                deleteButton.classList.remove('disabled');
+            }
+        })
+        .catch(error => {
+            showNotification('Error deleting waybill: ' + error.message, 'error');
+            // Restore button
+            deleteButton.innerHTML = originalText;
+            deleteButton.classList.remove('disabled');
+        });
+    }
+}
+
+// Get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Quick actions keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Alt + N: New Waybill
+    if (e.altKey && e.key === 'n') {
+        e.preventDefault();
+        window.location.href = '{% url "waybills:create_original" %}';
+    }
+    
+    // Alt + T: Template Management
+    if (e.altKey && e.key === 't') {
+        e.preventDefault();
+        window.location.href = '{% url "waybills:template_list" %}';
+    }
+});
+
+// Recalculate serial numbers after deletion
+function recalculateSerialNumbers() {
+    const serialCells = document.querySelectorAll('.serial-number span');
+    
+    // Get current page info from URL or pagination
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = parseInt(urlParams.get('page')) || 1;
+    
+    // Django pagination is set to 25 items per page
+    const itemsPerPage = 25;
+    const startIndex = (currentPage - 1) * itemsPerPage + 1;
+    
+    serialCells.forEach((cell, index) => {
+        cell.textContent = startIndex + index;
+    });
+}
+
+// Show notification function
+function showNotification(message, type = 'success') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <span>${message}</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Update stats after delete
+function updateStatsAfterDelete() {
+    // Update the total waybills count immediately
+    const totalWaybillsElements = document.querySelectorAll('.card-header .text-end h4');
+    if (totalWaybillsElements.length > 0) {
+        // First stats card should be total waybills
+        const totalWaybillsElement = totalWaybillsElements[0];
+        let currentCount = parseInt(totalWaybillsElement.textContent);
+        if (currentCount > 0) {
+            totalWaybillsElement.textContent = currentCount - 1;
+        }
+    }
+    
+    // For accurate stats, reload after a short delay
+    setTimeout(() => {
+        // Only reload if user hasn't navigated away
+        if (window.location.pathname === '/waybills/') {
+            location.reload();
+        }
+    }, 2000);
+}
+
+// Add keyboard shortcut hints to page
+document.addEventListener('DOMContentLoaded', function() {
+    const shortcutHint = document.createElement('div');
+    shortcutHint.innerHTML = `
+        <small class="text-muted">
+            <i class="material-icons text-xs">keyboard</i>
+            Shortcuts: Alt+N (New Waybill), Alt+T (Templates)
+        </small>
+    `;
+    shortcutHint.className = 'text-center mt-2';
+    document.querySelector('.card-body').appendChild(shortcutHint);
+});
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Update waybill status function
+function updateWaybillStatus(selectElement) {
+    const waybillId = selectElement.getAttribute('data-waybill-id');
+    const newStatus = selectElement.value;
+    const currentStatus = selectElement.getAttribute('data-current-status');
+    
+    console.log(`Status change triggered: Waybill ${waybillId}, Current: "${currentStatus}", New: "${newStatus}"`);
+    
+    // If status hasn't actually changed, do nothing
+    if (newStatus === currentStatus) {
+        console.log('Status unchanged, skipping update');
+        return;
+    }
+    
+    console.log(`Updating waybill ${waybillId} from "${currentStatus}" to "${newStatus}"`);
+    
+    // Show loading state
+    selectElement.disabled = true;
+    selectElement.style.opacity = '0.6';
+    
+    // Add loading indicator
+    const debugDiv = selectElement.parentNode.querySelector('div');
+    if (debugDiv) {
+        debugDiv.innerHTML = `DB: "${currentStatus}" | ID: ${waybillId} | <span style="color: orange;">UPDATING...</span>`;
+    }
+    
+    // Make AJAX request to update status
+    fetch(`/waybills/${waybillId}/update-status/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            'status': newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the stored current status
+            selectElement.setAttribute('data-current-status', data.new_status);
+            
+            // Update debug display
+            const debugDiv = selectElement.parentNode.querySelector('div');
+            if (debugDiv) {
+                debugDiv.innerHTML = `DB: "${data.new_status}" | ID: ${waybillId} | <span style="color: green;">UPDATED ✓</span>`;
+                setTimeout(() => {
+                    debugDiv.innerHTML = `DB: "${data.new_status}" | ID: ${waybillId}`;
+                }, 2000);
+            }
+            
+            // Show success feedback
+            selectElement.style.background = '#d4edda';
+            setTimeout(() => {
+                selectElement.style.background = '';
+            }, 1000);
+            
+            console.log(`Successfully updated waybill ${waybillId} to "${data.new_status}"`);
+            console.log('Full response:', data);
+        } else {
+            console.error('Update failed:', data.error);
+            alert('Error updating waybill status: ' + (data.error || 'Unknown error'));
+            // Restore original status
+            selectElement.value = currentStatus;
+            
+            // Update debug display
+            const debugDiv = selectElement.parentNode.querySelector('div');
+            if (debugDiv) {
+                debugDiv.innerHTML = `DB: "${currentStatus}" | ID: ${waybillId} | <span style="color: red;">FAILED ✗</span>`;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        alert('Error updating waybill status: ' + error.message);
+        // Restore original status
+        selectElement.value = currentStatus;
+        
+        // Update debug display
+        const debugDiv = selectElement.parentNode.querySelector('div');
+        if (debugDiv) {
+            debugDiv.innerHTML = `DB: "${currentStatus}" | ID: ${waybillId} | <span style="color: red;">ERROR ✗</span>`;
+        }
+    })
+    .finally(() => {
+        // Re-enable select
+        selectElement.disabled = false;
+        selectElement.style.opacity = '1';
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,489 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Waybill {{ waybill.waybill_number }} - Multi-Purpose Business App{% endblock %}
+{% block page_title %}Waybill {{ waybill.waybill_number }}{% endblock %}
+{% block breadcrumb %}Waybill Details{% endblock %}
+
+{% block content %}
+<style>
+/* EXACT styling from waybill preview */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: {{ waybill.template.text_color|default:"#333" }};
+    background: white;
+    padding: 20px;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.waybill-preview {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    box-shadow: none;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+}
+
+.waybill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+.company-logo img {
+    max-height: 80px;
+    max-width: 200px;
+}
+
+.company-details h2 {
+    color: {{ waybill.template.text_color|default:"#333" }};
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.company-details p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.waybill-title {
+    text-align: center;
+    font-size: 36px;
+    font-weight: bold;
+    color: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+    margin: 20px 0 30px 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.waybill-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 15px;
+    background: {{ waybill.template.secondary_color|default:"#f8f9fa" }} !important;
+    border-radius: 8px;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.custom-section {
+    margin-bottom: 30px;
+}
+
+.section-header h3 {
+    color: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.custom-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: {{ waybill.template.secondary_color|default:"#f8f9fa" }} !important;
+    border-radius: 8px;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 30px 0;
+    background: white;
+}
+
+.items-table th,
+.items-table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.items-table th {
+    background: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+    color: white !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.items-table tr:nth-child(even) {
+    background: {{ waybill.template.secondary_color|default:"#f8f9fa" }} !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.items-table td {
+    vertical-align: top;
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+/* Specific styling for text columns */
+.items-table td:nth-child(2), /* Product/Service */
+.items-table td:nth-child(3) { /* Description */
+    word-break: break-word;
+    hyphens: auto;
+    line-height: 1.4;
+}
+
+.signature-section {
+    text-align: center;
+    margin: 40px 0 30px 0;
+    padding: 20px;
+}
+
+.signature-section img {
+    max-height: 80px;
+    margin-bottom: 10px;
+}
+
+/* Print specific styles */
+@media print {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    body {
+        padding: 0;
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .waybill-preview {
+        box-shadow: none;
+        padding: 20px;
+        margin: 0;
+        max-width: none;
+        border: none;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+    
+    .items-table th {
+        background: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+        color: white !important;
+    }
+    
+    .waybill-title {
+        color: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+    }
+    
+    .section-header h3 {
+        color: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+    }
+}
+</style>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 no-print">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="text-white text-capitalize ps-3">Waybill {{ waybill.waybill_number }}</h6>
+            <div class="pe-3">
+              <a href="{% url 'waybills:edit' waybill.pk %}" class="btn btn-outline-white btn-sm mb-0 me-2">
+                <i class="material-icons text-sm">edit</i> Edit
+              </a>
+
+              <a href="{% url 'waybills:print' waybill.pk %}" target="_blank" class="btn btn-outline-white btn-sm mb-0 me-2">
+                <i class="material-icons text-sm">print</i> Print / Download PDF
+              </a>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-body p-0">
+        <!-- EXACT copy of waybill-preview from create page -->
+        <div class="waybill-preview">
+          <!-- Waybill Header -->
+          <div class="waybill-header">
+            {% if waybill.template.show_company_logo %}
+            <div class="company-logo">
+              {% if company_logo %}
+                <img src="{{ company_logo }}" alt="Company Logo">
+              {% else %}
+                <img src="{% static 'img/logo-ct.png' %}" alt="Company Logo">
+              {% endif %}
+            </div>
+            {% endif %}
+            {% if waybill.template.show_company_details %}
+            <div class="company-details">
+              <h2>{{ company_profile.company_name|default:"Your Company Name" }}</h2>
+              <p>{{ company_profile.address|default:"Company Address" }}</p>
+              <p>{{ company_profile.phone|default:"Phone Number" }}</p>
+              <p>{{ company_profile.email|default:"Email Address" }}</p>
+            </div>
+            {% endif %}
+          </div>
+          
+          <!-- Waybill Title -->
+          <div class="waybill-title">{{ waybill.template.document_title|default:"WAYBILL" }}</div>
+          
+          <!-- Waybill Info -->
+          <div class="waybill-info">
+            <div>
+              <strong>Waybill #: {{ waybill.waybill_number }}</strong>
+            </div>
+            <div>
+              <strong>Date: {{ waybill.waybill_date|date:"M d, Y" }}</strong>
+            </div>
+            <div>
+              <strong>Delivery: {% if waybill.delivery_date %}{{ waybill.delivery_date|date:"M d, Y" }}{% else %}Not set{% endif %}</strong>
+            </div>
+            <div>
+              <strong>Status: {{ waybill.get_status_display }}</strong>
+            </div>
+          </div>
+          
+          <!-- Custom Sections -->
+          {% for section_key, section_data in waybill.custom_data.items %}
+            {% if section_data and section_key != 'user_preferences' %}
+              <div class="custom-section">
+                <div class="section-header">
+                  <h3>
+                    {% if section_key == 'sender_info' %}SENDER INFORMATION
+                    {% elif section_key == 'receiver_info' %}RECEIVER INFORMATION
+                    {% elif section_key == 'shipment_info' %}SHIPMENT DETAILS
+                    {% else %}{{ section_key|title }}
+                    {% endif %}
+                  </h3>
+                </div>
+                <div>
+                  {% for field_key, field_value in section_data.items %}
+                    {% if field_value %}
+                      <strong>
+                        {% if field_key == 'sender_name' %}Sender Name:
+                        {% elif field_key == 'sender_phone' %}Sender Phone:
+                        {% elif field_key == 'sender_address' %}Sender Address:
+                        {% elif field_key == 'receiver_name' %}Receiver Name:
+                        {% elif field_key == 'receiver_phone' %}Receiver Phone:
+                        {% elif field_key == 'receiver_address' %}Receiver Address:
+                        {% elif field_key == 'destination' %}Destination:
+                        {% elif field_key == 'vehicle_number' %}Vehicle Number:
+                        {% elif field_key == 'driver_name' %}Driver Name:
+                        {% elif field_key == 'driver_phone' %}Driver Phone:
+                        {% else %}{{ field_key|title }}:
+                        {% endif %}
+                      </strong> {{ field_value }}<br>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+          
+          <!-- Items Table -->
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 8%;">S/N</th>
+                {% if waybill.template.table_columns %}
+                  {% for column in waybill.template.table_columns %}
+                    <th style="width: {{ column.width|default:'auto' }};">{{ column.label|upper }}</th>
+                  {% endfor %}
+                {% else %}
+                  <!-- Default columns matching invoice structure -->
+                  <th style="width: 25%;">PRODUCT / SERVICE</th>
+                  <th style="width: 35%;">DESCRIPTION</th>
+                  <th style="width: 20%;">QUANTITY</th>
+                  <th style="width: 20%;">WEIGHT</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in waybill.items.all %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                {% if waybill.template.table_columns %}
+                  {% for column in waybill.template.table_columns %}
+                    <td>
+                      {% if item.item_data|lookup:column.name %}
+                        {{ item.item_data|lookup:column.name }}
+                      {% else %}
+                        [Empty]
+                      {% endif %}
+                    </td>
+                  {% endfor %}
+                {% else %}
+                  <!-- Default columns matching invoice structure -->
+                  <td>{% if item.item_data.product_service %}{{ item.item_data.product_service }}{% else %}[No Product/Service]{% endif %}</td>
+                  <td>{% if item.item_data.description %}{{ item.item_data.description }}{% else %}[No Description]{% endif %}</td>
+                  <td>{{ item.item_data.quantity|default:"[No Quantity]" }}</td>
+                  <td>{{ item.item_data.weight|default:"[No Weight]" }}</td>
+                {% endif %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="{% if waybill.template.table_columns %}{{ waybill.template.table_columns|length|add:1 }}{% else %}5{% endif %}" 
+                    style="text-align: center; padding: 20px; color: #999;">
+                  No items found for this waybill.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          
+          <!-- Notes Section -->
+          {% if waybill.notes %}
+          <div class="custom-section">
+            <div class="section-header">
+              <h3>NOTES</h3>
+            </div>
+            <p>{{ waybill.notes|linebreaks }}</p>
+          </div>
+          {% endif %}
+          
+          <!-- Signature Section -->
+          {% if waybill.template.show_signature and company_signature %}
+          <div class="signature-section">
+            <img src="{{ company_signature }}" alt="Signature">
+            <p><strong>Authorized Signature</strong></p>
+          </div>
+          {% endif %}
+          
+          <!-- Bank Details Section -->
+          {% with user_prefs=waybill.custom_data.user_preferences %}
+          {% if user_prefs.show_bank_details and default_bank_account %}
+          <div class="custom-section" style="background-color: #f0f8ff; border: 2px solid #007bff; padding: 20px; margin: 20px 0;">
+            <div class="section-header">
+              <h3 style="color: #007bff;">BANK DETAILS</h3>
+            </div>
+            <div class="custom-section-content">
+              <p>
+                <strong>Bank Name:</strong> {{ default_bank_account.bank_name }}<br>
+                <strong>Account No:</strong> {{ default_bank_account.account_number }}<br>
+                <strong>Account Name:</strong> {{ default_bank_account.account_name }}
+              </p>
+            </div>
+          </div>
+          {% elif waybill.template.show_bank_details and default_bank_account %}
+          <div class="custom-section">
+            <div class="section-header">
+              <h3>BANK DETAILS</h3>
+            </div>
+            <div class="custom-section-content">
+              <p>
+                <strong>Bank Name:</strong> {{ default_bank_account.bank_name }}<br>
+                <strong>Account No:</strong> {{ default_bank_account.account_number }}<br>
+                <strong>Account Name:</strong> {{ default_bank_account.account_name }}
+              </p>
+            </div>
+          </div>
+          {% endif %}
+          {% endwith %}
+        </div>
+        
+        <!-- Debug Information (Only in development) -->
+        {% if False %}
+        <div class="row mt-4 no-print">
+          <div class="col-12">
+            <div class="alert alert-info">
+              <h6>Debug Information:</h6>
+              <p><strong>Waybill Fields:</strong></p>
+              <ul>
+                <li>Waybill Number: {{ waybill.waybill_number }}</li>
+                <li>Template: {{ waybill.template.name }}</li>
+                <li>Document Title: {{ waybill.template.document_title }}</li>
+                <li>Status: {{ waybill.status }}</li>
+                <li>Delivery Date: {{ waybill.delivery_date }}</li>
+                <li>Notes: {{ waybill.notes }}</li>
+                <li>Items Count: {{ waybill.items.count }}</li>
+                <li>Custom Data: {{ waybill.custom_data }}</li>
+              </ul>
+              <p><strong>Template Settings:</strong></p>
+              <ul>
+                <li>Primary Color: {{ waybill.template.primary_color }}</li>
+                <li>Secondary Color: {{ waybill.template.secondary_color }}</li>
+                <li>Text Color: {{ waybill.template.text_color }}</li>
+                <li>Show Company Logo: {{ waybill.template.show_company_logo }}</li>
+                <li>Show Company Details: {{ waybill.template.show_company_details }}</li>
+                <li>Template Bank Details: {{ waybill.template.show_bank_details }}</li>
+            <li>User Bank Details Choice: {{ waybill.custom_data.user_preferences.show_bank_details|default:"Not set" }}</li>
+            <li>Custom Data Keys: {{ waybill.custom_data.keys|default:"No keys" }}</li>
+            <li>User Preferences: {{ waybill.custom_data.user_preferences|default:"No user preferences" }}</li>
+                <li>Show Signature: {{ waybill.template.show_signature }}</li>
+              </ul>
+              <p><strong>Context Variables:</strong></p>
+              <ul>
+                <li>Company Profile: {% if company_profile %}{{ company_profile.company_name }}{% else %}None{% endif %}</li>
+                <li>Logo: {% if company_logo %}{{ company_logo }}{% else %}None{% endif %}</li>
+                <li>Signature: {% if company_signature %}{{ company_signature }}{% else %}None{% endif %}</li>
+                <li>Bank Account: {% if default_bank_account %}{{ default_bank_account.bank_name }}{% else %}None{% endif %}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+        <!-- Action Buttons -->
+        <div class="row mt-4 no-print">
+          <div class="col-12 text-center">
+            <a href="{% url 'waybills:list' %}" class="btn btn-outline-secondary me-2">
+              <i class="material-icons text-sm">arrow_back</i> Back to Waybills
+            </a>
+            <a href="{% url 'waybills:edit' waybill.pk %}" class="btn btn-primary">
+              <i class="material-icons text-sm">edit</i> Edit Waybill
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Apply template colors dynamically
+    const primaryColor = '{{ waybill.template.primary_color|default:"#FF5900" }}';
+    const secondaryColor = '{{ waybill.template.secondary_color|default:"#f8f9fa" }}';
+    const textColor = '{{ waybill.template.text_color|default:"#333" }}';
+    
+    document.documentElement.style.setProperty('--primary-color', primaryColor);
+    document.documentElement.style.setProperty('--secondary-color', secondaryColor);
+    document.documentElement.style.setProperty('--text-color', textColor);
+});
+</script>
+
+<!-- Custom template filter for dict lookup -->
+{% load custom_filters %}
+
+{% endblock %}

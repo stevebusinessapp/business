@@ -1,0 +1,247 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Multi-Purpose Business App</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .landing-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .landing-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+        
+        .landing-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        
+        .landing-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .landing-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .landing-body {
+            padding: 3rem 2rem;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 10px;
+            background: #f8f9fa;
+            transition: transform 0.2s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+        }
+        
+        .feature-text h5 {
+            margin-bottom: 0.25rem;
+            color: #333;
+        }
+        
+        .feature-text p {
+            margin-bottom: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-outline-custom {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .btn-outline-custom:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            text-decoration: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            border: 1px solid #c3e6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .landing-container {
+                padding: 1rem;
+            }
+            
+            .landing-header h1 {
+                font-size: 2rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="landing-card">
+            <div class="landing-header">
+                <h1><i class="fas fa-chart-line me-3"></i>Business App</h1>
+                <p>Your Complete Business Management Solution</p>
+            </div>
+            
+            <div class="landing-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="success-message">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h5>Invoice Management</h5>
+                        <p>Create, manage, and track invoices with ease</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h5>Inventory Control</h5>
+                        <p>Track stock levels and manage your inventory efficiently</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h5>Client Management</h5>
+                        <p>Organize and manage your client relationships</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="feature-text">
+                        <h5>Financial Reports</h5>
+                        <p>Generate comprehensive financial reports and analytics</p>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{% url 'accounts:login' %}" class="btn-primary-custom">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </a>
+                    <a href="{% url 'accounts:register' %}" class="btn-outline-custom">
+                        <i class="fas fa-user-plus me-2"></i>Register
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

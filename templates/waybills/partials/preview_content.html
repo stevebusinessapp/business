@@ -1,0 +1,478 @@
+{% load static %}
+
+<!-- Live Preview Content -->
+{% if selected_template %}
+<div class="preview-container waybill-preview" style="--primary-color: {{ selected_template.primary_color|default:'#e91e63' }}; --secondary-color: {{ selected_template.secondary_color|default:'#f8f9fa' }};">
+    
+    <!-- Header -->
+    <div class="waybill-header">
+        <div class="row">
+            <div class="col-md-6">
+                {% if company_logo and selected_template.show_company_logo %}
+                    <img src="{{ company_logo }}" alt="Company Logo" class="company-logo">
+                {% endif %}
+                
+                {% if company_profile and selected_template.show_company_details %}
+                    <div class="company-info">
+                        <h4>{{ company_profile.company_name }}</h4>
+                        {% if company_profile.address %}
+                            <p>{{ company_profile.address }}</p>
+                        {% endif %}
+                        {% if company_profile.phone %}
+                            <p>Tel: {{ company_profile.phone }}</p>
+                        {% endif %}
+                        {% if company_profile.email %}
+                            <p>Email: {{ company_profile.email }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-6 text-right">
+                <h2 class="waybill-title">{{ selected_template.document_title|default:'WAYBILL' }}</h2>
+                <p class="waybill-number">WB-{{ "now"|date:"ymd" }}-001</p>
+                <p class="waybill-date">Date: {{ "now"|date:"F j, Y" }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Details Section -->
+    <div class="waybill-details">
+        <div class="detail-group">
+            <h6>Shipment Details</h6>
+            <div class="detail-item">
+                <strong>Delivery Date:</strong> 
+                <span class="delivery-date">{{ "now"|date:"F j, Y" }}</span>
+            </div>
+            <div class="detail-item">
+                <strong>Status:</strong> 
+                <span class="status">Pending</span>
+            </div>
+            <div class="detail-item">
+                <strong>Notes:</strong> 
+                <span class="notes">Additional notes will appear here</span>
+            </div>
+        </div>
+        
+        <div class="detail-group">
+            <h6>Custom Information</h6>
+            {% if selected_template.custom_fields %}
+                {% for section_key, section_config in selected_template.custom_fields.items %}
+                    {% if section_config.type == 'section' %}
+                        <div class="custom-section">
+                            <strong>{{ section_config.label|default:section_key }}:</strong>
+                            {% for field_key, field_config in section_config.fields.items %}
+                                <div class="custom-field">
+                                    <span class="field-label">{{ field_config.label|default:field_key }}:</span>
+                                    <span class="field-value" data-field="custom_{{ section_key }}_{{ field_key }}">
+                                        {{ field_config.placeholder|default:'...' }}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No custom fields configured</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Items Table -->
+    <div class="items-section">
+        <h6>Items</h6>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Weight</th>
+                    <th>Dimensions</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="sample-item">
+                    <td>Sample Item Description</td>
+                    <td>1</td>
+                    <td>1 kg</td>
+                    <td>10x10x10 cm</td>
+                    <td>Fragile</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Bank Details -->
+    {% if default_bank_account and selected_template.show_bank_details %}
+    <div class="bank-details">
+        <h6>Bank Details</h6>
+        <div class="bank-info">
+            <div class="bank-item">
+                <strong>Bank:</strong> {{ default_bank_account.bank_name }}
+            </div>
+            <div class="bank-item">
+                <strong>Account Name:</strong> {{ default_bank_account.account_name }}
+            </div>
+            <div class="bank-item">
+                <strong>Account Number:</strong> {{ default_bank_account.account_number }}
+            </div>
+            {% if default_bank_account.routing_number %}
+            <div class="bank-item">
+                <strong>Routing Number:</strong> {{ default_bank_account.routing_number }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Footer -->
+    <div class="waybill-footer">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="signature-section">
+                    <h6>Authorized Signature</h6>
+                    <div class="signature-line"></div>
+                    <p>{{ company_profile.company_name|default:'Company Name' }}</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="signature-section">
+                    <h6>Received By</h6>
+                    <div class="signature-line"></div>
+                    <p>Date: ___________</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+{% else %}
+<div class="preview-placeholder">
+    <div class="placeholder-content">
+        <h5>Preview will appear here</h5>
+        <p>Select a template and fill in the form to see the waybill preview.</p>
+    </div>
+</div>
+{% endif %}
+
+<style>
+/* Preview-specific styles */
+.preview-container {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    animation: fadeIn 0.3s ease-in-out;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.waybill-header {
+    border-bottom: 3px solid var(--primary-color, #e91e63);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.waybill-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-color, #e91e63);
+    margin: 0;
+}
+
+.waybill-number {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #666;
+    margin: 5px 0;
+}
+
+.waybill-date {
+    color: #666;
+    margin: 0;
+}
+
+.company-logo {
+    max-width: 150px;
+    height: auto;
+    margin-bottom: 15px;
+}
+
+.company-info h4 {
+    color: var(--primary-color, #e91e63);
+    margin: 0 0 10px 0;
+    font-size: 1.3rem;
+}
+
+.company-info p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.waybill-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.detail-group {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: var(--secondary-color, #f8f9fa);
+}
+
+.detail-group h6 {
+    margin: 0 0 15px 0;
+    color: var(--primary-color, #e91e63);
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.detail-item {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.detail-item strong {
+    color: #333;
+}
+
+.custom-section {
+    margin-bottom: 15px;
+}
+
+.custom-field {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 5px 0;
+    border-bottom: 1px dotted #ddd;
+}
+
+.field-label {
+    font-weight: 500;
+    color: #666;
+}
+
+.field-value {
+    color: #333;
+    font-weight: 500;
+}
+
+.items-section {
+    margin-bottom: 30px;
+}
+
+.items-section h6 {
+    margin: 0 0 15px 0;
+    color: var(--primary-color, #e91e63);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+}
+
+.items-table th,
+.items-table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.items-table th {
+    background-color: var(--primary-color, #e91e63);
+    color: white;
+    font-weight: 600;
+}
+
+.items-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.items-table tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+.bank-details {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: var(--secondary-color, #f8f9fa);
+}
+
+.bank-details h6 {
+    margin: 0 0 15px 0;
+    color: var(--primary-color, #e91e63);
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.bank-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.bank-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px dotted #ddd;
+}
+
+.waybill-footer {
+    border-top: 2px solid var(--primary-color, #e91e63);
+    padding-top: 20px;
+    margin-top: 30px;
+}
+
+.signature-section {
+    text-align: center;
+}
+
+.signature-section h6 {
+    margin: 0 0 20px 0;
+    color: #666;
+    font-size: 1rem;
+}
+
+.signature-line {
+    height: 1px;
+    background-color: #333;
+    margin: 0 0 10px 0;
+}
+
+.preview-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.placeholder-content {
+    text-align: center;
+    color: #666;
+}
+
+.placeholder-content h5 {
+    margin: 0 0 10px 0;
+    color: #999;
+}
+
+.placeholder-content p {
+    margin: 0;
+    color: #999;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
+}
+
+.col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding: 0 15px;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-muted {
+    color: #6c757d;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .waybill-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .text-right {
+        text-align: left;
+    }
+    
+    .waybill-title {
+        font-size: 2rem;
+    }
+    
+    .bank-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .bank-item {
+        flex-direction: column;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+    }
+    
+    .custom-field {
+        flex-direction: column;
+    }
+}
+
+/* Print styles */
+@media print {
+    .preview-container {
+        max-width: none;
+        margin: 0;
+    }
+    
+    .waybill-header {
+        border-bottom: 3px solid #000;
+    }
+    
+    .waybill-title {
+        color: #000;
+    }
+    
+    .items-table th {
+        background-color: #000;
+        color: #fff;
+    }
+    
+    .detail-group {
+        border: 1px solid #000;
+    }
+    
+    .waybill-footer {
+        border-top: 2px solid #000;
+    }
+}
+</style>

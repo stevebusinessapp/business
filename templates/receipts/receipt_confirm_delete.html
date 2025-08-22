@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Delete Receipt {{ receipt.receipt_no }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Delete Receipt #{{ receipt.receipt_no }}</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Are you sure you want to <strong>delete</strong> this receipt?</p>
+                    <ul>
+                        <li><strong>Receipt No:</strong> {{ receipt.receipt_no }}</li>
+                        <li><strong>Client:</strong> {{ receipt.client_name }}</li>
+                        <li><strong>Amount Received:</strong> {{ receipt.amount_received }}</li>
+                    </ul>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'receipts:detail' receipt.pk %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

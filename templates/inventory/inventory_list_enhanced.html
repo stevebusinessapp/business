@@ -1,0 +1,736 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load inventory_extras %}
+
+{% block title %}{{ layout.name|default:"Inventory" }} - Inventory Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inventory-dynamic.css' %}">
+<style>
+    :root {
+        --primary-color: {{ layout.primary_color|default:"#007bff" }};
+        --secondary-color: {{ layout.secondary_color|default:"#6c757d" }};
+    }
+    
+    .inventory-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    
+    .inventory-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .inventory-header h2 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.8rem;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary-custom {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .btn-primary-custom:hover {
+        background: rgba(255,255,255,0.3);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .btn-success-custom {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-success-custom:hover {
+        background: #218838;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .inventory-table {
+        overflow-x: auto;
+    }
+    
+    .table {
+        margin: 0;
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .table th {
+        background: #f8f9fa;
+        padding: 15px 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: nowrap;
+    }
+    
+    .table td {
+        padding: 12px;
+        border-bottom: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s ease;
+    }
+    
+    .editable-field {
+        border: 1px solid transparent;
+        padding: 6px 10px;
+        border-radius: 4px;
+        transition: all 0.2s;
+        min-width: 80px;
+        cursor: pointer;
+        background: transparent;
+    }
+    
+    .editable-field:hover {
+        border-color: var(--primary-color);
+        background-color: #f8f9fa;
+    }
+    
+    .editable-field.editing {
+        border-color: var(--primary-color);
+        background-color: white;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    
+    .editable-input {
+        border: none;
+        outline: none;
+        width: 100%;
+        background: transparent;
+    }
+    
+    .quantity-cell {
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .price-cell {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .total-cell {
+        text-align: right;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+        background-color: #f8f9fa;
+    }
+    
+    .status-cell {
+        text-align: center;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: white;
+        min-width: 100px;
+    }
+    
+    .status-select {
+        border: none;
+        background: transparent;
+        color: inherit;
+        font-size: inherit;
+        font-weight: inherit;
+        cursor: pointer;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .status-select:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+    }
+    
+    .actions-cell {
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    .btn-action-small {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+        margin: 0 2px;
+    }
+    
+    .grand-total-row {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .grand-total-row td {
+        padding: 15px 12px;
+        border-bottom: none;
+    }
+    
+    .bulk-actions {
+        background: #e9ecef;
+        padding: 15px;
+        border-top: 1px solid #dee2e6;
+        display: none;
+    }
+    
+    .bulk-actions.show {
+        display: block;
+    }
+    
+    .bulk-actions-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .selected-count {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+    
+    .filters-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .filter-row {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: end;
+    }
+    
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .filter-group label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+    }
+    
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 400px;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .no-calculations {
+        opacity: 0.6;
+        font-style: italic;
+    }
+    
+    .layout-info {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .layout-info h4 {
+        margin: 0 0 10px 0;
+        color: var(--primary-color);
+    }
+    
+    .layout-info p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Layout Information -->
+    <div class="layout-info">
+        <h4><i class="fas fa-info-circle"></i> Layout Information</h4>
+        <p>
+            <strong>Layout:</strong> {{ layout.name|default:"Default Layout" }} |
+            <strong>Items:</strong> {{ items.count }} |
+            <strong>Calculations:</strong> {% if layout.supports_calculations %}Enabled{% else %}Disabled{% endif %} |
+            <strong>Last Updated:</strong> {{ layout.updated_at|date:"M d, Y H:i" }}
+            {% if current_category %}
+                | <strong>Category Filter:</strong> <span class="badge bg-primary">{{ current_category.name }}</span>
+                <a href="{% url 'inventory:list' %}" class="btn btn-sm btn-outline-secondary ms-2">
+                    <i class="fas fa-times"></i> Clear Filter
+                </a>
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Inventory Container -->
+    <div class="inventory-container">
+        <!-- Header -->
+        <div class="inventory-header">
+            <div>
+                <h2><i class="fas fa-boxes"></i> {{ layout.name|default:"Inventory Management" }}</h2>
+                {% if layout.description %}
+                    <p class="mb-0 mt-2" style="opacity: 0.9;">{{ layout.description }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="header-actions">
+                <a href="{% url 'inventory:create' %}" class="btn-action btn-success-custom">
+                    <i class="fas fa-plus"></i> Add Item
+                </a>
+                <a href="{% url 'inventory:import' %}" class="btn-action btn-primary-custom">
+                    <i class="fas fa-upload"></i> Import
+                </a>
+                <div class="dropdown">
+                    <button class="btn-action btn-primary-custom dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item export-btn" href="#" data-format="excel">Excel (.xlsx)</a></li>
+                        <li><a class="dropdown-item export-btn" href="#" data-format="csv">CSV</a></li>
+                        <li><a class="dropdown-item export-btn" href="#" data-format="pdf">PDF</a></li>
+                    </ul>
+                </div>
+                <a href="{% url 'inventory:layout_update' layout.pk %}" class="btn-action btn-primary-custom">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <form method="get" id="filter-form">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="search">Search</label>
+                        <input type="text" id="search" name="search" value="{{ request.GET.search }}" 
+                               placeholder="Search products, SKU, description...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            <option value="">All Statuses</option>
+                            {% for status in statuses %}
+                                <option value="{{ status.id }}" {% if request.GET.status == status.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ status.display_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="min_quantity">Min Quantity</label>
+                        <input type="number" id="min_quantity" name="min_quantity" 
+                               value="{{ request.GET.min_quantity }}" step="0.01">
+                    </div>
+                    <div class="filter-group">
+                        <label for="max_quantity">Max Quantity</label>
+                        <input type="number" id="max_quantity" name="max_quantity" 
+                               value="{{ request.GET.max_quantity }}" step="0.01">
+                    </div>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                        <a href="{% url 'inventory:list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions" id="bulk-actions">
+            <div class="bulk-actions-content">
+                <div>
+                    <span class="selected-count" id="selected-count">0</span> items selected
+                </div>
+                <div>
+                    <button class="btn btn-warning btn-sm" onclick="bulkUpdateStatus()">
+                        <i class="fas fa-edit"></i> Update Status
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="bulkDelete()">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="bulkExport()">
+                        <i class="fas fa-download"></i> Export Selected
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="inventory-table">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="40">
+                            <input type="checkbox" id="select-all" class="form-check-input">
+                        </th>
+                        {% for column in layout.get_visible_columns %}
+                            <th data-width="{{ column.width|default:'auto' }}">
+                                {{ column.display_name }}
+                                {% if column.sortable %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr data-item-id="{{ item.pk }}">
+                            <td>
+                                <input type="checkbox" class="form-check-input item-checkbox" value="{{ item.pk }}">
+                            </td>
+                            
+                            {% for column in layout.get_visible_columns %}
+                                <td class="{% if column.field_type == 'calculated' %}total-cell{% elif column.name == 'quantity' %}quantity-cell{% elif column.name == 'unit_price' %}price-cell{% elif column.name == 'status' %}status-cell status-{{ item.status.name }}{% endif %}">
+                                    {% if column.name == 'product_name' %}
+                                        <span class="editable-field" data-field="{{ column.name }}" data-type="{{ column.field_type }}">
+                                            {{ item.product_name }}
+                                        </span>
+                                    {% elif column.name == 'sku_code' %}
+                                        <span class="editable-field" data-field="{{ column.name }}" data-type="{{ column.field_type }}">
+                                            {{ item.sku_code }}
+                                        </span>
+                                    {% elif column.name == 'quantity' %}
+                                        <span class="editable-field" data-field="{{ column.name }}" data-type="{{ column.field_type }}">
+                                            {{ item.quantity|floatformat:2 }}
+                                        </span>
+                                    {% elif column.name == 'unit_price' %}
+                                        <span class="editable-field" data-field="{{ column.name }}" data-type="{{ column.field_type }}">
+                                            {{ user_currency_symbol }}{{ item.unit_price|floatformat:2 }}
+                                        </span>
+                                    {% elif column.name == 'total' %}
+                                        <span data-field="{{ column.name }}" data-value="{{ item.total_value }}">
+                                            {% if layout.supports_calculations %}
+                                                {{ user_currency_symbol }}{{ item.total_value|floatformat:2 }}
+                                            {% else %}
+                                                <span class="no-calculations">N/A</span>
+                                            {% endif %}
+                                        </span>
+                                    {% elif column.name == 'status' %}
+                                        <select class="status-select" data-item-id="{{ item.pk }}">
+                                            {% for status in statuses %}
+                                                <option value="{{ status.name }}" 
+                                                        {% if item.status.name == status.name %}selected{% endif %}
+                                                        data-color="{{ status.color }}">
+                                                    {{ status.display_name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    {% elif column.name == 'actions' %}
+                                        <div class="actions-cell">
+                                            <a href="{% url 'inventory:detail' item.pk %}" class="btn btn-sm btn-info btn-action-small" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'inventory:update' item.pk %}" class="btn btn-sm btn-warning btn-action-small" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'inventory:print' item.pk %}" class="btn btn-sm btn-secondary btn-action-small" title="Print">
+                                                <i class="fas fa-print"></i>
+                                            </a>
+                                            <a href="{% url 'inventory:delete' item.pk %}" class="btn btn-sm btn-danger btn-action-small" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <span class="editable-field" data-field="{{ column.name }}" data-type="{{ column.field_type }}">
+                                            {{ item.get_value|default:'' }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="{{ layout.get_visible_columns|length|add:1 }}" class="text-center py-4">
+                                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No inventory items found.</p>
+                                <a href="{% url 'inventory:create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Add Your First Item
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                
+                <!-- Grand Total Row -->
+                {% if layout.supports_calculations and layout.show_grand_total %}
+                    <tfoot>
+                        <tr class="grand-total-row">
+                            <td colspan="{{ layout.get_visible_columns|length|add:1 }}" class="text-end">
+                                <strong>Grand Total: <span id="grand-total">₦{{ grand_total|floatformat:2 }}</span></strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if items.has_other_pages %}
+        <nav aria-label="Inventory pagination">
+            <ul class="pagination justify-content-center">
+                {% if items.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ items.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in items.paginator.page_range %}
+                    {% if items.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > items.number|add:'-3' and num < items.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if items.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ items.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
+<!-- Layout Data for JavaScript -->
+<script id="layout-data" type="application/json">
+{
+    "id": {{ layout.pk }},
+    "name": "{{ layout.name }}",
+    "supports_calculations": {% if layout.supports_calculations %}true{% else %}false{% endif %},
+    "show_totals": {% if layout.show_totals %}true{% else %}false{% endif %},
+    "show_grand_total": {% if layout.show_grand_total %}true{% else %}false{% endif %},
+    "calculation_fields": {{ layout.get_calculation_fields|safe }},
+    "primary_color": "{{ layout.primary_color|default:'#007bff' }}",
+    "secondary_color": "{{ layout.secondary_color|default:'#6c757d' }}"
+}
+</script>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay" style="display: none;">
+    <div class="spinner"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/inventory-dynamic.js' %}"></script>
+<script>
+// Additional JavaScript for bulk operations
+function bulkUpdateStatus() {
+    const selectedItems = Array.from(document.querySelectorAll('.item-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    
+    if (selectedItems.length === 0) {
+        alert('Please select items to update');
+        return;
+    }
+    
+    const newStatus = prompt('Enter new status (in_stock, low_stock, out_of_stock, etc.):');
+    if (!newStatus) return;
+    
+    // Show loading
+    document.getElementById('loading-overlay').style.display = 'flex';
+    
+    fetch('/inventory/ajax/bulk-update-status/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.dynamicInventory.csrfToken
+        },
+        body: JSON.stringify({
+            item_ids: selectedItems,
+            new_status: newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update status');
+    })
+    .finally(() => {
+        document.getElementById('loading-overlay').style.display = 'none';
+    });
+}
+
+function bulkDelete() {
+    const selectedItems = Array.from(document.querySelectorAll('.item-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    
+    if (selectedItems.length === 0) {
+        alert('Please select items to delete');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ${selectedItems.length} items?`)) {
+        return;
+    }
+    
+    // Show loading
+    document.getElementById('loading-overlay').style.display = 'flex';
+    
+    fetch('/inventory/ajax/bulk-delete/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.dynamicInventory.csrfToken
+        },
+        body: JSON.stringify({
+            item_ids: selectedItems
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to delete items');
+    })
+    .finally(() => {
+        document.getElementById('loading-overlay').style.display = 'none';
+    });
+}
+
+function bulkExport() {
+    const selectedItems = Array.from(document.querySelectorAll('.item-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    
+    if (selectedItems.length === 0) {
+        alert('Please select items to export');
+        return;
+    }
+    
+    const format = prompt('Enter export format (excel, csv, pdf):');
+    if (!format) return;
+    
+    window.dynamicInventory.handleExport(format, selectedItems);
+}
+
+// Initialize bulk actions
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('item-checkbox')) {
+        window.dynamicInventory.updateBulkActions();
+    }
+});
+</script>
+{% endblock %} 

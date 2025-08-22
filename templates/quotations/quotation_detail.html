@@ -1,0 +1,737 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Quotation {{ quotation.quotation_number }} - Business App{% endblock %}
+
+{% csrf_token %}
+
+{% block extra_css %}
+<style>
+    .quotation-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .status-badge {
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        display: inline-block;
+    }
+    
+    .status-draft { background-color: #e3f2fd; color: #1976d2; }
+    .status-sent { background-color: #fff3e0; color: #f57c00; }
+    .status-accepted { background-color: #e8f5e8; color: #388e3c; }
+    .status-declined { background-color: #ffebee; color: #d32f2f; }
+    .status-expired { background-color: #f3e5f5; color: #7b1fa2; }
+    
+    .status-update {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #28a745;
+    }
+    
+    .status-update h6 {
+        color: #28a745;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .status-update .form-select:disabled {
+        background-color: #f8f9fa;
+        opacity: 0.7;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .info-card h6 {
+        color: #667eea;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 500;
+        color: #666;
+    }
+    
+    .info-value {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .line-items-table {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .line-items-table .table {
+        margin-bottom: 0;
+    }
+    
+    .line-items-table th {
+        background: #f8f9fa;
+        border: none;
+        font-weight: 600;
+        color: #667eea;
+        padding: 1rem;
+    }
+    
+    .line-items-table td {
+        border: none;
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .line-items-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .totals-section {
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .total-row:last-child {
+        border-bottom: none;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-buttons .btn {
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .action-buttons .btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
+    .btn-success { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); border: none; }
+    .btn-warning { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); border: none; }
+    .btn-danger { background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); border: none; }
+    .btn-info { background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%); border: none; }
+    
+    .company-logo {
+        max-width: 150px;
+        max-height: 80px;
+        object-fit: contain;
+    }
+    
+    .amount {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    
+    .amount.positive { color: #4caf50; }
+    .amount.negative { color: #f44336; }
+    
+    .terms-notes {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .terms-notes h6 {
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    
+    .status-update {
+        background: #e3f2fd;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .status-update select {
+        border-radius: 8px;
+        border: 1px solid #1976d2;
+    }
+    
+    .quotation-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .client-info {
+        background: #e8f5e8;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .client-info h6 {
+        color: #2e7d32;
+        margin-bottom: 0.5rem;
+    }
+    
+    .client-details {
+        font-size: 0.875rem;
+        color: #666;
+    }
+    
+    .expiry-warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .expiry-warning .text-warning {
+        color: #856404 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Quotation Header -->
+    <div class="quotation-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="quotation-number mb-2">{{ quotation.quotation_number }}</h1>
+                <p class="mb-2">
+                    <i class="fas fa-calendar me-2"></i>
+                    Created on {{ quotation.quotation_date|date:"F d, Y" }}
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    Client: {{ quotation.client.name|default:"No Client" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="status-badge status-{{ quotation.status }}">
+                    {{ quotation.get_status_display }}
+                </span>
+                <div class="mt-3">
+                    <h3 class="amount mb-0">{{ formatted_total }}</h3>
+                    <small class="opacity-75">{{ total_words }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="action-buttons">
+                <a href="{% url 'quotations:quotation_edit' quotation.pk %}" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>Edit
+                </a>
+                <a href="{% url 'quotations:quotation_print' quotation.pk %}" class="btn btn-info" target="_blank">
+                    <i class="fas fa-print me-2"></i>Print
+                </a>
+                {% if quotation.status == 'accepted' %}
+                <a href="{% url 'quotations:convert_to_invoice' quotation.pk %}" class="btn btn-success">
+                    <i class="fas fa-exchange-alt me-2"></i>Convert to Invoice
+                </a>
+                {% endif %}
+                <a href="{% url 'quotations:quotation_delete' quotation.pk %}" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>Delete
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Client Information -->
+            <div class="client-info">
+                <h6><i class="fas fa-user me-2"></i>Client Information</h6>
+                <div class="client-details">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Name:</strong> {{ quotation.client.name|default:"N/A" }}<br>
+                            <strong>Email:</strong> {{ quotation.client.email|default:"N/A" }}<br>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Phone:</strong> {{ quotation.client.phone|default:"N/A" }}<br>
+                            <strong>Address:</strong> {{ quotation.client.address|default:"N/A" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Line Items -->
+            <div class="line-items-table">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Product/Service</th>
+                                <th>Description</th>
+                                <th class="text-end">Quantity</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Line Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in quotation.items.all %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <strong>{{ item.product_service|default:"N/A" }}</strong>
+                                </td>
+                                <td>{{ item.description|default:"N/A" }}</td>
+                                <td class="text-end">{{ item.quantity|floatformat:2 }}</td>
+                                <td class="text-end">{{ item.unit_price|currency_format_with_symbol:company_profile }}</td>
+                                <td class="text-end amount">{{ item.line_total|currency_format_with_symbol:company_profile }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                    No line items found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Terms and Notes -->
+            {% if quotation.terms or quotation.notes %}
+            <div class="terms-notes">
+                {% if quotation.terms %}
+                <div class="mb-3">
+                    <h6><i class="fas fa-file-contract me-2"></i>Terms & Conditions</h6>
+                    <p class="mb-0">{{ quotation.terms|linebreaks }}</p>
+                </div>
+                {% endif %}
+                
+                {% if quotation.notes %}
+                <div>
+                    <h6><i class="fas fa-sticky-note me-2"></i>Additional Notes</h6>
+                    <p class="mb-0">{{ quotation.notes|linebreaks }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Expiry Warning -->
+            {% if quotation.valid_until %}
+                {% if quotation.valid_until < today %}
+                <div class="expiry-warning">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    <span class="text-warning">This quotation expired on {{ quotation.valid_until|date:"F d, Y" }}</span>
+                </div>
+                {% elif quotation.valid_until < today_plus_7 %}
+                <div class="expiry-warning">
+                    <i class="fas fa-clock text-warning me-2"></i>
+                    <span class="text-warning">This quotation expires on {{ quotation.valid_until|date:"F d, Y" }}</span>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- Quotation Details -->
+            <div class="info-card">
+                <h6><i class="fas fa-info-circle me-2"></i>Quotation Details</h6>
+                <div class="info-row">
+                    <span class="info-label">Quotation Number:</span>
+                    <span class="info-value">{{ quotation.quotation_number }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date:</span>
+                    <span class="info-value">{{ quotation.quotation_date|date:"M d, Y" }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Valid Until:</span>
+                    <span class="info-value">
+                        {% if quotation.valid_until %}
+                            {{ quotation.valid_until|date:"M d, Y" }}
+                        {% else %}
+                            No expiry
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="status-badge status-{{ quotation.status }}">
+                        {{ quotation.get_status_display }}
+                    </span>
+                </div>
+                {% if quotation.template %}
+                <div class="info-row">
+                    <span class="info-label">Template:</span>
+                    <span class="info-value">{{ quotation.template.name }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Financial Summary -->
+            <div class="totals-section">
+                <h6 class="mb-3"><i class="fas fa-calculator me-2"></i>Financial Summary</h6>
+                <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span>{{ quotation.subtotal|currency_format_with_symbol:company_profile }}</span>
+                </div>
+                <div class="total-row">
+                    <span>Tax:</span>
+                    <span>{{ quotation.total_tax|currency_format_with_symbol:company_profile }}</span>
+                </div>
+                <div class="total-row">
+                    <span>Discount:</span>
+                    <span class="amount negative">-{{ quotation.total_discount|currency_format_with_symbol:company_profile }}</span>
+                </div>
+                <div class="total-row">
+                    <span>Shipping:</span>
+                    <span>{{ quotation.shipping_fee|currency_format_with_symbol:company_profile }}</span>
+                </div>
+                <div class="total-row">
+                    <span>Other Charges:</span>
+                    <span>{{ quotation.other_charges|currency_format_with_symbol:company_profile }}</span>
+                </div>
+                <div class="total-row">
+                    <span>Grand Total:</span>
+                    <span>{{ quotation.grand_total|currency_format_with_symbol:company_profile }}</span>
+                </div>
+            </div>
+
+            <!-- Status Update -->
+            <div class="status-update">
+                <h6><i class="fas fa-edit me-2"></i>Update Status</h6>
+                
+                <!-- AJAX Status Update -->
+                <div class="mb-3">
+                    <select class="form-select" id="statusSelect" onchange="updateStatus()">
+                        {% for value, label in quotation.STATUS_CHOICES %}
+                        <option value="{{ value }}" {% if quotation.status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Status changes are saved automatically
+                    </small>
+                </div>
+                
+                <!-- Form-based Status Update (Fallback) -->
+                <div class="mt-3 pt-3 border-top">
+                    <form method="post" action="{% url 'quotations:quotation_update_status' quotation.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-8">
+                                <select name="status" class="form-select form-select-sm">
+                                    {% for value, label in quotation.STATUS_CHOICES %}
+                                    <option value="{{ value }}" {% if quotation.status == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    <i class="fas fa-save me-1"></i>Update
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Use this if AJAX update doesn't work
+                        </small>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Professional Conversion Information -->
+            {% if quotation.converted_invoice %}
+            <div class="conversion-info mt-4">
+                <h6><i class="fas fa-exchange-alt me-2"></i>Invoice Conversion</h6>
+                <div class="alert alert-success">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <div>
+                            <strong>Converted to Invoice:</strong>
+                            <a href="{% url 'invoices:detail' quotation.converted_invoice.pk %}" class="text-decoration-none">
+                                {{ quotation.converted_invoice.invoice_number }}
+                            </a>
+                            <br>
+                            <small class="text-muted">
+                                Converted on {{ quotation.conversion_date|date:"M d, Y" }} at {{ quotation.conversion_date|time:"H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Company Information -->
+            {% if company_profile %}
+            <div class="info-card">
+                <h6><i class="fas fa-building me-2"></i>Company Information</h6>
+                {% if company_logo %}
+                <div class="text-center mb-3">
+                    <img src="{{ company_logo }}" alt="Company Logo" class="company-logo">
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="info-label">Company:</span>
+                    <span class="info-value">{{ company_profile.company_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">{{ company_profile.email }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phone:</span>
+                    <span class="info-value">{{ company_profile.phone }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Address:</span>
+                    <span class="info-value">{{ company_profile.address }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Quotation Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to update the status of this quotation?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Current Status:</strong> {{ quotation.get_status_display }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmStatusUpdate()">Update Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateStatus() {
+    const statusSelect = document.getElementById('statusSelect');
+    const newStatus = statusSelect.value;
+    const currentStatus = '{{ quotation.status }}';
+    
+    if (newStatus === currentStatus) {
+        return;
+    }
+    
+    console.log('Updating status from', currentStatus, 'to', newStatus);
+    
+    // Show loading state
+    statusSelect.disabled = true;
+    const originalText = statusSelect.options[statusSelect.selectedIndex].text;
+    statusSelect.options[statusSelect.selectedIndex].text = 'Updating...';
+    
+    const formData = new FormData();
+    formData.append('status', newStatus);
+    
+    // Get CSRF token
+    const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfTokenElement) {
+        console.error('CSRF token element not found');
+        showNotification('CSRF token not found. Please refresh the page.', 'error');
+        resetStatusSelect(statusSelect, currentStatus, originalText);
+        return;
+    }
+    
+    const csrfToken = csrfTokenElement.value;
+    if (!csrfToken) {
+        console.error('CSRF token value is empty');
+        showNotification('CSRF token is empty. Please refresh the page.', 'error');
+        resetStatusSelect(statusSelect, currentStatus, originalText);
+        return;
+    }
+    
+    console.log('Sending status update request...');
+    
+    fetch('{% url "quotations:quotation_update_status" quotation.pk %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            // Update the status badge immediately
+            const statusBadge = document.querySelector('.status-badge');
+            if (statusBadge) {
+                statusBadge.className = `status-badge status-${newStatus}`;
+                statusBadge.textContent = data.status_display;
+            }
+            
+            // Show success message
+            showNotification(data.message, 'success');
+            
+            // Update the page title to reflect new status
+            document.title = document.title.replace(
+                /\([^)]*\)/, 
+                `(${data.status_display})`
+            );
+            
+            // Reload page after a short delay to update all status-related elements
+            setTimeout(() => {
+                console.log('Reloading page to update all elements...');
+                location.reload();
+            }, 1500);
+        } else {
+            console.error('Server returned error:', data.message);
+            showNotification(data.message || 'Failed to update status', 'error');
+            resetStatusSelect(statusSelect, currentStatus, originalText);
+        }
+    })
+    .catch(error => {
+        console.error('Status update error:', error);
+        showNotification('Error updating status: ' + error.message, 'error');
+        resetStatusSelect(statusSelect, currentStatus, originalText);
+    })
+    .finally(() => {
+        statusSelect.disabled = false;
+    });
+}
+
+function resetStatusSelect(statusSelect, currentStatus, originalText) {
+    statusSelect.value = currentStatus;
+    statusSelect.options[statusSelect.selectedIndex].text = originalText;
+    statusSelect.disabled = false;
+}
+
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Auto-refresh status check
+setInterval(function() {
+    // Check if quotation has expired
+    const validUntil = '{{ quotation.valid_until|date:"Y-m-d" }}';
+    if (validUntil) {
+        const today = new Date().toISOString().split('T')[0];
+        if (validUntil < today) {
+            // Add expiry warning if not already present
+            const existingWarning = document.querySelector('.expiry-warning');
+            if (!existingWarning) {
+                const warning = document.createElement('div');
+                warning.className = 'expiry-warning';
+                warning.innerHTML = `
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    <span class="text-warning">This quotation has expired</span>
+                `;
+                document.querySelector('.col-lg-8').appendChild(warning);
+            }
+        }
+    }
+}, 60000); // Check every minute
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + P for print
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        window.open('{% url "quotations:quotation_print" quotation.pk %}', '_blank');
+    }
+    
+    // Ctrl/Cmd + S for PDF download
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        window.location.href = '{% url "quotations:quotation_pdf" quotation.pk %}';
+    }
+    
+    // Ctrl/Cmd + E for edit
+    if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        window.location.href = '{% url "quotations:quotation_edit" quotation.pk %}';
+    }
+});
+</script>
+{% endblock %} 

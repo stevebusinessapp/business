@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en"> <!-- Declares the document type and specifies the language of the document as English -->
+<head>
+    <meta charset="UTF-8"> <!-- Sets the character encoding for the document to UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Ensures the page is responsive and sets the viewport to match the device's width -->
+    <title>Invoice </title> <!-- Sets the title of the webpage that appears in the browser tab -->
+    <style> 
+        body { /* Styles the body of the webpage */
+            font-family: Arial, sans-serif; /* Sets the font to Arial with a fallback to sans-serif */
+            background-color: #f4f4f4; /* Applies a light gray background color */
+            margin: 0; /* Removes default margin */
+            padding: 20px; /* Adds padding around the content */
+        }
+
+        .container { /* Styles the main container holding the form and receipt */
+            display: flex; /* Uses flexbox to align children horizontally */
+            justify-content: space-between; /* Adds space between the form and receipt containers */
+        }
+
+        .form-container { /* Styles the container for the input form */
+            width: 45%; /* Sets the width of the form container to 45% of the parent container */
+            background: #fff; /* Sets the background color to white */
+            padding: 20px; /* Adds padding inside the form container */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow around the form */
+            margin-right: 20px; /* Adds a margin to the right to create space between form and receipt */
+        }
+
+        .form-container input, /* Styles the form inputs, selects, and textareas uniformly */
+        .form-container select,
+        .form-container textarea {
+            width: 100%; /* Sets the width to 100% of the container */
+            padding: 10px; /* Adds padding inside the inputs */
+            margin-bottom: 10px; /* Adds space below each input */
+            border: 1px solid #ddd; /* Adds a light border around inputs */
+        }
+
+        .form-container label { /* Styles the labels in the form */
+            font-weight: bold; /* Makes the label text bold */
+            margin-bottom: 5px; /* Adds space below the label */
+            display: block; /* Makes the label occupy full width */
+        }
+
+        .receipt-container { /* Styles the container that holds the generated receipt */
+            width: 45%; /* Sets the width of the receipt container to 45% of the parent container */
+            background: #fff; /* Sets the background color to white */
+            padding: 20px; /* Adds padding inside the receipt container */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow around the receipt */
+        }
+
+        .header, /* Styles various sections inside the receipt container uniformly */
+        .receipt-info,
+        .totals,
+        .signature,
+        .footer {
+            margin-bottom: 20px; /* Adds space below each section */
+        }
+
+        .header { /* Styles the header section of the receipt */
+            display: flex; /* Uses flexbox to align children horizontally */
+            justify-content: space-between; /* Adds space between elements in the header */
+            align-items: center; /* Vertically centers the items in the header */
+            border-bottom: 2px solid #e4e4e4; /* Adds a light bottom border to separate the header */
+            padding-bottom: 10px; /* Adds padding at the bottom of the header */
+        }
+
+        .logo img { /* Styles the logo image */
+            max-height: 100px; /* Limits the height of the logo */
+        }
+
+        .company-info h1 { /* Styles the company name heading in the receipt */
+            margin: 0; /* Removes default margin */
+            font-size: 1.5em; /* Increases font size for emphasis */
+            color: #333; /* Sets the text color to dark gray */
+        }
+
+        .company-info p { /* Styles the company info paragraphs */
+            margin: 0; /* Removes default margin */
+            color: #666; /* Sets the text color to medium gray */
+        }
+
+        .recipient h3 { /* Styles the recipient section heading */
+            margin-top: 0; /* Removes the top margin */
+            color: #FF5900; /* Sets the text color to a shade of green */
+        }
+
+        .receipt-info { /* Styles the receipt info section */
+            display: flex; /* Uses flexbox for horizontal alignment */
+            justify-content: space-between; /* Distributes space between elements */
+            align-items: center; /* Vertically centers the items */
+            background-color: #FF5900; /* Sets a green background color */
+            color: white; /* Sets the text color to white */
+            padding: 10px; /* Adds padding inside the receipt info section */
+        }
+
+        .receipt-number { /* Styles the receipt number container */
+            flex: 1; /* Allows it to grow and take up available space */
+            text-align: left; /* Aligns the text to the left */
+        }
+
+        .lop-number { /* Styles the L.O.P No. container */
+            flex: 1; /* Allows it to grow and take up available space */
+            text-align: center; /* Centers the text */
+        }
+
+        .transaction-date { /* Styles the transaction date container */
+            flex: 1; /* Allows it to grow and take up available space */
+            text-align: right; /* Aligns the text to the right */
+        }
+
+        .products { /* Styles the table displaying products/services in the receipt */
+            width: 100%; /* Sets the table to take full width */
+            border-collapse: collapse; /* Ensures no space between table cells */
+            margin-bottom: 20px; /* Adds space below the table */
+        }
+
+        .products th, /* Styles both table headers and table cells uniformly */
+        .products td {
+            border: 1px solid #ddd; /* Adds a light border around table cells */
+            padding: 8px; /* Adds padding inside table cells */
+            text-align: left; /* Aligns text to the left inside cells */
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            max-width: 200px;
+        }
+
+
+        .products th:nth-child(1) { width: 20%; }
+        .products th:nth-child(2) { width: 35%; }
+        .products th:nth-child(3) { width: 10%; }
+        .products th:nth-child(4) { width: 15%; }
+        .products th:nth-child(5) { width: 20%; }
+
+        .products th { /* Specifically styles table headers */
+            background-color: #FF5900; /* Sets a green background for headers */
+            color: white; /* Sets the text color to white */
+        }
+
+        .totals { /* Styles the totals section in the receipt */
+            display: flex; /* Uses flexbox for horizontal alignment */
+            justify-content: space-between; /* Distributes space between elements */
+            align-items: flex-start; /* Aligns items to the start */
+        }
+
+        .receipt-payment { /* Styles the payment section in the receipt */
+            text-align: right; /* Aligns text to the right */
+        }
+
+        .receipt-payment p { /* Styles paragraphs inside the payment section */
+            margin: 5px 0; /* Adds vertical margin between paragraphs */
+        }
+
+        .receipt-payment .total { /* Styles the total amount in the payment section */
+            font-size: 1.2em; /* Increases font size */
+            font-weight: bold; /* Makes the text bold */
+        }
+
+        .footer { /* Styles the footer of the receipt */
+            text-align: center; /* Centers the text in the footer */
+            color: #999; /* Sets the text color to light gray */
+            font-size: 0.9em; /* Decreases font size slightly */
+        }
+
+        .signature { /* Styles the signature section of the receipt */
+            margin-top: 40px; /* Adds space above the signature section */
+            display: flex; /* Uses flexbox for horizontal alignment */
+            justify-content: space-between; /* Distributes space between elements */
+            align-items: center; /* Vertically centers the items */
+        }
+
+        .signature .sign-box { /* Styles the signature box */
+            width: 300px; /* Sets the width of the signature box */
+            text-align: center; /* Centers text inside the signature box */
+            padding-top: 5px; /* Adds padding at the top */
+            font-size: 0.9em; /* Sets a smaller font size */
+            color: #333; /* Sets the text color to dark gray */
+        }
+
+        .signature img { /* Styles the signature image */
+            width: 400px; /* Sets the width of the signature image */
+            height: 100px; /* Keeps the aspect ratio of the image */
+            border-top: 1px solid #333; /* Adds a top border to mimic a signature line */
+        }
+
+        .print-button, .add-row-button { /* Styles both the print and add-row buttons */
+            text-align: center; /* Centers the buttons */
+            margin-top: 20px; /* Adds space above the buttons */
+        }
+
+        .print-button button, .add-row-button button { /* Styles the buttons */
+            padding: 10px 20px; /* Adds padding inside the buttons */
+            font-size: 1em; /* Sets the font size */
+            background-color: #FF5900; /* Sets a green background color */
+            color: white; /* Sets the text color to white */
+            border: none; /* Removes the border */
+            cursor: pointer; /* Changes the cursor to a pointer when hovering over the button */
+        }
+
+        /* Print Styles */
+        @media print { /* Defines styles that apply when printing */
+            * { 
+                -webkit-print-color-adjust: exact !important; /* Ensures colors are printed exactly as displayed in WebKit browsers */
+                color-adjust: exact !important; /* Ensures colors are printed exactly as displayed in Firefox */
+            }
+
+            .form-container, .print-button, .add-row-button { /* Hides these elements during printing */
+                display: none;
+            }
+
+            .receipt-container { /* Adjusts the receipt container for printing */
+                width: 100%; /* Expands to full width */
+                box-shadow: none; /* Removes shadow effect */
+                margin-right: 0; /* Removes right margin */
+                background-color: white; /* Ensures the background is white */
+            }
+
+            body { /* Styles the body for printing */
+                background-color: white; /* Sets a white background */
+                margin: 0; /* Removes margin */
+            }
+
+            .header,
+            .receipt-info,
+            .totals,
+            .signature,
+            .footer { /* Adds space below each section during printing */
+                margin-bottom: 20px;
+            }
+
+            .header { /* Styles the header specifically for printing */
+                border-bottom: 2px solid #e4e4e4; /* Adds a bottom border */
+            }
+
+            .receipt-info { /* Styles the receipt info section for printing */
+                background-color: #FF5900; /* Ensures the green background color is printed */
+                color: white; /* Ensures the text color is white */
+            }
+
+            .products th { /* Styles the product table headers for printing */
+                background-color: #FF5900; /* Ensures the green background color is printed */
+                color: white; /* Ensures the text color is white */
+            }
+
+            .receipt-payment .total { /* Ensures the total is bold and prominent during printing */
+                font-size: 1.2em;
+                font-weight: bold;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container"> <!-- Creates a container for both the form and receipt sections -->
+        <!-- Form Container -->
+        <div class="form-container"> <!-- Container for the input form -->
+            <h2>Fill in the receipt details</h2> <!-- Heading for the form -->
+
+            <label for="company-logo">Company Logo:</label>
+            <input type="file" id="company-logo" accept="image/*">
+            <p class="hint">Recommended size: 100px height for best results</p>
+
+
+            <label for="company-name">Company Name:</label> <!-- Label for the company name input -->
+            <input type="text" id="company-name" placeholder="Enter company name" value="Type Your Company Name here..."> <!-- Input field for company name -->
+
+            <label for="company-address">Company Address:</label> <!-- Label for the company address input -->
+            <textarea id="company-address" placeholder="Enter company address">Type your Address Here..................</textarea> <!-- Textarea for company address -->
+
+            <label for="company-phone">Company Phone:</label> <!-- Label for the company phone input -->
+            <input type="text" id="company-phone" placeholder="Enter company phone" value="(+234) Your Phone number"> <!-- Input field for company phone -->
+
+            <label for="company-email">Company Email:</label> <!-- Label for the company email input -->
+            <input type="email" id="company-email" placeholder="Enter company email" value="example@gmail.com"> <!-- Input field for company email -->
+
+
+
+            <label for="recipient-name">Recipient Name:</label> <!-- Label for the recipient name input -->
+            <input type="text" id="recipient-name" placeholder="Enter recipient name" value="Steve Ubangha"> <!-- Input field for recipient name -->
+
+            <label for="recipient-address">Recipient Address:</label> <!-- Label for the recipient address input -->
+            <textarea id="recipient-address" placeholder="Enter recipient address">1 Titans Way, Nashville, Abuja Idu</textarea> <!-- Textarea for recipient address -->
+
+            <label for="transaction-date">Transaction Date:</label> <!-- Label for the transaction date input -->
+            <input type="date" id="transaction-date" value="2023-10-27"> <!-- Input field for transaction date -->
+
+            <label for="receipt-number">Receipt Number:</label> <!-- Label for the receipt number input -->
+            <input type="text" id="receipt-number" placeholder="Enter receipt number" value="#4032"> <!-- Input field for receipt number -->
+
+            <label for="lop-number">L.O.P No.:</label> <!-- Label for the L.O.P No. input -->
+            <input type="text" id="lop-number" placeholder="Enter L.O.P Number"> <!-- Input field for L.O.P No. -->
+
+            <div id="products-container"> <!-- Container for dynamically added product/service rows -->
+                <div class="product-row"> <!-- A single row for product/service details -->
+                    <label for="product1">Product/Service 1:</label> <!-- Label for the first product/service -->
+                    <input type="text" id="product1" placeholder="Enter product/service" value="Property maintenance services (hourly)"> <!-- Input field for product/service name -->
+
+                    <label for="description1">Description 1:</label> <!-- Label for the first product/service description -->
+                    <textarea id="description1" placeholder="Enter description">General property maintenance</textarea> <!-- Textarea for product/service description -->
+
+                    <label for="qty1">Quantity 1:</label> <!-- Label for the first product/service quantity -->
+                    <input type="text" id="qty1" placeholder="Enter quantity" value="20"> <!-- Input field for product/service quantity -->
+
+                    <label for="cost1">Cost 1:</label> <!-- Label for the first product/service cost -->
+                    <input type="text" id="cost1" placeholder="Enter cost" value="₦80.00"> <!-- Input field for product/service cost -->
+
+                    <label for="total1">Total 1:</label> <!-- Label for the first product/service total -->
+                    <input type="text" id="total1" placeholder="Enter total" value="₦1,600.00"> <!-- Input field for product/service total -->
+                </div>
+            </div>
+
+            <div class="add-row-button"> <!-- Container for the "Add Product/Service" button -->
+                <button onclick="addProductRow()">Add Product/Service</button> <!-- Button to add a new product/service row -->
+            </div>
+
+            <label for="subtotal">Subtotal:</label> <!-- Label for the subtotal input -->
+            <input type="text" id="subtotal" placeholder="Enter subtotal" value="₦3,510.00"> <!-- Input field for subtotal -->
+
+            <label for="tax">VAT (7.5%):</label> <!-- Label for the tax input -->
+            <input type="text" id="tax" placeholder="Enter tax" value="₦456.30"> <!-- Input field for tax -->
+
+            <label for="total">Total:</label> <!-- Label for the total input -->
+            <input type="text" id="total" placeholder="Enter total" value="₦3,966.30"> <!-- Input field for total -->
+
+            <div class="print-button"> <!-- Container for the "Generate & Print Receipt" button -->
+                <button onclick="generateReceipt()">Generate & Print Receipt</button> <!-- Button to generate and print the receipt -->
+            </div>
+
+
+            <label for="signature-upload">Signature:</label>
+            <input type="file" id="signature-upload" accept="image/*">
+            <p class="hint">Upload your signature image</p>
+
+
+            <h3>Footer Information (Optional)</h3>
+            
+            <label for="pfi-validity">PFI Validity:</label>
+            <input type="text" id="pfi-validity" placeholder="Enter PFI validity" value="48Hrs">
+            
+            <label for="payment-terms">Terms of Payment:</label>
+            <input type="text" id="payment-terms" placeholder="Enter payment terms" value="70% Advance Payment">
+            
+            <h4>Bank Details 1 (Optional)</h4>
+            <label for="bank-name-1">Bank Name:</label>
+            <input type="text" id="bank-name-1" placeholder="Enter bank name" value="Bank Name">
+            
+            <label for="account-no-1">Account No:</label>
+            <input type="text" id="account-no-1" placeholder="Enter account number" value="Your Account Number">
+            
+            <label for="account-name-1">Account Name:</label>
+            <input type="text" id="account-name-1" placeholder="Enter account name" value="Account Name">
+            
+            <h4>Bank Details 2 (Optional)</h4>
+            <label for="bank-name-2">Bank Name:</label>
+            <input type="text" id="bank-name-2" placeholder="Enter bank name" value="Bank Name">
+            
+            <label for="account-no-2">Account No:</label>
+            <input type="text" id="account-no-2" placeholder="Enter account number" value="Your Account Number">
+            
+            <label for="account-name-2">Account Name:</label>
+            <input type="text" id="account-name-2" placeholder="Enter account name" value="Account Name">
+
+
+
+        </div>
+
+        <!-- Receipt Container -->
+        <div class="receipt-container" id="receipt"> <!-- Container for displaying the generated receipt -->
+
+
+            <div class="header"> <!-- Header section of the receipt -->
+                <div class="logo"> <!-- Container for the logo -->
+                    <img src="pics/logo34.png" alt="Logo" id="logoDisplay"> <!-- Placeholder for the company logo -->
+                </div>
+                <div class="company-info"> <!-- Container for the company information -->
+                    <h1 id="companyNameDisplay">Type Your Company Name here...</h1> <!-- Displays the company name -->
+                    <p id="companyAddressDisplay">Type your Address Here..................</p> <!-- Displays the company address -->
+                    <p id="companyPhoneDisplay">(+234) Your Phone number</p> <!-- Displays the company phone number -->
+                    <p id="companyEmailDisplay">example@gmail.com</p> <!-- Displays the company email address -->
+                <!-- <p id="companyEmailDisplay">info@cityprint.ng</p> Displays the company email address -->
+                </div>
+            </div>
+
+
+            
+            <center><button style="background-color: #FF5900; color: white; font-size: 20px; border-color: gray; padding: 5px;">INVOICE</button></center>
+            
+            <div class="recipient"> <!-- Section for displaying recipient information -->
+                <h3>RECIPIENT:</h3> <!-- Heading for the recipient section -->
+                <p><strong id="recipientNameDisplay">Steve Ubangha</strong></p> <!-- Displays the recipient's name -->
+                <p id="recipientAddressDisplay">1 Titans Way, Nashville, Abuja Idu</p> <!-- Displays the recipient's address -->
+            </div>
+            <div class="receipt-info"> <!-- Section for displaying receipt info like date and number -->
+                <div class="receipt-number"> <!-- Container for the receipt number -->
+                    <p><strong id="receiptNumberDisplay">Receipt for #4032</strong></p> <!-- Displays the receipt number -->
+                </div>
+                <div class="lop-number"> <!-- Container for the L.O.P No. -->
+                    <p><strong id="lopNumberDisplay">L.O.P No.: </strong></p> <!-- Displays the L.O.P No. -->
+                </div>
+                <div class="transaction-date"> <!-- Container for the transaction date -->
+                    <p id="transactionDateDisplay">Transaction Date: October 27, 2023</p> <!-- Displays the transaction date -->
+                </div>
+            </div>
+            <table class="products"> <!-- Table to display products/services in the receipt -->
+                <thead>
+                    <tr> <!-- Table header row -->
+                        <th>PRODUCT / SERVICE</th> <!-- Column for product/service name -->
+                        <th>DESCRIPTION</th> <!-- Column for product/service description -->
+                        <th>QTY.</th> <!-- Column for product/service quantity -->
+                        <th>COST</th> <!-- Column for product/service cost -->
+                        <th>TOTAL</th> <!-- Column for product/service total -->
+                    </tr>
+                </thead>
+                <tbody id="productsDisplay"> <!-- Body of the table where products/services are listed -->
+                    <tr> <!-- A single row for a product/service -->
+                        <td id="product1Display">Property maintenance services (hourly)</td> <!-- Displays the first product/service name -->
+                        <td id="description1Display">General property maintenance</td> <!-- Displays the first product/service description -->
+                        <td id="qty1Display">20</td> <!-- Displays the first product/service quantity -->
+                        <td id="cost1Display">₦80.00</td> <!-- Displays the first product/service cost -->
+                        <td id="total1Display">₦1,600.00</td> <!-- Displays the first product/service total -->
+                    </tr>
+                </tbody>
+            </table>
+            <div class="totals"> <!-- Section for displaying totals -->
+                <div class="thanks"> <!-- Container for a thank you note -->
+                    <p>Thanks for your patronage!</p> <!-- Displays a thank you note -->
+                </div>
+                <div class="receipt-payment"> <!-- Section for displaying payment totals -->
+                    <p>Subtotal: <span id="subtotalDisplay">₦3,510.00</span></p> <!-- Displays the subtotal -->
+                    <p>VAT (7.5%): <span id="taxDisplay">₦456.30</span></p> <!-- Displays the tax -->
+                    <p class="total">Total: <span id="totalDisplay">₦3,966.30</span></p> <!-- Displays the total amount -->
+                </div>
+            </div>
+
+           
+            <div class="signature"> <!-- Section for displaying a signature -->
+                <div class="sign-box"> <!-- Container for the signature box -->
+                    <img src="pics/david.png" alt="Signature" id="signatureDisplay"> <!-- Placeholder for the signature image -->
+                </div>
+            </div>
+
+
+      
+            <!-- <div class="footer">
+                <h3 style="color: #FF5900;">PFI Validity: 48Hrs</h3>
+                <center>
+                    <p
+                        style="background-color: black; color: white; padding: 10px; width: 40%; border-radius: 15px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+                        Terms of Payment: 70% Advance Payment</p>
+                </center>
+            
+                <h3 style="color: #FF5900;">BANK DETAILS</h3>
+                <div style="display: flex; justify-content: center; gap: 20px;">
+                    <p
+                        style="background-color: black; color: white; padding: 10px; width: 300px; border-radius: 15px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+                        Bank Name : FCMB<br>
+                        Account No : 2001334042<br>
+                        Account Name: CITY PRINTS and PUBLISHING
+                    </p>
+                    <p
+                        style="background-color: black; color: white; padding: 10px; width: 300px; border-radius: 15px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+                        Bank Name : Stanbic IBTC<br>
+                        Account No : 0054907817<br>
+                        Account Name: CITY PRINTS and PUBLISHING
+                    </p>
+                </div>
+            </div> -->
+
+            <div class="footer" id="footer-section">
+                <div id="pfi-section">
+                    <h3 style="color: #FF5900;">PFI Validity: <span id="pfi-validity-display">48Hrs</span></h3>
+                </div>
+            
+                <div id="payment-terms-section">
+                    <center>
+                        <p
+                            style="background-color: black; color: white; padding: 10px; width: 40%; border-radius: 15px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+                            Terms of Payment: <span id="payment-terms-display">70% Advance Payment</span>
+                        </p>
+                    </center>
+                </div>
+            
+                <div id="bank-details-section">
+                    <h3 style="color: #FF5900;">BANK DETAILS</h3>
+                    <div style="display: flex; justify-content: center; gap: 20px;">
+                        <div id="bank-1-section"
+                            style="background-color: black; color: white; padding: 10px; width: 300px; border-radius: 15px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+                            Bank Name: <span id="bank-name-1-display">Name Of Bank</span><br>
+                            Account No: <span id="account-no-1-display">Your Account Number</span><br>
+                            Account Name: <span id="account-name-1-display">Account Name</span>
+                        </div>
+            
+                        <div id="bank-2-section"
+                            style="background-color: black; color: white; padding: 10px; width: 300px; border-radius: 15px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+                            Bank Name: <span id="bank-name-1-display">Name Of Bank</span><br>
+                            Account No: <span id="account-no-1-display">Your Account Number</span><br>
+                            Account Name: <span id="account-name-1-display">Account Name</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+
+        </div>
+    </div>
+
+<script>
+    let productCount = 1;
+
+    function formatMoney(amount) {
+        return '₦' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+
+    function parseFormattedInput(input) {
+        if (!input) return 0;
+
+        // Remove all non-numeric characters except decimal point
+        // This will handle currency symbols, commas, hash tags, and text
+        const numericString = input.replace(/[^0-9.]/g, '');
+
+        // Convert to number
+        return parseFloat(numericString) || 0;
+    }
+
+    function calculateRowTotal(index) {
+        // Use parseFormattedInput to handle formatted inputs
+        const qty = parseFormattedInput(document.getElementById(`qty${index}`).value);
+        const cost = parseFormattedInput(document.getElementById(`cost${index}`).value);
+        const total = qty * cost;
+
+        document.getElementById(`total${index}`).value = formatMoney(total);
+        document.getElementById(`total${index}Display`).textContent = formatMoney(total);
+
+        calculateGrandTotal();
+    }
+
+     function calculateGrandTotal() {
+        let subtotal = 0;
+        for (let i = 1; i <= productCount; i++) {
+            const total = parseFormattedInput(document.getElementById(`total${i}`).value);
+            subtotal += total;
+        }
+
+        const tax = subtotal * 0.000; // 7.5% VAT
+        const grandTotal = subtotal + tax;
+
+        document.getElementById('subtotal').value = formatMoney(subtotal);
+        document.getElementById('tax').value = formatMoney(tax);
+        document.getElementById('total').value = formatMoney(grandTotal);
+
+        document.getElementById('subtotalDisplay').textContent = formatMoney(subtotal);
+        document.getElementById('taxDisplay').textContent = formatMoney(tax);
+        document.getElementById('totalDisplay').textContent = formatMoney(grandTotal);
+    }
+
+    function updateProductRow(index) {
+        console.log(`Setting up event listeners for product row ${index}`); // Debug log
+
+        const productInput = document.getElementById(`product${index}`);
+        const descriptionInput = document.getElementById(`description${index}`);
+        const qtyInput = document.getElementById(`qty${index}`);
+        const costInput = document.getElementById(`cost${index}`);
+
+        // Check if elements exist before adding event listeners
+        if (productInput) {
+            productInput.addEventListener('input', function () {
+                const displayElement = document.getElementById(`product${index}Display`);
+                if (displayElement) {
+                    displayElement.textContent = this.value;
+                    console.log(`Updated product${index}Display to: ${this.value}`); // Debug log
+                }
+            });
+        }
+
+        if (descriptionInput) {
+            descriptionInput.addEventListener('input', function () {
+                const displayElement = document.getElementById(`description${index}Display`);
+                if (displayElement) {
+                    displayElement.textContent = this.value;
+                    console.log(`Updated description${index}Display to: ${this.value}`); // Debug log
+                }
+            });
+        }
+
+        if (qtyInput) {
+            qtyInput.addEventListener('input', function () {
+                const displayElement = document.getElementById(`qty${index}Display`);
+                if (displayElement) {
+                    displayElement.textContent = this.value;
+                    console.log(`Updated qty${index}Display to: ${this.value}`); // Debug log
+                }
+                calculateRowTotal(index);
+            });
+        }
+
+        if (costInput) {
+            costInput.addEventListener('input', function () {
+                const displayElement = document.getElementById(`cost${index}Display`);
+                if (displayElement) {
+                    displayElement.textContent = this.value;
+                    console.log(`Updated cost${index}Display to: ${this.value}`); // Debug log
+                }
+                calculateRowTotal(index);
+            });
+        }
+
+        // Trigger initial update to ensure display matches input values
+        if (productInput) {
+            const event = new Event('input', { bubbles: true });
+            productInput.dispatchEvent(event);
+        }
+        if (descriptionInput) {
+            const event = new Event('input', { bubbles: true });
+            descriptionInput.dispatchEvent(event);
+        }
+        if (qtyInput) {
+            const event = new Event('input', { bubbles: true });
+            qtyInput.dispatchEvent(event);
+        }
+        if (costInput) {
+            const event = new Event('input', { bubbles: true });
+            costInput.dispatchEvent(event);
+        }
+    }
+
+
+    function addProductRow() {
+        productCount++;
+        const productsContainer = document.getElementById('products-container');
+        const productsDisplay = document.getElementById('productsDisplay');
+
+        const productRow = document.createElement('div');
+        productRow.className = 'product-row';
+        productRow.innerHTML = `
+            <label for="product${productCount}">Product/Service ${productCount}:</label>
+            <input type="text" id="product${productCount}" placeholder="Enter product/service">
+
+            <label for="description${productCount}">Description ${productCount}:</label>
+            <textarea id="description${productCount}" placeholder="Enter description"></textarea>
+
+            <label for="qty${productCount}">Quantity ${productCount}:</label>
+            <input type="text" id="qty${productCount}" placeholder="Enter quantity">
+
+            <label for="cost${productCount}">Cost ${productCount}:</label>
+            <input type="text" id="cost${productCount}" placeholder="Enter cost">
+
+            <label for="total${productCount}">Total ${productCount}:</label>
+            <input type="text" id="total${productCount}" placeholder="Enter total">
+        `;
+        productsContainer.appendChild(productRow);
+
+        const displayRow = document.createElement('tr');
+        displayRow.innerHTML = `
+            <td id="product${productCount}Display"></td>
+            <td id="description${productCount}Display"></td>
+            <td id="qty${productCount}Display"></td>
+            <td id="cost${productCount}Display"></td>
+            <td id="total${productCount}Display"></td>
+        `;
+        productsDisplay.appendChild(displayRow);
+
+        // Add event listeners for the new row
+        updateProductRow(productCount);
+
+        // Initialize the total for this row
+        document.getElementById(`qty${productCount}`).value = "0";
+        document.getElementById(`cost${productCount}`).value = "₦0.00";
+        calculateRowTotal(productCount);
+    }
+
+
+
+    function generateReceipt() {
+        const companyName = document.getElementById('company-name').value;
+        const companyAddress = document.getElementById('company-address').value;
+        const companyPhone = document.getElementById('company-phone').value;
+        const companyEmail = document.getElementById('company-email').value;
+        const recipientName = document.getElementById('recipient-name').value;
+        const recipientAddress = document.getElementById('recipient-address').value;
+        const transactionDate = document.getElementById('transaction-date').value;
+        const receiptNumber = document.getElementById('receipt-number').value;
+        const lopNumber = document.getElementById('lop-number').value;
+        const total = document.getElementById('total').value;
+
+        document.getElementById('companyNameDisplay').textContent = companyName;
+        document.getElementById('companyAddressDisplay').textContent = companyAddress;
+        document.getElementById('companyPhoneDisplay').textContent = companyPhone;
+        document.getElementById('companyEmailDisplay').textContent = companyEmail;
+        document.getElementById('recipientNameDisplay').textContent = recipientName;
+        document.getElementById('recipientAddressDisplay').textContent = recipientAddress;
+        document.getElementById('transactionDateDisplay').textContent = `Transaction Date: ${transactionDate}`;
+        document.getElementById('receiptNumberDisplay').textContent = `Receipt for ${receiptNumber}`;
+        document.getElementById('lopNumberDisplay').textContent = `L.O.P No.: ${lopNumber}`;
+
+        const productsDisplay = document.getElementById('productsDisplay');
+        productsDisplay.innerHTML = '';
+
+        for (let i = 1; i <= productCount; i++) {
+            const product = document.getElementById(`product${i}`).value;
+            const description = document.getElementById(`description${i}`).value;
+            const qty = document.getElementById(`qty${i}`).value;
+            const cost = document.getElementById(`cost${i}`).value;
+            const total = document.getElementById(`total${i}`).value;
+
+            const productRow = document.createElement('tr');
+            productRow.innerHTML = `
+                <td id="product${i}Display">${product}</td>
+                <td id="description${i}Display">${description}</td>
+                <td id="qty${i}Display">${qty}</td>
+                <td id="cost${i}Display">${cost}</td>
+                <td id="total${i}Display">${total}</td>
+            `;
+            productsDisplay.appendChild(productRow);
+        }
+
+        window.print();
+    }
+
+    function addRealTimeUpdates() {
+
+        // Add these new event listeners for company information
+        document.getElementById('company-name').addEventListener('input', function () {
+            document.getElementById('companyNameDisplay').textContent = this.value;
+        });
+
+        document.getElementById('company-address').addEventListener('input', function () {
+            document.getElementById('companyAddressDisplay').textContent = this.value;
+        });
+
+        document.getElementById('company-phone').addEventListener('input', function () {
+            document.getElementById('companyPhoneDisplay').textContent = this.value;
+        });
+
+        document.getElementById('company-email').addEventListener('input', function () {
+            document.getElementById('companyEmailDisplay').textContent = this.value;
+        });
+
+
+        document.getElementById('recipient-name').addEventListener('input', function () {
+            document.getElementById('recipientNameDisplay').textContent = this.value;
+        });
+
+        document.getElementById('recipient-address').addEventListener('input', function () {
+            document.getElementById('recipientAddressDisplay').textContent = this.value;
+        });
+
+        document.getElementById('transaction-date').addEventListener('input', function () {
+            document.getElementById('transactionDateDisplay').textContent = 'Transaction Date: ' + this.value;
+        });
+
+        document.getElementById('receipt-number').addEventListener('input', function () {
+            document.getElementById('receiptNumberDisplay').textContent = 'Receipt for ' + this.value;
+        });
+
+        document.getElementById('lop-number').addEventListener('input', function () {
+            document.getElementById('lopNumberDisplay').textContent = 'L.O.P No.: ' + this.value;
+        });
+
+        document.getElementById('company-logo').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const logoDisplay = document.getElementById('logoDisplay');
+                    logoDisplay.src = e.target.result;
+                    // Maintain the original size constraints
+                    logoDisplay.style.maxHeight = '100px';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+
+        document.getElementById('signature-upload').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const signatureDisplay = document.getElementById('signatureDisplay');
+                    signatureDisplay.src = e.target.result;
+                    // Maintain the original size constraints
+                    signatureDisplay.style.width = '400px'; // Match the width from CSS
+                    signatureDisplay.style.height = '150px'; // Match the height from CSS
+                    signatureDisplay.style.objectFit = 'contain'; // Ensures the image maintains its aspect ratio
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+
+
+
+        // PFI Validity
+        document.getElementById('pfi-validity').addEventListener('input', function () {
+            const pfiSection = document.getElementById('pfi-section');
+            const pfiDisplay = document.getElementById('pfi-validity-display');
+
+            if (this.value.trim() === '') {
+                pfiSection.style.display = 'none';
+            } else {
+                pfiSection.style.display = 'block';
+                pfiDisplay.textContent = this.value;
+            }
+        });
+
+        // Payment Terms
+        document.getElementById('payment-terms').addEventListener('input', function () {
+            const termsSection = document.getElementById('payment-terms-section');
+            const termsDisplay = document.getElementById('payment-terms-display');
+
+            if (this.value.trim() === '') {
+                termsSection.style.display = 'none';
+            } else {
+                termsSection.style.display = 'block';
+                termsDisplay.textContent = this.value;
+            }
+        });
+
+        // Bank Details 1
+        function updateBank1Display() {
+            const bankName = document.getElementById('bank-name-1').value.trim();
+            const accountNo = document.getElementById('account-no-1').value.trim();
+            const accountName = document.getElementById('account-name-1').value.trim();
+            const bankSection = document.getElementById('bank-1-section');
+
+            if (bankName === '' && accountNo === '' && accountName === '') {
+                bankSection.style.display = 'none';
+            } else {
+                bankSection.style.display = 'block';
+                document.getElementById('bank-name-1-display').textContent = bankName;
+                document.getElementById('account-no-1-display').textContent = accountNo;
+                document.getElementById('account-name-1-display').textContent = accountName;
+            }
+
+            // Hide bank details section if both banks are empty
+            updateBankDetailsSection();
+        }
+
+        // Bank Details 2
+        function updateBank2Display() {
+            const bankName = document.getElementById('bank-name-2').value.trim();
+            const accountNo = document.getElementById('account-no-2').value.trim();
+            const accountName = document.getElementById('account-name-2').value.trim();
+            const bankSection = document.getElementById('bank-2-section');
+
+            if (bankName === '' && accountNo === '' && accountName === '') {
+                bankSection.style.display = 'none';
+            } else {
+                bankSection.style.display = 'block';
+                document.getElementById('bank-name-2-display').textContent = bankName;
+                document.getElementById('account-no-2-display').textContent = accountNo;
+                document.getElementById('account-name-2-display').textContent = accountName;
+            }
+
+            // Hide bank details section if both banks are empty
+            updateBankDetailsSection();
+        }
+
+        // Hide bank details section if both banks are empty
+        function updateBankDetailsSection() {
+            const bank1Visible = document.getElementById('bank-1-section').style.display !== 'none';
+            const bank2Visible = document.getElementById('bank-2-section').style.display !== 'none';
+            const bankDetailsSection = document.getElementById('bank-details-section');
+
+            if (!bank1Visible && !bank2Visible) {
+                bankDetailsSection.style.display = 'none';
+            } else {
+                bankDetailsSection.style.display = 'block';
+            }
+        }
+
+        // Add event listeners for bank 1
+        document.getElementById('bank-name-1').addEventListener('input', updateBank1Display);
+        document.getElementById('account-no-1').addEventListener('input', updateBank1Display);
+        document.getElementById('account-name-1').addEventListener('input', updateBank1Display);
+
+        // Add event listeners for bank 2
+        document.getElementById('bank-name-2').addEventListener('input', updateBank2Display);
+        document.getElementById('account-no-2').addEventListener('input', updateBank2Display);
+        document.getElementById('account-name-2').addEventListener('input', updateBank2Display);
+
+        // Initial check to hide empty sections
+        document.getElementById('pfi-validity').dispatchEvent(new Event('input'));
+        document.getElementById('payment-terms').dispatchEvent(new Event('input'));
+        updateBank1Display();
+        updateBank2Display();
+
+
+
+    }
+
+    /**
+     * Event listener for the window's load event.
+     * Runs two functions that update the UI in real-time as the user interacts with the form.
+     * The first function, addRealTimeUpdates(), updates the receipt preview with real-time
+     * changes to the form's input fields. The second function, updateProductRow(1),
+     * updates the first product row with real-time changes to the form's input fields.
+     * @listens window#load
+     */
+    // Make sure window.onload is properly set up
+    window.onload = function () {
+        console.log("Window loaded, initializing event listeners..."); // Debug log
+        addRealTimeUpdates();
+        updateProductRow(1); // This should now work correctly with the improved function
+        console.log("Initialization complete"); // Debug log
+    }
+
+    // You can also call updateProductRow directly to ensure it runs
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log("DOM content loaded, ensuring product row 1 is initialized..."); // Debug log
+        updateProductRow(1);
+    });
+</script>
+
+
+</body>
+</html>

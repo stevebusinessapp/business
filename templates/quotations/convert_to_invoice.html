@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block title %}Convert Quotation to Invoice{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exchange-alt me-2"></i>
+                        Convert Quotation to Invoice
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Conversion Details
+                        </h5>
+                        <p class="mb-0">
+                            You are about to convert quotation <strong>{{ quotation.quotation_number }}</strong> to an invoice. 
+                            This will create a new invoice with all the quotation details.
+                        </p>
+                    </div>
+
+                    <div class="quotation-summary">
+                        <h6 class="text-muted mb-3">Quotation Summary:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Quotation Number:</strong> {{ quotation.quotation_number }}</p>
+                                <p><strong>Date:</strong> {{ quotation.quotation_date|date:"F j, Y" }}</p>
+                                <p><strong>Status:</strong> 
+                                    <span class="badge bg-{% if quotation.status == 'accepted' %}success{% elif quotation.status == 'declined' %}danger{% elif quotation.status == 'sent' %}info{% else %}warning{% endif %}">
+                                        {{ quotation.get_status_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Client:</strong> 
+                                    {% if quotation.client %}
+                                        {{ quotation.client.name }}
+                                    {% else %}
+                                        <span class="text-muted">No client</span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Valid Until:</strong> 
+                                    {% if quotation.valid_until %}
+                                        {{ quotation.valid_until|date:"F j, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">No expiry</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6 class="text-muted mb-3">Financial Summary:</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Subtotal:</span>
+                                        <span>{{ quotation.subtotal|currency_format_with_symbol:company_profile }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Tax:</span>
+                                        <span>{{ quotation.total_tax|currency_format_with_symbol:company_profile }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Discount:</span>
+                                        <span>{{ quotation.total_discount|currency_format_with_symbol:company_profile }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Shipping:</span>
+                                        <span>{{ quotation.shipping_fee|currency_format_with_symbol:company_profile }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Other Charges:</span>
+                                        <span>{{ quotation.other_charges|currency_format_with_symbol:company_profile }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2 fw-bold text-primary">
+                                        <span>Grand Total:</span>
+                                        <span><strong>{{ quotation.grand_total|currency_format_with_symbol:company_profile }}</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if quotation.items.exists %}
+                        <div class="mt-4">
+                            <h6 class="text-muted mb-3">Line Items:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Description</th>
+                                            <th>Qty</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in quotation.items.all %}
+                                        <tr>
+                                            <td>{{ item.product_service|default:"-" }}</td>
+                                            <td>{{ item.description|default:"-" }}</td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td>{{ item.unit_price|currency_format_with_symbol:company_profile }}</td>
+                                            <td>{{ item.line_total|currency_format_with_symbol:company_profile }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if quotation.terms or quotation.notes %}
+                        <div class="mt-4">
+                            <h6 class="text-muted mb-3">Additional Information:</h6>
+                            {% if quotation.terms %}
+                            <div class="mb-3">
+                                <strong>Terms:</strong>
+                                <p class="mb-0">{{ quotation.terms|linebreaksbr }}</p>
+                            </div>
+                            {% endif %}
+                            {% if quotation.notes %}
+                            <div class="mb-3">
+                                <strong>Notes:</strong>
+                                <p class="mb-0">{{ quotation.notes|linebreaksbr }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert alert-warning mt-4">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Important Notes
+                        </h6>
+                        <ul class="mb-0">
+                            <li>The new invoice will have a due date of 30 days from today</li>
+                            <li>All line items and financial details will be copied to the new invoice</li>
+                            <li>The quotation status will be updated to "Accepted"</li>
+                            <li>You can edit the invoice after creation if needed</li>
+                        </ul>
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'quotations:quotation_detail' quotation.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-exchange-alt me-2"></i>Convert to Invoice
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

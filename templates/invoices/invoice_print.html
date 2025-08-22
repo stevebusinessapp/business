@@ -1,0 +1,455 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Print Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        /* Current template colors - Applied to all invoice views */
+        :root {
+            {% if current_template %}
+                --primary-color: {{ current_template.primary_color }};
+                --secondary-color: {{ current_template.secondary_color }};
+                --text-color: {{ current_template.text_color }};
+                --accent-color: {{ current_template.accent_color }};
+            {% else %}
+                --primary-color: #FF5900;
+                --secondary-color: #f8f9fa;
+                --text-color: #333333;
+                --accent-color: #e9ecef;
+            {% endif %}
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: white;
+            padding: 20px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .invoice-preview {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            box-shadow: none;
+            border: 2px solid var(--accent-color);
+            border-radius: 10px;
+        }
+        
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--accent-color);
+        }
+        
+        .company-logo img {
+            max-height: 80px;
+            max-width: 200px;
+        }
+        
+        .company-details h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .company-details p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .invoice-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary-color) !important;
+            margin: 20px 0 30px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .invoice-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa !important;
+            border-radius: 8px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .client-section {
+            margin-bottom: 30px;
+        }
+        
+        .client-section h3 {
+            color: var(--primary-color) !important;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            background: white;
+        }
+        
+        .items-table th,
+        .items-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        .items-table th {
+            background: var(--primary-color) !important;
+            color: white !important;
+            font-weight: bold;
+            text-transform: uppercase;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background: #f8f9fa !important;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .totals-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa !important;
+            border-radius: 8px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .totals-right {
+            text-align: right;
+            min-width: 250px;
+        }
+        
+        .totals-right p {
+            margin: 8px 0;
+            padding: 5px 0;
+        }
+        
+        .total-final {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color) !important;
+            border-top: 2px solid var(--primary-color) !important;
+            padding-top: 10px !important;
+            margin-top: 10px !important;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .signature-section {
+            text-align: center;
+            margin: 40px 0 30px 0;
+            padding: 20px;
+        }
+        
+        .signature-section img {
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        
+        .bank-details-section {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .bank-details-section h3 {
+            color: var(--primary-color) !important;
+            margin-bottom: 20px;
+            font-size: 20px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .bank-details-section > div {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .bank-details-section > div > div {
+            background-color: #333 !important;
+            color: white !important;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 6px 20px rgba(0,0,0,0.19) !important;
+            min-width: 300px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .bank-details-section p {
+            margin: 0;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+        
+        /* Print specific styles */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            body {
+                padding: 0;
+                margin: 0;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .invoice-preview {
+                box-shadow: none;
+                padding: 20px;
+                margin: 0;
+                max-width: none;
+                border: none;
+            }
+            
+            .items-table th {
+                background: var(--primary-color) !important;
+                color: white !important;
+            }
+            
+            .bank-details-section > div > div {
+                background-color: #333 !important;
+                color: white !important;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 6px 20px rgba(0,0,0,0.19) !important;
+            }
+            
+            .total-final {
+                color: var(--primary-color) !important;
+                border-top: 2px solid var(--primary-color) !important;
+            }
+            
+            .invoice-title {
+                color: var(--primary-color) !important;
+            }
+            
+            .bank-details-section h3 {
+                color: var(--primary-color) !important;
+            }
+            
+            .client-section h3 {
+                color: var(--primary-color) !important;
+            }
+        }
+        
+        .no-print {
+            display: none;
+        }
+        
+        @media screen {
+            .no-print {
+                display: block;
+            }
+        }
+    </style>
+    <script>
+        // Auto-print when page loads
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+        
+        // Format currency values with commas
+        document.addEventListener('DOMContentLoaded', function() {
+            const currencyElements = document.querySelectorAll('.format-currency');
+            
+            currencyElements.forEach(function(element) {
+                const text = element.textContent;
+                // Extract currency symbol and number
+                const match = text.match(/^([₦$€£])(\d+(?:\.\d{2})?)$/);
+                if (match) {
+                    const symbol = match[1];
+                    const number = parseFloat(match[2]);
+                    // Format number with commas
+                    const formattedNumber = number.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    element.textContent = symbol + formattedNumber;
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="invoice-preview">
+        <!-- Invoice Header -->
+        <div class="invoice-header">
+            <div class="company-logo">
+                {% if company_logo %}
+                    <img src="{{ company_logo }}" alt="Company Logo">
+                {% endif %}
+            </div>
+            <div class="company-details">
+                <h2>{{ company_profile.company_name|default:"Your Company Name" }}</h2>
+                <p>{{ company_profile.address|default:"Company Address" }}</p>
+                <p>{{ company_profile.phone|default:"Phone Number" }}</p>
+                <p>{{ company_profile.email|default:"Email Address" }}</p>
+            </div>
+        </div>
+        
+        <!-- Invoice Title -->
+        <div class="invoice-title">{% if invoice.template %}{{ invoice.template.document_title }}{% else %}INVOICE{% endif %}</div>
+        
+        <!-- Invoice Info -->
+        <div class="invoice-info">
+            <div>
+                <strong>Invoice #: {{ invoice.invoice_number }}</strong>
+            </div>
+            <div>
+                <strong>Date: {{ invoice.invoice_date|date:"M d, Y" }}</strong>
+            </div>
+            <div>
+                <strong>Due: {% if invoice.due_date %}{{ invoice.due_date|date:"M d, Y" }}{% else %}No Due Date{% endif %}</strong>
+            </div>
+        </div>
+        
+        <!-- Client Section -->
+        <div class="client-section">
+            <h3>BILL TO:</h3>
+            <div>
+                <strong>{{ invoice.client_name }}</strong><br>
+                {% if invoice.client_email %}{{ invoice.client_email }}<br>{% endif %}
+                {% if invoice.client_phone %}{{ invoice.client_phone }}<br>{% endif %}
+                {% if invoice.client_address %}{{ invoice.client_address }}<br>{% endif %}
+            </div>
+        </div>
+        
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 8%;">S/N</th>
+                    <th style="width: 20%;">PRODUCT / SERVICE</th>
+                    <th style="width: 30%;">DESCRIPTION</th>
+                    <th style="width: 10%;">QTY.</th>
+                    <th style="width: 15%;">COST</th>
+                    <th style="width: 17%;">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items.all %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{% if item.product_service %}{{ item.product_service }}{% else %}[No Product/Service]{% endif %}</td>
+                    <td>{% if item.description %}{{ item.description }}{% else %}[No Description]{% endif %}</td>
+                    <td>{{ item.quantity|floatformat:"-2" }}</td>
+                    <td class="format-currency">{{ currency_symbol|default:"₦" }}{{ item.unit_price|floatformat:2 }}</td>
+                    <td class="format-currency">{{ currency_symbol|default:"₦" }}{{ item.line_total|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 20px; color: #999;">
+                        No items found for this invoice.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Totals Section -->
+        <div class="totals-section">
+            <div class="totals-left">
+                <p><strong>Thanks for doing business with us!</strong></p>
+                {% if invoice.notes %}
+                    <div>{{ invoice.notes|linebreaks }}</div>
+                {% endif %}
+            </div>
+            <div class="totals-right">
+                <p>Subtotal: <span class="format-currency">{{ currency_symbol|default:"₦" }}{{ invoice.subtotal|floatformat:2 }}</span></p>
+                <!-- Always show tax, discount, shipping, other charges, and payment details -->
+                {% if invoice.total_tax != 0 %}
+                    <p>Tax: <span class="format-currency">{{ currency_symbol|default:"₦" }}{{ invoice.total_tax|floatformat:2 }}</span></p>
+                {% endif %}
+                {% if invoice.total_discount != 0 %}
+                    <p>Discount: {% if invoice.total_discount > 0 %}-{% endif %}<span class="format-currency">{{ currency_symbol|default:"₦" }}{{ invoice.total_discount|floatformat:2 }}</span></p>
+                {% endif %}
+                {% if invoice.shipping_fee != 0 %}
+                    <p>Shipping: <span class="format-currency">{{ currency_symbol|default:"₦" }}{{ invoice.shipping_fee|floatformat:2 }}</span></p>
+                {% endif %}
+                {% if invoice.other_charges != 0 %}
+                    <p>Other Charges: <span class="format-currency">{{ currency_symbol|default:"₦" }}{{ invoice.other_charges|floatformat:2 }}</span></p>
+                {% endif %}
+                <p class="total-final">TOTAL: <span class="format-currency">{{ currency_symbol|default:"₦" }}{{ invoice.grand_total|floatformat:2 }}</span></p>
+                {% if invoice.amount_paid != 0 %}
+                    <p>Amount Paid: <span class="format-currency">{{ currency_symbol|default:"₦" }}{{ invoice.amount_paid|floatformat:2 }}</span></p>
+                    <p>Balance Due: <span class="format-currency">{{ currency_symbol|default:"₦" }}{{ invoice.balance_due|floatformat:2 }}</span></p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Signature Section -->
+        {% if company_signature %}
+        <div class="signature-section">
+            <img src="{{ company_signature }}" alt="Signature">
+            <p><strong>Authorized Signature</strong></p>
+        </div>
+        {% endif %}
+        
+        <!-- Bank Details Section -->
+        {% if default_bank_account %}
+        <div class="bank-details-section">
+            <h3>BANK DETAILS</h3>
+            <div>
+                <div>
+                    <p>
+                        <strong>Bank Name:</strong> {{ default_bank_account.bank_name }}<br>
+                        <strong>Account No:</strong> {{ default_bank_account.account_number }}<br>
+                        <strong>Account Name:</strong> {{ default_bank_account.account_name }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

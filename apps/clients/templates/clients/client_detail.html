@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ client.name }} - Client Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .client-detail-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .client-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+    
+    .client-avatar {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .info-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        min-width: 120px;
+        margin-right: 1rem;
+    }
+    
+    .info-value {
+        color: #212529;
+        flex: 1;
+    }
+    
+    .quotation-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+    
+    .quotation-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+    }
+    
+    .status-draft { background-color: #e3f2fd; color: #1976d2; }
+    .status-sent { background-color: #fff3e0; color: #f57c00; }
+    .status-accepted { background-color: #e8f5e8; color: #388e3c; }
+    .status-declined { background-color: #ffebee; color: #d32f2f; }
+    .status-expired { background-color: #f3e5f5; color: #7b1fa2; }
+    
+    .btn-action {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-user text-primary me-2"></i>
+                        Client Details
+                    </h2>
+                    <p class="text-muted mb-0">View and manage client information</p>
+                </div>
+                <div class="action-buttons">
+                    <a href="{% url 'clients:client_edit' client.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Edit Client
+                    </a>
+                    <a href="{% url 'clients:client_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Clients
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="client-header">
+                <div class="text-center">
+                    <div class="client-avatar mx-auto">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3 class="mb-2">{{ client.name }}</h3>
+                    <p class="mb-0 opacity-75">
+                        <i class="fas fa-calendar me-1"></i>
+                        Client since {{ client.created_at|date:"F d, Y" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Client Information -->
+        <div class="col-lg-8">
+            <div class="client-detail-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-info-circle me-2"></i>Contact Information
+                </h5>
+                
+                <div class="info-row">
+                    <span class="info-label">
+                        <i class="fas fa-envelope me-2"></i>Email:
+                    </span>
+                    <span class="info-value">
+                        <a href="mailto:{{ client.email }}" class="text-decoration-none">
+                            {{ client.email }}
+                        </a>
+                    </span>
+                </div>
+                
+                {% if client.phone %}
+                <div class="info-row">
+                    <span class="info-label">
+                        <i class="fas fa-phone me-2"></i>Phone:
+                    </span>
+                    <span class="info-value">
+                        <a href="tel:{{ client.phone }}" class="text-decoration-none">
+                            {{ client.phone }}
+                        </a>
+                    </span>
+                </div>
+                {% endif %}
+                
+                {% if client.address %}
+                <div class="info-row">
+                    <span class="info-label">
+                        <i class="fas fa-map-marker-alt me-2"></i>Address:
+                    </span>
+                    <span class="info-value">{{ client.address }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="info-row">
+                    <span class="info-label">
+                        <i class="fas fa-calendar-plus me-2"></i>Created:
+                    </span>
+                    <span class="info-value">{{ client.created_at|date:"F d, Y \a\t g:i A" }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">
+                        <i class="fas fa-calendar-edit me-2"></i>Last Updated:
+                    </span>
+                    <span class="info-value">{{ client.updated_at|date:"F d, Y \a\t g:i A" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4">
+            <div class="client-detail-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+                
+                <div class="d-grid gap-2">
+                    <a href="{% url 'quotations:quotation_create' %}?client={{ client.pk }}" class="btn btn-success btn-action">
+                        <i class="fas fa-plus me-2"></i>Create Quotation
+                    </a>
+                    <a href="{% url 'clients:client_edit' client.pk %}" class="btn btn-primary btn-action">
+                        <i class="fas fa-edit me-2"></i>Edit Client
+                    </a>
+                    <a href="mailto:{{ client.email }}" class="btn btn-info btn-action">
+                        <i class="fas fa-envelope me-2"></i>Send Email
+                    </a>
+                    {% if client.phone %}
+                    <a href="tel:{{ client.phone }}" class="btn btn-warning btn-action">
+                        <i class="fas fa-phone me-2"></i>Call Client
+                    </a>
+                    {% endif %}
+                    <a href="#" class="btn btn-danger btn-action" 
+                       onclick="confirmDelete('{{ client.name }}', '{% url 'clients:client_delete' client.pk %}')">
+                        <i class="fas fa-trash me-2"></i>Delete Client
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quotations History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="client-detail-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>Quotations History
+                    </h5>
+                    <a href="{% url 'quotations:quotation_create' %}?client={{ client.pk }}" class="btn btn-sm btn-success">
+                        <i class="fas fa-plus me-1"></i>New Quotation
+                    </a>
+                </div>
+                
+                {% if client.quotation_set.all %}
+                <div class="row">
+                    {% for quotation in client.quotation_set.all %}
+                    <div class="col-lg-6 col-md-12 mb-3">
+                        <div class="card quotation-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">{{ quotation.quotation_number }}</h6>
+                                    <span class="status-badge status-{{ quotation.status }}">
+                                        {{ quotation.get_status_display }}
+                                    </span>
+                                </div>
+                                
+                                <p class="card-text text-muted mb-2">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ quotation.quotation_date|date:"M d, Y" }}
+                                </p>
+                                
+                                <p class="card-text mb-3">
+                                    <strong>Amount:</strong> ₦{{ quotation.grand_total|floatformat:2|intcomma }}
+                                </p>
+                                
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'quotations:quotation_detail' quotation.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                    <a href="{% url 'quotations:quotation_edit' quotation.pk %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
+                                    <a href="{% url 'quotations:quotation_print' quotation.pk %}" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-print me-1"></i>Print
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No quotations yet</h5>
+                    <p class="text-muted">This client hasn't received any quotations yet.</p>
+                    <a href="{% url 'quotations:quotation_create' %}?client={{ client.pk }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create First Quotation
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the client "<span id="clientName"></span>"?</p>
+                <p class="text-danger"><small>This action cannot be undone and will also delete all associated quotations.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="deleteConfirmBtn" class="btn btn-danger">Delete Client</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(clientName, deleteUrl) {
+    document.getElementById('clientName').textContent = clientName;
+    document.getElementById('deleteConfirmBtn').href = deleteUrl;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %} 

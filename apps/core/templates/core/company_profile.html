@@ -1,0 +1,583 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Company Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-lg-flex">
+                        <div>
+                            <h5 class="mb-0">Company Profile</h5>
+                            <p class="text-sm mb-0">
+                                {% if created %}
+                                    Set up your company profile to get started
+                                {% else %}
+                                    Update your company information
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <div class="ms-auto my-auto">
+                                <a href="{% url 'core:dashboard' %}" class="btn btn-outline-primary btn-sm mb-0">
+                                    Back to Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.company_name.id_for_label }}" class="form-control-label">
+                                        Company Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.company_name }}
+                                    {% if form.company_name.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.company_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.email.id_for_label }}" class="form-control-label">
+                                        Email <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.email.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.phone.id_for_label }}" class="form-control-label">
+                                        Phone <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.phone }}
+                                    {% if form.phone.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.phone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.website.id_for_label }}" class="form-control-label">
+                                        Website
+                                    </label>
+                                    {{ form.website }}
+                                    {% if form.website.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.website.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="{{ form.address.id_for_label }}" class="form-control-label">
+                                        Address <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.address }}
+                                    {% if form.address.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.address.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Visual Assets -->
+                        <hr class="horizontal dark">
+                        <h6 class="text-uppercase text-xs font-weight-bolder">Visual Assets</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.logo.id_for_label }}" class="form-control-label">
+                                        Company Logo
+                                    </label>
+                                    {% if company_profile.logo %}
+                                        <div class="mb-2">
+                                            <img src="{{ company_profile.logo.url }}" 
+                                                 alt="Current Logo" 
+                                                 class="img-thumbnail" 
+                                                 style="max-width: 150px; max-height: 100px;">
+                                        </div>
+                                    {% endif %}
+                                    {{ form.logo }}
+                                    <small class="text-muted">Accepted formats: JPG, PNG, GIF. Max size: 5MB</small>
+                                    {% if form.logo.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.logo.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.signature.id_for_label }}" class="form-control-label">
+                                        Company Signature
+                                    </label>
+                                    {% if company_profile.signature %}
+                                        <div class="mb-2">
+                                            <img src="{{ company_profile.signature.url }}" 
+                                                 alt="Current Signature" 
+                                                 class="img-thumbnail" 
+                                                 style="max-width: 150px; max-height: 100px;">
+                                        </div>
+                                    {% endif %}
+                                    {{ form.signature }}
+                                    <small class="text-muted">Accepted formats: JPG, PNG, GIF. Max size: 5MB</small>
+                                    {% if form.signature.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.signature.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Defaults -->
+                        <hr class="horizontal dark">
+                        <h6 class="text-uppercase text-xs font-weight-bolder">Financial Defaults</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.default_tax.id_for_label }}" class="form-control-label">
+                                        Default Tax (%)
+                                    </label>
+                                    {{ form.default_tax }}
+                                    {% if form.default_tax.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.default_tax.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.default_discount.id_for_label }}" class="form-control-label">
+                                        Default Discount (%)
+                                    </label>
+                                    {{ form.default_discount }}
+                                    {% if form.default_discount.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.default_discount.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.default_shipping_fee.id_for_label }}" class="form-control-label">
+                                        Default Shipping Fee
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">{{ currency_symbol }}</span>
+                                        {{ form.default_shipping_fee }}
+                                    </div>
+                                    {% if form.default_shipping_fee.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.default_shipping_fee.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Currency Settings -->
+                        <hr class="horizontal dark">
+                        <h6 class="text-uppercase text-xs font-weight-bolder">Currency Settings</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="currency_dropdown" class="form-control-label">
+                                        Select Currency
+                                    </label>
+                                    <select id="currency_dropdown" class="form-control">
+                                        <option value="">-- Select Currency --</option>
+                                        <option value="USD" data-symbol="$">USD - US Dollar ($)</option>
+                                        <option value="EUR" data-symbol="€">EUR - Euro (€)</option>
+                                        <option value="GBP" data-symbol="£">GBP - British Pound (£)</option>
+                                        <option value="NGN" data-symbol="₦">NGN - Nigerian Naira (₦)</option>
+                                        <option value="JPY" data-symbol="¥">JPY - Japanese Yen (¥)</option>
+                                        <option value="CNY" data-symbol="¥">CNY - Chinese Yuan (¥)</option>
+                                        <option value="INR" data-symbol="₹">INR - Indian Rupee (₹)</option>
+                                        <option value="AUD" data-symbol="A$">AUD - Australian Dollar (A$)</option>
+                                        <option value="CAD" data-symbol="C$">CAD - Canadian Dollar (C$)</option>
+                                        <option value="CHF" data-symbol="Fr">CHF - Swiss Franc (Fr)</option>
+                                        <option value="KRW" data-symbol="₩">KRW - South Korean Won (₩)</option>
+                                        <option value="SGD" data-symbol="S$">SGD - Singapore Dollar (S$)</option>
+                                        <option value="HKD" data-symbol="HK$">HKD - Hong Kong Dollar (HK$)</option>
+                                        <option value="ZAR" data-symbol="R">ZAR - South African Rand (R)</option>
+                                        <option value="BRL" data-symbol="R$">BRL - Brazilian Real (R$)</option>
+                                        <option value="MXN" data-symbol="$">MXN - Mexican Peso ($)</option>
+                                        <option value="SAR" data-symbol="﷼">SAR - Saudi Riyal (﷼)</option>
+                                        <option value="AED" data-symbol="د.إ">AED - UAE Dirham (د.إ)</option>
+                                    </select>
+                                    <small class="text-muted">Select your preferred currency from the list</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.currency_symbol.id_for_label }}" class="form-control-label">
+                                        Currency Symbol
+                                    </label>
+                                    {{ form.currency_symbol }}
+                                    <small class="text-muted">Automatically updated when currency is selected</small>
+                                    {% if form.currency_symbol.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.currency_symbol.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden field for currency code -->
+                        <div style="display: none;">
+                            {{ form.currency_code }}
+                        </div>
+
+                        <!-- Custom Charges -->
+                        <hr class="horizontal dark">
+                        <h6 class="text-uppercase text-xs font-weight-bolder">Custom Charges</h6>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="{{ form.custom_charges.id_for_label }}" class="form-control-label">
+                                        Custom Charges (JSON)
+                                    </label>
+                                    {{ form.custom_charges }}
+                                    <small class="text-muted">
+                                        Define custom charges as JSON. Example: {"handling_fee": 10.00, "processing_fee": 5.00}
+                                    </small>
+                                    {% if form.custom_charges.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.custom_charges.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end">
+                                    <a href="{% url 'core:dashboard' %}" class="btn btn-light me-2">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">
+                                        {% if created %}
+                                            Create Profile
+                                        {% else %}
+                                            Update Profile
+                                        {% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Preview uploaded images
+    function previewImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById(previewId);
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Currency dropdown functionality
+    const currencyDropdown = document.getElementById('currency_dropdown');
+    const currencyCodeInput = document.getElementById('{{ form.currency_code.id_for_label }}');
+    const currencySymbolInput = document.getElementById('{{ form.currency_symbol.id_for_label }}');
+    
+    // Set initial dropdown selection based on existing currency code
+    if (currencyDropdown && currencyCodeInput) {
+        const currentCode = currencyCodeInput.value;
+        if (currentCode) {
+            currencyDropdown.value = currentCode;
+        }
+    }
+    
+    // Handle currency dropdown change
+    if (currencyDropdown) {
+        currencyDropdown.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const currencyCode = selectedOption.value;
+            const currencySymbol = selectedOption.getAttribute('data-symbol');
+            
+            // Update hidden currency code field
+            if (currencyCodeInput) {
+                currencyCodeInput.value = currencyCode;
+            }
+            
+            // Update currency symbol field
+            if (currencySymbolInput && currencySymbol) {
+                currencySymbolInput.value = currencySymbol;
+                
+                // Add visual feedback
+                currencySymbolInput.style.backgroundColor = '#e8f5e8';
+                setTimeout(() => {
+                    currencySymbolInput.style.backgroundColor = '';
+                }, 1000);
+            }
+            
+            // Update currency via AJAX and handle accounting transactions
+            if (currencyCode && currencySymbol) {
+                updateCurrencyAndTransactions(currencyCode, currencySymbol);
+            }
+        });
+    }
+
+    // Function to update currency and handle accounting transactions
+    function updateCurrencyAndTransactions(currencyCode, currencySymbol) {
+        console.log('Updating currency to:', currencyCode, currencySymbol);
+        
+        const requestData = {
+            currency_code: currencyCode,
+            currency_symbol: currencySymbol
+        };
+        
+        console.log('Request data:', requestData);
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            console.error('CSRF token not found');
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-danger alert-dismissible fade show';
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.style.minWidth = '300px';
+            notification.innerHTML = `
+                <strong>Error!</strong><br>
+                Security token not found. Please refresh the page and try again.
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(notification);
+            return;
+        }
+        
+        fetch('/dashboard/update-currency/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken.value,
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                // Show success notification
+                const notification = document.createElement('div');
+                notification.className = 'alert alert-success alert-dismissible fade show';
+                notification.style.position = 'fixed';
+                notification.style.top = '20px';
+                notification.style.right = '20px';
+                notification.style.zIndex = '9999';
+                notification.style.minWidth = '350px';
+                notification.innerHTML = `
+                    <strong>Currency Updated Successfully!</strong><br>
+                    <small>${data.message}</small>
+                    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                `;
+                document.body.appendChild(notification);
+                
+                // Auto-remove notification after 5 seconds
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 5000);
+                
+                // Dispatch custom event for currency update
+                const currencyEvent = new CustomEvent('currencyUpdated', {
+                    detail: {
+                        currencyCode: currencyCode,
+                        currencySymbol: currencySymbol,
+                        transactionsUpdated: data.transactions_updated
+                    }
+                });
+                window.dispatchEvent(currencyEvent);
+            } else {
+                // Show error notification
+                const notification = document.createElement('div');
+                notification.className = 'alert alert-danger alert-dismissible fade show';
+                notification.style.position = 'fixed';
+                notification.style.top = '20px';
+                notification.style.right = '20px';
+                notification.style.zIndex = '9999';
+                notification.style.minWidth = '300px';
+                notification.innerHTML = `
+                    <strong>Error!</strong><br>
+                    ${data.error}
+                    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                `;
+                document.body.appendChild(notification);
+                
+                // Auto-remove notification after 5 seconds
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 5000);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating currency:', error);
+            
+            // Determine error message based on error type
+            let errorMessage = 'Failed to update currency. Please try again.';
+            
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = 'Network error. Please check your connection and try again.';
+            } else if (error.name === 'SyntaxError') {
+                errorMessage = 'Invalid response from server. Please try again.';
+            } else if (error.message) {
+                errorMessage = `Error: ${error.message}`;
+            }
+            
+            // Show error notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-danger alert-dismissible fade show';
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '9999';
+            notification.style.minWidth = '300px';
+            notification.innerHTML = `
+                <strong>Error!</strong><br>
+                ${errorMessage}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(notification);
+            
+            // Auto-remove notification after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        });
+    }
+
+    // Add event listeners for image preview
+    const logoInput = document.getElementById('{{ form.logo.id_for_label }}');
+    const signatureInput = document.getElementById('{{ form.signature.id_for_label }}');
+    
+    if (logoInput) {
+        logoInput.addEventListener('change', function() {
+            previewImage(this, 'logo-preview');
+        });
+    }
+    
+    if (signatureInput) {
+        signatureInput.addEventListener('change', function() {
+            previewImage(this, 'signature-preview');
+        });
+    }
+
+    // Validate JSON input for custom charges
+    const customChargesInput = document.getElementById('{{ form.custom_charges.id_for_label }}');
+    if (customChargesInput) {
+        customChargesInput.addEventListener('blur', function() {
+            const value = this.value.trim();
+            if (value) {
+                try {
+                    JSON.parse(value);
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } catch (e) {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            }
+        });
+    }
+    
+    // Form validation before submit
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Ensure currency fields are filled if dropdown was used
+            if (currencyDropdown && currencyDropdown.value && !currencyCodeInput.value) {
+                currencyCodeInput.value = currencyDropdown.value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

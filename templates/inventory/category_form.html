@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-light {
+        background-color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-light {
+        color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        background-color: transparent !important;
+    }
+    
+    .category-form-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+    }
+    .form-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .color-picker {
+        width: 60px;
+        height: 40px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .color-preview {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 10px;
+        border: 2px solid #dee2e6;
+    }
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-header pb-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-0">{{ title }}</h6>
+                            <p class="text-sm mb-0">Create and manage inventory categories</p>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'inventory:category_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Categories
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card form-card">
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Category Name -->
+                        <div class="mb-4">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                <strong>Category Name *</strong>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {{ form.name.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="help-text">Enter a unique name for this category</div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <strong>Description</strong>
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {{ form.description.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="help-text">Optional description for this category</div>
+                        </div>
+
+                        <!-- Color Selection -->
+                        <div class="mb-4">
+                            <label for="{{ form.color.id_for_label }}" class="form-label">
+                                <strong>Category Color</strong>
+                            </label>
+                            <div class="d-flex align-items-center">
+                                {{ form.color }}
+                                <div class="color-preview" id="colorPreview"></div>
+                            </div>
+                            {% if form.color.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {{ form.color.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="help-text">Choose a color to represent this category</div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'inventory:category_list' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-submit">
+                                        <i class="fas fa-save"></i> {{ action }} Category
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>About Categories</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-tag fa-2x text-primary mb-2"></i>
+                                <h6>Organization</h6>
+                                <p class="text-muted">Categories help organize your inventory into logical groups for easier management.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-filter fa-2x text-success mb-2"></i>
+                                <h6>Filtering</h6>
+                                <p class="text-muted">Use categories to filter and search through your inventory more efficiently.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-chart-pie fa-2x text-warning mb-2"></i>
+                                <h6>Reporting</h6>
+                                <p class="text-muted">Categories enable better reporting and analysis of your inventory data.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.getElementById('{{ form.color.id_for_label }}');
+    const colorPreview = document.getElementById('colorPreview');
+    
+    // Update color preview when color changes
+    function updateColorPreview() {
+        const color = colorInput.value;
+        colorPreview.style.backgroundColor = color;
+    }
+    
+    colorInput.addEventListener('input', updateColorPreview);
+    colorInput.addEventListener('change', updateColorPreview);
+    
+    // Initialize color preview
+    updateColorPreview();
+    
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    
+    // Auto-generate description if empty
+    const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+    const descriptionInput = document.getElementById('{{ form.description.id_for_label }}');
+    
+    nameInput.addEventListener('blur', function() {
+        if (this.value && !descriptionInput.value) {
+            descriptionInput.value = `Category for ${this.value} items`;
+        }
+    });
+    
+    // Suggest colors based on category name
+    const colorSuggestions = {
+        'electronics': '#007bff',
+        'clothing': '#28a745',
+        'books': '#ffc107',
+        'food': '#dc3545',
+        'tools': '#6c757d',
+        'furniture': '#fd7e14',
+        'sports': '#20c997',
+        'beauty': '#e83e8c',
+        'automotive': '#6f42c1',
+        'garden': '#198754'
+    };
+    
+    nameInput.addEventListener('input', function() {
+        const name = this.value.toLowerCase();
+        for (const [keyword, color] of Object.entries(colorSuggestions)) {
+            if (name.includes(keyword)) {
+                colorInput.value = color;
+                updateColorPreview();
+                break;
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

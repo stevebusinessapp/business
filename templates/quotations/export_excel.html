@@ -1,0 +1,52 @@
+<table>
+    <thead>
+        <tr>
+            <th>Quotation Number</th>
+            <th>Date</th>
+            <th>Client</th>
+            <th>Status</th>
+            <th>Subtotal</th>
+            <th>Tax</th>
+            <th>Discount</th>
+            <th>Shipping</th>
+            <th>Other Charges</th>
+            <th>Total</th>
+            {% if quotation.template and quotation.template.layout_config %}
+                {% for col in quotation.template.layout_config|safe|json_loads %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            {% endif %}
+            {% if quotation.template and quotation.template.header_fields_config %}
+                {% for field in quotation.template.header_fields_config %}
+                    <th>{{ field.name }}</th>
+                {% endfor %}
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for quotation in quotations %}
+        <tr>
+            <td>{{ quotation.number }}</td>
+            <td>{{ quotation.date }}</td>
+            <td>{{ quotation.client }}</td>
+            <td>{{ quotation.get_status_display }}</td>
+            <td>{{ quotation.subtotal }}</td>
+            <td>{{ quotation.tax }}</td>
+            <td>{{ quotation.discount }}</td>
+            <td>{{ quotation.shipping }}</td>
+            <td>{{ quotation.other_charges }}</td>
+            <td>{{ quotation.total }}</td>
+            {% if quotation.template and quotation.template.layout_config %}
+                {% for col in quotation.template.layout_config|safe|json_loads %}
+                    <td>{{ quotation.custom_fields|get_item:col }}</td>
+                {% endfor %}
+            {% endif %}
+            {% if quotation.template and quotation.template.header_fields_config %}
+                {% for field in quotation.template.header_fields_config %}
+                    <td>{{ quotation.header_custom_fields|get_item:field.name }}</td>
+                {% endfor %}
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table> 

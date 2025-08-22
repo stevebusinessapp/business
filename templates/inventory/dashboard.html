@@ -1,0 +1,480 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inventory Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .low-stock-alert {
+        border-left: 4px solid #dc3545;
+        background-color: #f8d7da;
+    }
+    .category-card {
+        border-left: 4px solid var(--bs-primary);
+    }
+    .activity-item {
+        border-left: 3px solid var(--bs-primary);
+        padding-left: 15px;
+        margin-bottom: 10px;
+    }
+    .quick-action-btn {
+        transition: all 0.3s;
+    }
+    .quick-action-btn:hover {
+        transform: scale(1.05);
+    }
+    
+    /* Category color indicator */
+    .category-color-indicator {
+        background-color: #ccc; /* Default fallback color */
+    }
+    
+    /* Circular icon fixes */
+    .icon-shape {
+        width: 48px;
+        height: 48px;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 50% !important;
+        background: white !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        position: relative !important;
+    }
+    .icon-shape i {
+        font-size: 1.5rem !important;
+        opacity: 1 !important;
+        color: #007bff !important;
+        display: block !important;
+        text-align: center !important;
+        line-height: 1 !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+    .bg-gradient-primary .icon-shape i {
+        color: #007bff !important;
+    }
+    .bg-gradient-success .icon-shape i {
+        color: #28a745 !important;
+    }
+    .bg-gradient-warning .icon-shape i {
+        color: #ffc107 !important;
+    }
+    .bg-gradient-danger .icon-shape i {
+        color: #dc3545 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-0">Inventory Dashboard</h6>
+                            <p class="text-sm mb-0">Manage your inventory and track stock levels</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'inventory:create' %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Add Product
+                                </a>
+                                <a href="{% url 'inventory:import' %}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-upload"></i> Import
+                                </a>
+                                <a href="{% url 'inventory:export' %}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-download"></i> Export
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Products</p>
+                                <h5 class="font-weight-bolder">{{ total_products }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="fas fa-boxes text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Value</p>
+                                <h5 class="font-weight-bolder">{{ user_currency_symbol }}{{ total_value|floatformat:2 }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="fas fa-dollar-sign text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card stat-card {% if low_stock_count > 0 %}low-stock-alert{% endif %}">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Low Stock</p>
+                                <h5 class="font-weight-bolder">{{ low_stock_count }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="fas fa-exclamation-triangle text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Out of Stock</p>
+                                <h5 class="font-weight-bolder">{{ out_of_stock_count }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-danger shadow-danger text-center rounded-circle">
+                                <i class="fas fa-times-circle text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Low Stock Alerts -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Low Stock Alerts</h6>
+                    <p class="text-sm mb-0">
+                        <i class="fa fa-arrow-up text-warning" aria-hidden="true"></i>
+                        <span class="font-weight-bold">{{ low_stock_count }}</span> items need attention
+                    </p>
+                </div>
+                <div class="card-body p-3">
+                    {% if low_stock_products %}
+                        <div class="table-responsive">
+                            <table class="table align-items-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Product</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Stock</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Threshold</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in low_stock_products %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex px-2 py-1">
+                                                <div class="d-flex flex-column justify-content-center">
+                                                    <h6 class="mb-0 text-sm">{{ product.product_name }}</h6>
+                                                    <p class="text-xs text-secondary mb-0">{{ product.sku_code }}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <p class="text-xs font-weight-bold mb-0">{{ product.quantity_in_stock }}</p>
+                                        </td>
+                                        <td>
+                                            <p class="text-xs text-secondary mb-0">{{ product.minimum_threshold }}</p>
+                                        </td>
+                                        <td class="align-middle">
+                                            <a href="{% url 'inventory:stock_adjustment' product.pk %}" class="btn btn-sm btn-warning">
+                                                Adjust
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'inventory:list' %}?stock_status=low_stock" class="btn btn-sm btn-warning">
+                                View All Low Stock Items
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                            <p class="text-muted">No low stock alerts!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Recent Activity</h6>
+                    <p class="text-sm mb-0">Latest inventory changes</p>
+                </div>
+                <div class="card-body p-3">
+                    {% if recent_logs %}
+                        {% for log in recent_logs %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-sm font-weight-bold mb-0">{{ log.get_log_type_display }}</h6>
+                                    <p class="text-xs text-secondary mb-0">{{ log.description }}</p>
+                                    {% if log.product %}
+                                        <p class="text-xs text-muted mb-0">{{ log.product.product_name }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <p class="text-xs text-secondary mb-0">{{ log.created_at|timesince }} ago</p>
+                                    {% if log.quantity_change %}
+                                        <span class="badge {% if log.quantity_change > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                            {% if log.quantity_change > 0 %}+{% endif %}{{ log.quantity_change }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle text-info fa-3x mb-3"></i>
+                            <p class="text-muted">No recent activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Distribution -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Category Distribution</h6>
+                    <p class="text-sm mb-0">Products by category</p>
+                </div>
+                <div class="card-body p-3">
+                    {% if category_stats %}
+                        <div class="table-responsive">
+                            <table class="table align-items-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Category</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Products</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Value</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Color</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for category in category_stats %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex px-2 py-1">
+                                                <div class="d-flex flex-column justify-content-center">
+                                                    <h6 class="mb-0 text-sm">{{ category.name }}</h6>
+                                                    {% if category.description %}
+                                                        <p class="text-xs text-secondary mb-0">{{ category.description|truncatechars:50 }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <p class="text-xs font-weight-bold mb-0">{{ category.product_count }}</p>
+                                        </td>
+                                        <td>
+                                            <p class="text-xs text-secondary mb-0">${{ category.category_value|default:0|floatformat:2 }}</p>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-2 category-color-indicator" style="width: 20px; height: 20px; border-radius: 3px;" data-color="{{ category.color }}"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-tags text-muted fa-3x mb-3"></i>
+                            <p class="text-muted">No categories created yet</p>
+                            <a href="{% url 'inventory:category_create' %}" class="btn btn-sm btn-primary">
+                                Create First Category
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Quick Actions</h6>
+                    <p class="text-sm mb-0">Common inventory tasks</p>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-grid gap-2">
+                                                    <a href="{% url 'inventory:create' %}" class="btn btn-primary quick-action-btn">
+                            <i class="fas fa-plus me-2"></i>Add New Product
+                        </a>
+                        <a href="{% url 'inventory:list' %}" class="btn btn-primary quick-action-btn">
+                            <i class="fas fa-list me-2"></i>View All Products
+                        </a>
+                        <a href="{% url 'inventory:category_create' %}" class="btn btn-info quick-action-btn">
+                            <i class="fas fa-tag me-2"></i>Create Category
+                        </a>
+                        <a href="{% url 'inventory:layout_create' %}" class="btn btn-success quick-action-btn">
+                            <i class="fas fa-edit me-2"></i>Create Layout
+                        </a>
+                                                    <a href="{% url 'inventory:import' %}" class="btn btn-warning quick-action-btn">
+                            <i class="fas fa-upload me-2"></i>Import from Excel
+                        </a>
+                                                    <a href="{% url 'inventory:export' %}" class="btn btn-secondary quick-action-btn">
+                            <i class="fas fa-download me-2"></i>Export Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh dashboard every 5 minutes
+    setTimeout(function() {
+        location.reload();
+    }, 300000);
+    
+    // Add some interactivity
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set category colors dynamically
+        document.querySelectorAll('.category-color-indicator').forEach(function(element) {
+            const color = element.getAttribute('data-color');
+            if (color) {
+                element.style.backgroundColor = color;
+            }
+        });
+        
+        // Animate stat cards on load
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %} 

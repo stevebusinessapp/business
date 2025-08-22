@@ -1,0 +1,517 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-light {
+        background-color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-light {
+        color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        background-color: transparent !important;
+    }
+    
+    .form-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+    }
+    .form-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .field-group {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .field-group h6 {
+        color: #495057;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-header pb-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-0">{{ title }}</h6>
+                            <p class="text-sm mb-0">Enter product information below</p>
+                        </div>
+                        <div class="col-auto">
+                                        <a href="{% url 'inventory:list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="field-group">
+                            <h6><i class="fas fa-info-circle me-2"></i>Basic Information</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.product_name.id_for_label }}" class="form-label required-field">
+                                        Product Name
+                                    </label>
+                                    {{ form.product_name }}
+                                    {% if form.product_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.product_name.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Enter the name of the product</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.sku_code.id_for_label }}" class="form-label required-field">
+                                        SKU Code
+                                    </label>
+                                    {{ form.sku_code }}
+                                    {% if form.sku_code.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.sku_code.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Unique stock keeping unit code</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">
+                                        Category
+                                    </label>
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.category.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Select a category or leave blank</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.supplier.id_for_label }}" class="form-label">
+                                        Supplier
+                                    </label>
+                                    {{ form.supplier }}
+                                    {% if form.supplier.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.supplier.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Name of the supplier</div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    Description
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.description.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="help-text">Detailed description of the product</div>
+                            </div>
+                        </div>
+
+                        <!-- Stock Information -->
+                        <div class="field-group">
+                            <h6><i class="fas fa-boxes me-2"></i>Stock Information</h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.quantity_in_stock.id_for_label }}" class="form-label">
+                                        Quantity in Stock
+                                    </label>
+                                    {{ form.quantity_in_stock }}
+                                    {% if form.quantity_in_stock.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.quantity_in_stock.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Current available quantity</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.minimum_threshold.id_for_label }}" class="form-label">
+                                        Minimum Threshold
+                                    </label>
+                                    {{ form.minimum_threshold }}
+                                    {% if form.minimum_threshold.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.minimum_threshold.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Alert when stock falls below this level</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="{{ form.unit_price.id_for_label }}" class="form-label">
+                                        Unit Price
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">{{ user_currency_symbol }}</span>
+                                        {{ form.unit_price }}
+                                    </div>
+                                    {% if form.unit_price.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.unit_price.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Cost per unit</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Real-time Calculation Preview -->
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="calculation-preview" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+                                        <h6 class="mb-2"><i class="fas fa-calculator text-success"></i> Total Value Preview</h6>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <strong>Quantity:</strong> <span id="preview-quantity">0</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Unit Price:</strong> <span id="preview-price">₦0.00</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <strong>Total Value:</strong> <span id="preview-total" class="text-success fw-bold">₦0.00</span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <small class="text-muted">Updates in real-time as you type</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="field-group">
+                            <h6><i class="fas fa-plus-circle me-2"></i>Additional Information</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.location.id_for_label }}" class="form-label">
+                                        Storage Location
+                                    </label>
+                                    {{ form.location }}
+                                    {% if form.location.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.location.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Where the product is stored</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.expiry_date.id_for_label }}" class="form-label">
+                                        Expiry Date
+                                    </label>
+                                    {{ form.expiry_date }}
+                                    {% if form.expiry_date.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.expiry_date.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Expiration date (if applicable)</div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    Notes
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.notes.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="help-text">Additional notes or comments</div>
+                            </div>
+                        </div>
+
+                        <!-- Status Information -->
+                        <div class="field-group">
+                            <h6><i class="fas fa-toggle-on me-2"></i>Status Information</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">
+                                        Status
+                                    </label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.status.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Current status of the item</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check mt-4">
+                                        {{ form.is_active }}
+                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                            Active
+                                        </label>
+                                    </div>
+                                    {% if form.is_active.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.is_active.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="help-text">Check if this item is active</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'inventory:list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-submit">
+                                        <i class="fas fa-save"></i> {% if item %}Update{% else %}Create{% endif %} Product
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-body">
+                    <h6 class="mb-3">Quick Actions</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:category_create' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-tag"></i> Create Category
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:import' %}" class="btn btn-info w-100">
+                                <i class="fas fa-upload"></i> Import Products
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:layout_create' %}" class="btn btn-success w-100">
+                                <i class="fas fa-edit"></i> Create Layout
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'inventory:export' %}" class="btn btn-warning w-100">
+                                <i class="fas fa-download"></i> Export Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Calculation Info -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-body">
+                    <div class="alert alert-info mb-0">
+                        <h6 class="alert-heading"><i class="fas fa-info-circle"></i> Real-time Calculation Features</h6>
+                        <p class="mb-2">Once you create this item, it will automatically have the following features enabled:</p>
+                        <ul class="mb-0">
+                            <li><strong>Real-time editing:</strong> Click on quantity or price fields to edit directly in the table</li>
+                            <li><strong>Automatic calculations:</strong> Totals update instantly as you type</li>
+                            <li><strong>Visual feedback:</strong> Fields highlight during editing</li>
+                            <li><strong>Auto-save:</strong> Changes are saved automatically via AJAX</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    
+    // Real-time calculation preview
+    const quantityInput = document.getElementById('{{ form.quantity_in_stock.id_for_label }}');
+    const priceInput = document.getElementById('{{ form.unit_price.id_for_label }}');
+    const previewQuantity = document.getElementById('preview-quantity');
+    const previewPrice = document.getElementById('preview-price');
+    const previewTotal = document.getElementById('preview-total');
+    
+    function updateCalculationPreview() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const total = quantity * price;
+        
+        previewQuantity.textContent = quantity;
+        const currencySymbol = '{{ user_currency_symbol }}';
+        previewPrice.textContent = `${currencySymbol}${price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        previewTotal.textContent = `${currencySymbol}${total.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        
+        // Add visual feedback
+        if (total > 0) {
+            previewTotal.style.color = '#28a745';
+            previewTotal.style.fontWeight = 'bold';
+        } else {
+            previewTotal.style.color = '#6c757d';
+            previewTotal.style.fontWeight = 'normal';
+        }
+    }
+    
+    // Add event listeners for real-time updates
+    if (quantityInput) {
+        quantityInput.addEventListener('input', updateCalculationPreview);
+    }
+    if (priceInput) {
+        priceInput.addEventListener('input', updateCalculationPreview);
+    }
+    
+    // Initial calculation
+    updateCalculationPreview();
+    
+    // Form validation
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    }
+    
+    // Auto-generate SKU if empty
+    const skuInput = document.getElementById('{{ form.sku_code.id_for_label }}');
+    const productNameInput = document.getElementById('{{ form.product_name.id_for_label }}');
+    
+    if (skuInput && productNameInput) {
+        productNameInput.addEventListener('input', function() {
+            if (!skuInput.value.trim()) {
+                const productName = this.value.trim();
+                if (productName) {
+                    const sku = productName.substring(0, 3).toUpperCase() + 
+                               Date.now().toString().substring(-4);
+                    skuInput.value = sku;
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

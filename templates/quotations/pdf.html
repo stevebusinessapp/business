@@ -1,0 +1,77 @@
+{% extends 'base_print.html' %}
+{% block content %}
+<div class="pdf-container">
+    <div class="header" style="border-bottom: 4px solid {{ quotation.template.color_scheme|default:'#1976d2' }};">
+        <img src="{{ company.logo.url }}" alt="Logo" height="60" style="float:right;">
+        <h2 style="color: {{ quotation.template.color_scheme|default:'#1976d2' }};">{{ company.name }}</h2>
+        <p>{{ company.address }}<br>{{ company.email }} | {{ company.phone }}</p>
+    </div>
+    <hr>
+    <h3 style="color: {{ quotation.template.color_scheme|default:'#1976d2' }};">Quotation: {{ quotation.number }}</h3>
+    <p>Date: {{ quotation.date }}</p>
+    <p>Status: {{ quotation.get_status_display }}</p>
+    <div class="client-info">
+        <h4>Client</h4>
+        <p>{{ quotation.client.name }}<br>{{ quotation.client.address }}<br>{{ quotation.client.email }} | {{ quotation.client.phone }}</p>
+    </div>
+    {% if quotation.template and quotation.template.header_fields_config %}
+        <h4>Custom Header Fields</h4>
+        <ul>
+            {% for field in quotation.template.header_fields_config %}
+                <li><strong>{{ field.name }}:</strong> {{ quotation.header_custom_fields|get_item:field.name }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <table class="table table-bordered mt-3" style="border-color: {{ quotation.template.color_scheme|default:'#1976d2' }};">
+        <thead style="background: {{ quotation.template.color_scheme|default:'#1976d2' }}; color: #fff;">
+            <tr>
+                <th>Description</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+                {% if quotation.template and quotation.template.layout_config %}
+                    {% for col in quotation.template.layout_config|safe|json_loads %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_price }}</td>
+                <td>{{ item.total }}</td>
+                {% if quotation.template and quotation.template.layout_config %}
+                    {% for col in quotation.template.layout_config|safe|json_loads %}
+                        <td>{{ item.custom_fields|get_item:col }}</td>
+                    {% endfor %}
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="totals mt-3">
+        <p>Subtotal: {{ currency_symbol }}{{ quotation.subtotal }}</p>
+        <p>Tax: {{ currency_symbol }}{{ quotation.tax }}</p>
+        <p>Discount: {{ currency_symbol }}{{ quotation.discount }}</p>
+        <p>Shipping: {{ currency_symbol }}{{ quotation.shipping }}</p>
+        <p>Other Charges: {{ currency_symbol }}{{ quotation.other_charges }}</p>
+        <h4>Total: {{ formatted_total }}</h4>
+        <p>Total (in words): <em>{{ total_words }}</em></p>
+    </div>
+    <div class="terms mt-3">
+        <h5>Terms & Conditions</h5>
+        <p>{{ quotation.terms|default:quotation.template.default_terms }}</p>
+    </div>
+    {% if quotation.template.footer_notes %}
+    <div class="footer mt-4" style="color: {{ quotation.template.color_scheme|default:'#1976d2' }};">
+        <p>{{ quotation.template.footer_notes }}</p>
+    </div>
+    {% endif %}
+    <div class="footer mt-4">
+        <p>{{ company.name }} &copy; {{ year }}</p>
+    </div>
+</div>
+{% endblock %} 

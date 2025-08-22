@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Template {{ template.name }} - Multi-Purpose Business App{% endblock %}
+{% block page_title %}Delete Template{% endblock %}
+{% block breadcrumb %}Delete Template{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-danger shadow-danger border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3">Confirm Template Deletion</h6>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <div class="text-center mb-4">
+          <i class="material-icons text-danger" style="font-size: 64px;">warning</i>
+          <h4 class="mt-3">Delete Template "{{ template.name }}"?</h4>
+          <p class="text-muted">This action cannot be undone. The template and its configuration will be permanently deleted.</p>
+        </div>
+        
+        <!-- Template Summary -->
+        <div class="card border-light mb-4">
+          <div class="card-body">
+            <h6 class="card-title text-danger">Template Details</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Template Name:</strong> {{ template.name }}</p>
+                <p><strong>Document Title:</strong> {{ template.document_title }}</p>
+                <p><strong>Number Prefix:</strong> {{ template.number_prefix }}</p>
+                <p><strong>Status:</strong> 
+                  {% if template.is_default %}
+                    <span class="badge bg-warning">Default Template</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Custom Template</span>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Created:</strong> {{ template.created_at|date:"M d, Y" }}</p>
+                <p><strong>Last Updated:</strong> {{ template.updated_at|date:"M d, Y" }}</p>
+                <p><strong>Custom Fields:</strong> {{ template.custom_fields|length }} section{{ template.custom_fields|length|pluralize }}</p>
+                <p><strong>Table Columns:</strong> {{ template.table_columns|length }} column{{ template.table_columns|length|pluralize }}</p>
+              </div>
+            </div>
+            
+            {% if template.description %}
+            <div class="mt-3">
+              <p><strong>Description:</strong></p>
+              <p class="text-muted">{{ template.description|truncatewords:30 }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Color Preview -->
+            <div class="mt-3">
+              <strong>Colors:</strong>
+              <div class="d-flex gap-2 mt-2">
+                <div class="text-center">
+                  <div style="background: {{ template.primary_color }}; width: 40px; height: 30px; border-radius: 4px; border: 1px solid #ddd;"></div>
+                  <small class="text-muted">Primary</small>
+                </div>
+                <div class="text-center">
+                  <div style="background: {{ template.secondary_color }}; width: 40px; height: 30px; border-radius: 4px; border: 1px solid #ddd;"></div>
+                  <small class="text-muted">Secondary</small>
+                </div>
+                <div class="text-center">
+                  <div style="background: {{ template.text_color }}; width: 40px; height: 30px; border-radius: 4px; border: 1px solid #ddd;"></div>
+                  <small class="text-muted">Text</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Warning Messages -->
+        {% if template.is_default %}
+        <div class="alert alert-warning" role="alert">
+          <h6><i class="material-icons text-sm me-2">star</i>Default Template Warning!</h6>
+          <p class="mb-0">This is your default template. If you delete it:</p>
+          <ul class="mt-2 mb-0">
+            <li>A new default template will be automatically created</li>
+            <li>All future waybills will use the new default template</li>
+            <li>Existing waybills using this template will still work</li>
+          </ul>
+        </div>
+        {% endif %}
+        
+        <div class="alert alert-danger" role="alert">
+          <h6><i class="material-icons text-sm me-2">error</i>Deletion Warning!</h6>
+          <p class="mb-0">Deleting this template will:</p>
+          <ul class="mt-2 mb-0">
+            <li>Remove the template permanently from your account</li>
+            <li>Delete all custom field configurations</li>
+            <li>Remove table column customizations</li>
+            <li>This action cannot be reversed</li>
+          </ul>
+          <p class="mt-2 mb-0"><strong>Note:</strong> Existing waybills created with this template will continue to work normally.</p>
+        </div>
+        
+        <!-- Alternative Actions -->
+        <div class="alert alert-info" role="alert">
+          <h6><i class="material-icons text-sm me-2">lightbulb</i>Consider These Alternatives:</h6>
+          <ul class="mb-0">
+            <li><a href="{% url 'waybills:template_edit' template.pk %}" class="text-primary">Edit the template</a> to modify its settings</li>
+            <li><a href="{% url 'waybills:template_duplicate' template.pk %}" class="text-primary">Duplicate the template</a> to create a backup first</li>
+            <li>Keep the template but create a new default template instead</li>
+          </ul>
+        </div>
+        
+        <!-- Action Buttons -->
+        <form method="post" class="d-inline">
+          {% csrf_token %}
+          <div class="text-center">
+            <a href="{% url 'waybills:template_detail' template.pk %}" class="btn btn-outline-secondary me-3">
+              <i class="material-icons text-sm">arrow_back</i> Cancel
+            </a>
+            <a href="{% url 'waybills:template_duplicate' template.pk %}" class="btn btn-outline-primary me-3">
+              <i class="material-icons text-sm">content_copy</i> Duplicate First
+            </a>
+            <button type="submit" class="btn btn-danger" onclick="return confirmDeletion()">
+              <i class="material-icons text-sm">delete_forever</i> Delete Template
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.d-flex.gap-2 {
+  gap: 0.5rem !important;
+}
+
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.alert {
+  border-radius: 8px;
+}
+
+.alert ul {
+  padding-left: 1.5rem;
+}
+
+.alert a {
+  text-decoration: none;
+}
+
+.alert a:hover {
+  text-decoration: underline;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDeletion() {
+    const templateName = '{{ template.name }}';
+    const isDefault = {{ template.is_default|yesno:"true,false" }};
+    
+    let message = `Are you absolutely sure you want to delete the template "${templateName}"?\n\n`;
+    message += 'This will permanently remove:\n';
+    message += '- The template configuration\n';
+    message += '- All custom field settings\n';
+    message += '- Table column customizations\n\n';
+    
+    if (isDefault) {
+        message += 'WARNING: This is your default template!\n';
+        message += 'A new default template will be created automatically.\n\n';
+    }
+    
+    message += 'This action cannot be undone!';
+    
+    return confirm(message);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Escape key - cancel
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        window.location.href = '{% url "waybills:template_detail" template.pk %}';
+    }
+    
+    // Alt + D: Duplicate template
+    if (e.altKey && e.key === 'd') {
+        e.preventDefault();
+        window.location.href = '{% url "waybills:template_duplicate" template.pk %}';
+    }
+});
+
+// Focus management
+document.addEventListener('DOMContentLoaded', function() {
+    // Focus on cancel button by default (safer choice)
+    const cancelButton = document.querySelector('a[href*="template_detail"]');
+    if (cancelButton) {
+        cancelButton.focus();
+    }
+});
+
+// Show additional confirmation for default templates
+{% if template.is_default %}
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!confirm('This is your DEFAULT template. Are you really sure you want to delete it?')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,664 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" href="{% static 'img/apple-icon.png' %}">
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+  <title>{% block title %}Multi-Purpose Business App{% endblock %}</title>
+  
+  <!-- Currency Meta Tags -->
+  <meta name="currency-symbol" content="{{ user_currency_symbol|default:'$' }}">
+  <meta name="currency-code" content="{{ user_currency_code|default:'USD' }}">
+  
+  <!-- PERFORMANCE OPTIMIZATION - Critical resource hints -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- FontAwesome preconnect removed due to 403 error -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  
+  <!-- Preload critical fonts -->
+  <link rel="preload" href="https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="https://fonts.gstatic.com/s/materialicons/v140/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2" as="font" type="font/woff2" crossorigin>
+  
+  <!-- Optimized font loading with display=swap -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Slab:wght@400;700&display=swap">
+  
+  <!-- Essential icons only -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <!-- Local assets -->
+  <link href="{% static 'css/nucleo-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'css/nucleo-svg.css' %}" rel="stylesheet">
+  
+  <!-- Fallback CDN ready -->
+  <!-- CSS Files -->
+  <link id="pagestyle" href="{% static 'css/material-dashboard.css' %}?v=3.0.0" rel="stylesheet" />
+  
+  <style>
+    /* Button visibility fixes - Global */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    
+    /* Additional button styles for missing variants */
+    .btn-outline-white {
+        color: #ffffff !important;
+        border-color: #ffffff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-white:hover {
+        color: #000000 !important;
+        background-color: #ffffff !important;
+    }
+    
+    .btn-outline-info {
+        color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+        background-color: transparent !important;
+    }
+    
+    .btn-outline-warning {
+        color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        background-color: transparent !important;
+    }
+    
+    .btn-outline-light {
+        color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        background-color: transparent !important;
+    }
+    
+    .btn-outline-dark {
+        color: #343a40 !important;
+        border-color: #343a40 !important;
+        background-color: transparent !important;
+    }
+    
+    /* Fix for buttons with only 'btn' class */
+    .btn:not([class*="btn-"]) {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+        color: white !important;
+    }
+    
+    /* Ensure all buttons have proper hover states */
+    .btn:hover {
+        opacity: 0.9;
+    }
+    
+    /* Fix for any custom button classes */
+    .btn-submit {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+        color: white !important;
+    }
+    
+    .btn-action {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+        color: white !important;
+    }
+    
+    /* Light button styling */
+    .btn-light {
+        background-color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    .btn-light:hover {
+        background-color: #e2e6ea !important;
+        border-color: #dae0e5 !important;
+        color: #212529 !important;
+    }
+    
+    /* Link button styling */
+    .btn-link {
+        background-color: transparent !important;
+        border-color: transparent !important;
+        color: #007bff !important;
+        text-decoration: none !important;
+    }
+    .btn-link:hover {
+        background-color: transparent !important;
+        border-color: transparent !important;
+        color: #0056b3 !important;
+        text-decoration: underline !important;
+    }
+    
+    /* Additional button size and state styles */
+    .btn-sm {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.875rem !important;
+        border-radius: 0.2rem !important;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem !important;
+        font-size: 1.25rem !important;
+        border-radius: 0.3rem !important;
+    }
+    
+    /* Disabled button styling */
+    .btn:disabled,
+    .btn.disabled {
+        opacity: 0.65 !important;
+        pointer-events: none !important;
+    }
+    
+    /* Close button styling */
+    .btn-close {
+        background-color: transparent !important;
+        border: 0 !important;
+        color: #000 !important;
+        opacity: 0.5 !important;
+    }
+    .btn-close:hover {
+        opacity: 0.75 !important;
+    }
+    
+    /* Quick action button styling */
+    .quick-action-btn {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+        color: white !important;
+        margin: 0.25rem !important;
+    }
+    
+    /* COMPLETE ICON FIX - Override all conflicting styles */
+    .material-icons {
+      font-family: 'Material Icons' !important;
+      font-weight: normal !important;
+      font-style: normal !important;
+      font-size: 24px !important;
+      line-height: 1 !important;
+      letter-spacing: normal !important;
+      text-transform: none !important;
+      display: inline-block !important;
+      white-space: nowrap !important;
+      word-wrap: normal !important;
+      direction: ltr !important;
+    }
+    
+    /* Font Awesome Icon Fixes */
+    .fas, .far, .fab, .fa {
+      font-family: 'Font Awesome 6 Free', 'Font Awesome 6 Pro', 'Font Awesome 6 Brands' !important;
+      font-weight: 900 !important;
+      font-style: normal !important;
+      font-variant: normal !important;
+      text-rendering: auto !important;
+      -webkit-font-smoothing: antialiased !important;
+      -moz-osx-font-smoothing: grayscale !important;
+      display: inline-block !important;
+      speak: none !important;
+      font-feature-settings: normal !important;
+      font-variant-ligatures: normal !important;
+      text-transform: none !important;
+    }
+    
+    .far {
+      font-weight: 400 !important;
+    }
+    
+    .fab {
+      font-weight: 400 !important;
+    }
+    
+    /* Ensure Font Awesome icons are visible */
+    .fas::before, .far::before, .fab::before, .fa::before {
+      display: inline-block !important;
+      font-style: normal !important;
+      font-variant: normal !important;
+      text-rendering: auto !important;
+      -webkit-font-smoothing: antialiased !important;
+    }
+    
+    /* Material Icons fixes */
+    .material-icons {
+      -webkit-font-feature-settings: 'liga' !important;
+      -webkit-font-smoothing: antialiased !important;
+      text-rendering: optimizeLegibility !important;
+      -moz-osx-font-smoothing: grayscale !important;
+      font-feature-settings: 'liga' !important;
+      vertical-align: middle !important;
+      overflow: visible !important;
+      height: auto !important;
+      min-height: auto !important;
+      max-height: none !important;
+      width: auto !important;
+      min-width: auto !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      background: none !important;
+      box-shadow: none !important;
+      position: static !important;
+    }
+    
+    /* Sidebar icons specific sizing */
+    .sidenav .nav-link .material-icons {
+      font-size: 16px !important;
+      margin-right: 8px !important;
+    }
+    
+    /* Navbar icons */
+    .navbar .material-icons {
+      font-size: 18px !important;
+    }
+    
+    /* Button icons */
+    .btn .material-icons {
+      font-size: 16px !important;
+      vertical-align: middle !important;
+    }
+    
+    /* Card header icons */
+    .card-header .material-icons {
+      font-size: 20px !important;
+    }
+    
+    /* Large icons */
+    .icon .material-icons {
+      font-size: 24px !important;
+    }
+    
+    /* Ensure icons work in all contexts */
+    .material-icons.text-xs { font-size: 12px !important; }
+    .material-icons.text-sm { font-size: 14px !important; }
+    .material-icons.text-lg { font-size: 20px !important; }
+    .material-icons.text-xl { font-size: 24px !important; }
+    
+    /* Fix any layout issues with icons */
+    .d-flex .material-icons {
+      align-self: center !important;
+    }
+    
+    /* Override any invoice template conflicts */
+    .invoice-creator .material-icons,
+    .invoice-preview .material-icons {
+      font-family: 'Material Icons' !important;
+      display: inline-block !important;
+      font-size: inherit !important;
+      line-height: inherit !important;
+      vertical-align: middle !important;
+    }
+  </style>
+  
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body class="g-sidenav-show bg-gray-200" 
+      data-currency-symbol="{{ user_currency_symbol|default:'$' }}" 
+      data-currency-code="{{ user_currency_code|default:'USD' }}">
+  <!-- Sidebar -->
+  <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 bg-gradient-dark" id="sidenav-main">
+    <div class="sidenav-header">
+      <i class="fas fa-times p-3 cursor-pointer text-white opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
+      <a class="navbar-brand m-0" href="{% url 'core:dashboard' %}">
+        {% if company_logo %}
+          <img src="{{ company_logo }}" class="navbar-brand-img h-100" alt="logo">
+        {% else %}
+          <img src="{% static 'img/logo-ct.png' %}" class="navbar-brand-img h-100" alt="logo">
+        {% endif %}
+        <span class="ms-1 font-weight-bold text-white">
+          {% if company_profile.company_name %}{{ company_profile.company_name }}{% else %}Business App{% endif %}
+        </span>
+      </a>
+    </div>
+    <hr class="horizontal light mt-0 mb-2">
+    
+    <div class="collapse navbar-collapse w-auto max-height-vh-100" id="sidenav-collapse-main">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link text-white {% if request.resolver_match.view_name == 'core:dashboard' %}active bg-gradient-primary{% endif %}" href="{% url 'core:dashboard' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="dashboard">dashboard</i>
+            </div>
+            <span class="nav-link-text ms-1">Dashboard</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white {% if 'invoices' in request.resolver_match.namespace and 'template' not in request.resolver_match.view_name %}active bg-gradient-primary{% endif %}" href="{% url 'invoices:list' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="receipt_long">receipt_long</i>
+            </div>
+            <span class="nav-link-text ms-1">Invoices</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white {% if 'template' in request.resolver_match.view_name %}active bg-gradient-primary{% endif %}" href="{% url 'invoices:template_list' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="palette">palette</i>
+            </div>
+            <span class="nav-link-text ms-1">Invoice Templates</span>
+          </a>
+        </li>
+        
+        <!-- Placeholder menu items - will be activated as modules are implemented -->
+        <li class="nav-item">
+          <a class="nav-link text-white {% if request.resolver_match.app_name == 'receipts' %}active bg-gradient-primary{% endif %}" href="{% url 'receipts:list' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="receipt">receipt</i>
+            </div>
+            <span class="nav-link-text ms-1">Receipts</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white {% if request.resolver_match.app_name == 'waybills' %}active bg-gradient-primary{% endif %}" href="{% url 'waybills:list' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="local_shipping">local_shipping</i>
+            </div>
+            <span class="nav-link-text ms-1">Waybills</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white {% if request.resolver_match.app_name == 'job_orders' %}active bg-gradient-primary{% endif %}" href="{% url 'job_orders:joborder_list' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="work">work</i>
+            </div>
+            <span class="nav-link-text ms-1">Job Orders</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white {% if request.resolver_match.app_name == 'job_orders' and request.resolver_match.url_name == 'layout_list' %}active bg-gradient-primary{% endif %}" href="{% url 'job_orders:layout_list' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="table_chart">table_chart</i>
+            </div>
+            <span class="nav-link-text ms-1">Job Order Layouts</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white {% if request.resolver_match.app_name == 'quotations' %}active bg-gradient-primary{% endif %}" href="{% url 'quotations:quotation_list' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="request_quote">request_quote</i>
+            </div>
+            <span class="nav-link-text ms-1">Quotations</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white disabled" href="#" title="Coming Soon">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="money_off">money_off</i>
+            </div>
+            <span class="nav-link-text ms-1">Expenses</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white {% if request.resolver_match.app_name == 'inventory' and 'template' not in request.resolver_match.view_name %}active bg-gradient-primary{% endif %}" href="{% url 'inventory:dashboard' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="inventory">inventory</i>
+            </div>
+            <span class="nav-link-text ms-1">Inventory</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white {% if 'inventory' in request.resolver_match.app_name and 'template' in request.resolver_match.view_name %}active bg-gradient-primary{% endif %}" href="{% url 'inventory:template_list' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="layers">layers</i>
+            </div>
+            <span class="nav-link-text ms-1">Inventory Templates</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'clients:client_list' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="people">people</i>
+            </div>
+            <span class="nav-link-text ms-1">Clients</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white {% if request.resolver_match.app_name == 'accounting' %}active bg-gradient-primary{% endif %}" href="{% url 'accounting:dashboard' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="bar_chart">bar_chart</i>
+            </div>
+            <span class="nav-link-text ms-1">Accounting</span>
+          </a>
+        </li>
+        
+        <li class="nav-item mt-3">
+          <h6 class="ps-4 ms-2 text-uppercase text-xs text-white font-weight-bolder opacity-8">Account</h6>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'core:company_profile' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="business">business</i>
+            </div>
+            <span class="nav-link-text ms-1">Company Profile</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'accounts:logout' %}">
+            <div class="text-white text-center me-2 d-flex align-items-center justify-content-center">
+              <i class="material-icons opacity-10" data-icon="logout">logout</i>
+            </div>
+            <span class="nav-link-text ms-1">Sign Out</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </aside>
+  
+  <!-- Main Content -->
+  <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg ">
+    <!-- Navbar -->
+    <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
+      <div class="container-fluid py-1 px-3">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+            <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="{% url 'core:dashboard' %}">Pages</a></li>
+            <li class="breadcrumb-item text-sm text-dark active" aria-current="page">{% block breadcrumb %}Dashboard{% endblock %}</li>
+          </ol>
+          <h6 class="font-weight-bolder mb-0">{% block page_title %}Dashboard{% endblock %}</h6>
+        </nav>
+        <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+          <div class="ms-md-auto pe-md-3 d-flex align-items-center">
+            <div class="input-group input-group-outline">
+              <label class="form-label">Type here...</label>
+              <input type="text" class="form-control">
+            </div>
+          </div>
+          <ul class="navbar-nav  justify-content-end">
+            <li class="nav-item d-flex align-items-center">
+              <span class="nav-link text-body font-weight-bold px-0">
+                <i class="fa fa-user me-sm-1"></i>
+                <span class="d-sm-inline d-none">{{ request.user.get_full_name|default:request.user.email }}</span>
+              </span>
+            </li>
+            <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+              <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
+                <div class="sidenav-toggler-inner">
+                  <i class="sidenav-toggler-line"></i>
+                  <i class="sidenav-toggler-line"></i>
+                  <i class="sidenav-toggler-line"></i>
+                </div>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    
+    <!-- Content -->
+    <div class="container-fluid py-4">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      
+      {% block content %}{% endblock %}
+      
+      <!-- Footer -->
+      <footer class="footer py-4">
+        <div class="container-fluid">
+          <div class="row align-items-center justify-content-lg-between">
+            <div class="col-lg-6 mb-lg-0 mb-4">
+              <div class="copyright text-center text-sm text-muted text-lg-start">
+                © <script>document.write(new Date().getFullYear())</script> Multi-Purpose Business App | Developed by <a href="https://nazarng.com/steve.html" target="_blank" class="text-decoration-none">Steve Ubangha</a>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <ul class="nav nav-footer justify-content-center justify-content-lg-end">
+                <li class="nav-item">
+                  <a href="#" class="nav-link text-muted">About Us</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link text-muted">Blog</a>
+                </li>
+                <li class="nav-item">
+                  <a href="#" class="nav-link text-muted">License</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </main>
+  
+  <!-- Core JS Files - Optimized loading -->
+  <script src="{% static 'js/core/popper.min.js' %}"></script>
+  <script src="{% static 'js/core/bootstrap.min.js' %}"></script>
+  <script src="{% static 'js/plugins/perfect-scrollbar.min.js' %}"></script>
+  <script src="{% static 'js/plugins/smooth-scrollbar.min.js' %}"></script>
+  <script src="{% static 'js/material-dashboard.min.js' %}?v=3.0.0"></script>
+  
+  <!-- Currency Utilities -->
+  <script src="{% static 'js/currency-utils.js' %}"></script>
+
+  <!-- Notification Utilities -->
+  <script>
+  // Global notification function
+  function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+      <strong>${type.charAt(0).toUpperCase() + type.slice(1)}!</strong><br>
+      ${message}
+      <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      if (notification.parentElement) {
+        notification.remove();
+      }
+    }, 5000);
+  }
+  </script>
+
+  <!-- Patch for material-dashboard.min.js null classList error -->
+  <script>
+  window.addEventListener('load', function() {
+    try {
+      if (typeof navbarColorOnResize === 'function') {
+        var nav = document.querySelector('.navbar');
+        if (nav && nav.classList) {
+          navbarColorOnResize();
+        }
+      }
+    } catch (e) { /* Silently ignore */ }
+  });
+  </script>
+
+  <!-- Font Awesome - Deferred -->
+  <!-- FontAwesome script removed due to 403 error -->
+
+  <!-- ULTRA-LIGHTWEIGHT ICON FIX -->
+  <script>
+  // Minimal icon fix - runs only if needed
+  window.addEventListener('load', function() {
+    const icons = document.querySelectorAll('.material-icons');
+    icons.forEach(icon => {
+      const rect = icon.getBoundingClientRect();
+      if (rect.width > 30) { // Text detected instead of icon
+        const name = icon.textContent.trim();
+        const fallbacks = {
+          'dashboard': '🏠', 'receipt_long': '📄', 'receipt': '🧾', 
+          'local_shipping': '🚚', 'work': '💼', 'request_quote': '💰',
+          'money_off': '💸', 'inventory': '📦', 'people': '👥',
+          'bar_chart': '📊', 'business': '🏢', 'logout': '🚪'
+        };
+        if (fallbacks[name]) {
+          icon.innerHTML = fallbacks[name];
+          icon.style.fontFamily = 'system-ui';
+        }
+      }
+    });
+  });
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

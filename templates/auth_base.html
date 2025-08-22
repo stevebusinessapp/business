@@ -1,0 +1,1060 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="apple-touch-icon" sizes="76x76" href="{% static 'img/apple-icon.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    <title>{% block title %}Multi-Purpose Business App{% endblock %}</title>
+    
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <!-- FontAwesome script removed due to 403 error -->
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Base Auth Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        /* Reset default Bootstrap styles that might conflict */
+        .container, .container-fluid {
+            padding: 0;
+            margin: 0;
+        }
+
+        .row {
+            margin: 0;
+        }
+
+        .col, .col-12 {
+            padding: 0;
+        }
+
+        /* Ensure full height layout */
+        html, body {
+            min-height: 100vh;
+            height: auto;
+        }
+
+        /* Hide any default Bootstrap components */
+        .navbar, .nav, .card {
+            display: none;
+        }
+
+        /* Override any default backgrounds */
+        .bg-gray-200 {
+            background: transparent !important;
+        }
+
+        /* Remove any default margins/padding */
+        .main-content {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .page-header {
+            background: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .mask {
+            display: none !important;
+        }
+
+        /* Ensure content area takes full space */
+        .content-wrapper {
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        /* Remove any conflicting animations */
+        .fadeIn3, .fadeInBottom {
+            animation: none !important;
+        }
+
+        /* Ensure z-index doesn't interfere */
+        .z-index-0 {
+            z-index: auto !important;
+        }
+
+        /* Remove any default card styles */
+        .card {
+            display: block !important;
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Remove sticky positioning */
+        .position-sticky {
+            position: static !important;
+        }
+
+        /* Remove any default spacing */
+        .mt-0, .my-auto, .mx-auto {
+            margin: 0 !important;
+        }
+
+        /* Remove any default positioning */
+        .position-absolute {
+            position: static !important;
+        }
+
+        /* Hide any default blur effects */
+        .blur {
+            backdrop-filter: none !important;
+        }
+
+        /* Remove default shadows */
+        .shadow {
+            box-shadow: none !important;
+        }
+
+        /* Remove default borders */
+        .border-radius-xl {
+            border-radius: 0 !important;
+        }
+
+        /* Remove default backgrounds */
+        .bg-gradient-dark {
+            background: none !important;
+        }
+
+        .opacity-6 {
+            opacity: 1 !important;
+        }
+
+        /* Remove default minimum heights */
+        .min-vh-100 {
+            min-height: auto !important;
+        }
+
+        /* Remove default alignments */
+        .align-items-start {
+            align-items: stretch !important;
+        }
+
+        /* Remove default spacing */
+        .py-2 {
+            padding: 0 !important;
+        }
+
+        .px-2, .ps-2, .pe-0 {
+            padding: 0 !important;
+        }
+
+        .mx-4 {
+            margin: 0 !important;
+        }
+
+        .my-3 {
+            margin: 0 !important;
+        }
+
+        .ms-lg-0, .ms-3 {
+            margin: 0 !important;
+        }
+
+        .me-2, .me-1 {
+            margin: 0 !important;
+        }
+
+        .start-0, .end-0 {
+            left: auto !important;
+            right: auto !important;
+        }
+
+        .top-0 {
+            top: auto !important;
+        }
+
+        /* Remove default text colors */
+        .text-dark {
+            color: inherit !important;
+        }
+
+        /* Remove default font weights */
+        .font-weight-bolder {
+            font-weight: inherit !important;
+        }
+
+        /* Remove default opacities */
+        .opacity-6 {
+            opacity: 1 !important;
+        }
+
+        /* Remove default z-index */
+        .z-index-3 {
+            z-index: auto !important;
+        }
+
+        /* Remove default navbar styles */
+        .navbar-brand {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .navbar-nav {
+            margin: 0 !important;
+        }
+
+        .nav-item {
+            margin: 0 !important;
+        }
+
+        .nav-link {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .navbar-collapse {
+            margin: 0 !important;
+        }
+
+        /* Remove default alert styles */
+        .alert {
+            display: none !important;
+        }
+
+        /* Remove default button styles */
+        .btn-close {
+            display: none !important;
+        }
+
+        /* Remove default show/fade classes */
+        .show, .fade {
+            display: block !important;
+            opacity: 1 !important;
+        }
+
+        /* Remove default dismissible styles */
+        .alert-dismissible {
+            padding: 0 !important;
+        }
+
+        /* Remove default flex classes */
+        .d-flex {
+            display: block !important;
+        }
+
+        .align-items-center {
+            align-items: stretch !important;
+        }
+
+        /* Remove default expansion */
+        .navbar-expand-lg {
+            display: none !important;
+        }
+
+        /* Remove default collapse */
+        .collapse {
+            display: none !important;
+        }
+
+        /* Remove default current page */
+        .active {
+            background: none !important;
+            color: inherit !important;
+        }
+
+        /* Remove default aria */
+        [aria-current="page"] {
+            background: none !important;
+        }
+
+        /* Remove default list styles */
+        ul {
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        li {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Remove default link styles */
+        a {
+            text-decoration: none !important;
+            color: inherit !important;
+        }
+
+        /* Remove default icons (but allow in content) */
+        .navbar .fa, .navbar .fas, .navbar .fab,
+        .nav .fa, .nav .fas, .nav .fab {
+            display: none !important;
+        }
+
+        /* Show only content block */
+        .content-wrapper .auth-content {
+            display: block !important;
+        }
+
+        /* Ensure proper content display */
+        .content-wrapper .auth-content * {
+            display: block !important;
+        }
+
+        .content-wrapper .auth-content .fa,
+        .content-wrapper .auth-content .fas,
+        .content-wrapper .auth-content .fab {
+            display: inline-block !important;
+        }
+
+        /* Remove default scripts interference */
+        .tooltip, .popover, .modal {
+            display: none !important;
+        }
+
+        /* Remove default form styles */
+        .form-control {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Remove default input group styles */
+        .input-group {
+            border: none !important;
+        }
+
+        /* Remove default button styles */
+        .btn {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Remove default spacing utilities */
+        .mt-3, .mx-3 {
+            margin: 0 !important;
+        }
+
+        /* Remove default role attributes */
+        [role="alert"] {
+            display: none !important;
+        }
+
+        /* Remove default aria-label */
+        [aria-label="Close"] {
+            display: none !important;
+        }
+
+        /* Remove default type button */
+        [type="button"] {
+            background: none !important;
+            border: none !important;
+        }
+
+        /* Remove default data attributes */
+        [data-bs-dismiss] {
+            display: none !important;
+        }
+
+        /* Clean content area */
+        .clean-content {
+            width: 100%;
+            min-height: 100vh;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        /* Show content properly */
+        .clean-content > * {
+            display: block !important;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* Ensure icons work in content */
+        .clean-content .fa,
+        .clean-content .fas,
+        .clean-content .fab {
+            display: inline-block !important;
+            font-family: "Font Awesome 5 Free", "Font Awesome 5 Brands" !important;
+            font-weight: 900 !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .clean-content .fab {
+            font-family: "Font Awesome 5 Brands" !important;
+            font-weight: 400 !important;
+        }
+
+        /* Ensure proper link styling in content */
+        .clean-content a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Ensure proper form elements */
+        .clean-content input,
+        .clean-content button,
+        .clean-content select,
+        .clean-content textarea {
+            display: block;
+            width: auto;
+            height: auto;
+        }
+
+        /* Ensure proper flex/grid layouts */
+        .clean-content .auth-container {
+            display: flex !important;
+        }
+
+        .clean-content .auth-brand-side,
+        .clean-content .auth-form-side {
+            display: flex !important;
+        }
+
+        .clean-content .social-login {
+            display: grid !important;
+        }
+
+        .clean-content .form-row {
+            display: grid !important;
+        }
+
+        .clean-content .benefits-grid {
+            display: grid !important;
+        }
+
+        .clean-content .steps-list {
+            display: grid !important;
+        }
+
+        .clean-content .action-buttons {
+            display: grid !important;
+        }
+
+        .clean-content .next-steps {
+            display: block !important;
+        }
+
+        /* Ensure proper positioning */
+        .clean-content .auth-container {
+            position: relative !important;
+        }
+
+        .clean-content .password-toggle {
+            position: relative !important;
+        }
+
+        .clean-content .password-toggle-btn {
+            position: absolute !important;
+        }
+
+        .clean-content .input-icon {
+            position: absolute !important;
+        }
+
+        .clean-content .loading::after {
+            position: absolute !important;
+        }
+
+        .clean-content .auth-brand-side::before {
+            position: absolute !important;
+        }
+
+        .clean-content .btn-primary::before {
+            position: absolute !important;
+        }
+
+        .clean-content .btn-social::before {
+            position: absolute !important;
+        }
+
+        .clean-content .success-card {
+            position: relative !important;
+        }
+
+        .clean-content .auth-form-container {
+            position: relative !important;
+        }
+
+        .clean-content .brand-content {
+            position: relative !important;
+        }
+
+        /* Ensure animations work */
+        .clean-content .strength-bar-fill {
+            transition: all 0.3s ease !important;
+        }
+
+        .clean-content .form-control {
+            transition: all 0.2s ease !important;
+        }
+
+        .clean-content .btn-primary {
+            transition: all 0.2s ease !important;
+        }
+
+        .clean-content .btn-social {
+            transition: all 0.2s ease !important;
+        }
+
+        .clean-content .password-toggle-btn {
+            transition: color 0.2s ease !important;
+        }
+
+        .clean-content .auth-link {
+            transition: all 0.3s ease !important;
+        }
+
+        .clean-content .forgot-link {
+            transition: color 0.2s ease !important;
+        }
+
+        .clean-content .benefit-item {
+            transition: all 0.2s ease !important;
+        }
+
+        .clean-content .step-item {
+            transition: all 0.2s ease !important;
+        }
+
+        /* Ensure hover effects work */
+        .clean-content .form-control:hover {
+            border-color: #d1d5db !important;
+            background: white !important;
+        }
+
+        .clean-content .form-control:focus {
+            border-color: #667eea !important;
+            background: white !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        }
+
+        .clean-content .btn-primary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3) !important;
+        }
+
+        .clean-content .btn-social:hover {
+            border-color: #667eea !important;
+            color: #667eea !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .clean-content .password-toggle-btn:hover {
+            color: #667eea !important;
+        }
+
+        .clean-content .auth-link:hover {
+            color: #764ba2 !important;
+            text-decoration: underline !important;
+        }
+
+        .clean-content .forgot-link:hover {
+            color: #5a67d8 !important;
+            text-decoration: underline !important;
+        }
+
+        .clean-content .benefit-item:hover {
+            background: #f3f4f6 !important;
+            border-color: #d1d5db !important;
+        }
+
+        /* Ensure proper z-index */
+        .clean-content .auth-brand-side {
+            z-index: 1 !important;
+        }
+
+        .clean-content .auth-form-side {
+            z-index: 1 !important;
+        }
+
+        .clean-content .brand-content {
+            z-index: 2 !important;
+        }
+
+        .clean-content .success-card {
+            z-index: 2 !important;
+        }
+
+        .clean-content .auth-form-container {
+            z-index: 2 !important;
+        }
+
+        /* Ensure proper overflow */
+        .clean-content .auth-brand-side {
+            overflow: hidden !important;
+        }
+
+        .clean-content .btn-primary {
+            overflow: hidden !important;
+        }
+
+        .clean-content .btn-social {
+            overflow: hidden !important;
+        }
+
+        .clean-content .strength-bar {
+            overflow: hidden !important;
+        }
+
+        .clean-content .success-card {
+            overflow: visible !important;
+        }
+
+        .clean-content .auth-card {
+            overflow: visible !important;
+        }
+
+        /* Ensure proper scrolling on mobile */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+                height: auto !important;
+            }
+            
+            .clean-content {
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+                height: auto !important;
+            }
+            
+            .clean-content .auth-container {
+                min-height: 100vh !important;
+                height: auto !important;
+                flex-direction: column !important;
+            }
+            
+            .clean-content .auth-form-side {
+                overflow-y: auto !important;
+                max-height: none !important;
+                height: auto !important;
+            }
+            
+            .clean-content .auth-brand-side {
+                overflow-y: visible !important;
+                height: auto !important;
+                min-height: 40vh !important;
+            }
+        }
+        
+        /* Ensure scrolling on all devices */
+        @media (max-width: 1024px) {
+            body {
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .clean-content {
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        /* Ensure proper height and scrolling */
+        .clean-content .auth-container {
+            height: auto !important;
+            min-height: 100vh !important;
+        }
+        
+        .clean-content .auth-form-side,
+        .clean-content .auth-brand-side {
+            height: auto !important;
+            min-height: 50vh !important;
+        }
+
+        /* Ensure proper text decoration */
+        .clean-content .auth-link {
+            text-decoration: none !important;
+        }
+
+        .clean-content .forgot-link {
+            text-decoration: none !important;
+        }
+
+        .clean-content .btn-social {
+            text-decoration: none !important;
+        }
+
+        .clean-content .auth-footer a {
+            text-decoration: none !important;
+        }
+
+        .clean-content .help-section a {
+            text-decoration: none !important;
+        }
+
+        .clean-content .form-check-label a {
+            text-decoration: none !important;
+        }
+
+        /* Ensure proper cursor */
+        .clean-content .form-control {
+            cursor: text !important;
+        }
+
+        .clean-content .btn-primary {
+            cursor: pointer !important;
+        }
+
+        .clean-content .btn-social {
+            cursor: pointer !important;
+        }
+
+        .clean-content .password-toggle-btn {
+            cursor: pointer !important;
+        }
+
+        .clean-content .auth-link {
+            cursor: pointer !important;
+        }
+
+        .clean-content .forgot-link {
+            cursor: pointer !important;
+        }
+
+        .clean-content .form-check-input {
+            cursor: pointer !important;
+        }
+
+        .clean-content .form-check-label {
+            cursor: pointer !important;
+        }
+
+        /* Ensure proper outline */
+        .clean-content .form-control {
+            outline: none !important;
+        }
+
+        .clean-content .password-toggle-btn {
+            outline: none !important;
+        }
+
+        .clean-content .btn-primary {
+            outline: none !important;
+        }
+
+        .clean-content .btn-social {
+            outline: none !important;
+        }
+
+        .clean-content .form-check-input {
+            outline: none !important;
+        }
+
+        /* Ensure proper border */
+        .clean-content .password-toggle-btn {
+            border: none !important;
+        }
+
+        .clean-content .btn-primary {
+            border: none !important;
+        }
+
+        .clean-content .form-check-input {
+            border: 2px solid #d1d5db !important;
+        }
+
+        .clean-content .form-check-input:checked {
+            background: #667eea !important;
+            border-color: #667eea !important;
+        }
+
+        /* Ensure proper background */
+        .clean-content .password-toggle-btn {
+            background: none !important;
+        }
+
+        .clean-content .form-control {
+            background: #f9fafb !important;
+        }
+
+        .clean-content .form-control:focus {
+            background: white !important;
+        }
+
+        .clean-content .form-control:hover {
+            background: white !important;
+        }
+
+        .clean-content .btn-social {
+            background: white !important;
+        }
+
+        .clean-content .form-check-input {
+            background: white !important;
+        }
+
+        /* Ensure proper padding */
+        .clean-content .password-toggle-btn {
+            padding: 4px !important;
+        }
+
+        /* Ensure proper margins */
+        .clean-content .field-error {
+            margin-top: 6px !important;
+        }
+
+        .clean-content .password-strength {
+            margin-top: 12px !important;
+        }
+
+        .clean-content .strength-text {
+            margin-bottom: 8px !important;
+        }
+
+        .clean-content .requirement {
+            margin-bottom: 4px !important;
+        }
+
+        .clean-content .auth-footer {
+            margin-top: 32px !important;
+        }
+
+        .clean-content .divider {
+            margin: 32px 0 !important;
+        }
+
+        .clean-content .social-login {
+            margin-top: 20px !important;
+        }
+
+        .clean-content .form-check-group {
+            margin: 24px 0 !important;
+        }
+
+        .clean-content .auth-header {
+            margin-bottom: 40px !important;
+        }
+
+        .clean-content .success-message {
+            margin-bottom: 32px !important;
+        }
+
+        .clean-content .next-steps {
+            margin-bottom: 32px !important;
+        }
+
+        .clean-content .action-buttons {
+            margin-bottom: 32px !important;
+        }
+
+        .clean-content .info-box {
+            margin-bottom: 32px !important;
+        }
+
+        .clean-content .security-tips {
+            margin-bottom: 32px !important;
+        }
+
+        .clean-content .brand-logo {
+            margin: 0 auto 30px !important;
+        }
+
+        .clean-content .brand-title {
+            margin-bottom: 20px !important;
+        }
+
+        .clean-content .brand-subtitle {
+            margin-bottom: 40px !important;
+        }
+
+        .clean-content .success-icon {
+            margin: 0 auto 24px !important;
+        }
+
+        .clean-content .success-header h1 {
+            margin-bottom: 12px !important;
+        }
+
+        .clean-content .success-header p {
+            margin-bottom: 0 !important;
+        }
+
+        .clean-content .success-message h3 {
+            margin-bottom: 8px !important;
+        }
+
+        .clean-content .success-message p {
+            margin: 0 !important;
+        }
+
+        .clean-content .message-icon {
+            margin: 0 auto 16px !important;
+        }
+
+        .clean-content .tips-icon {
+            margin: 0 auto 16px !important;
+        }
+
+        .clean-content .info-icon {
+            margin-bottom: 12px !important;
+        }
+
+        .clean-content .info-box h3 {
+            margin-bottom: 8px !important;
+        }
+
+        .clean-content .info-box p {
+            margin: 0 !important;
+        }
+
+        .clean-content .security-tips h3 {
+            margin-bottom: 12px !important;
+        }
+
+        .clean-content .security-tips li {
+            margin-bottom: 8px !important;
+        }
+
+        .clean-content .security-tips li:last-child {
+            margin-bottom: 0 !important;
+        }
+
+        .clean-content .next-steps h3 {
+            margin-bottom: 20px !important;
+        }
+
+        .clean-content .step-content h4 {
+            margin-bottom: 4px !important;
+        }
+
+        .clean-content .step-content p {
+            margin: 0 !important;
+        }
+
+        .clean-content .benefit-content h4 {
+            margin-bottom: 4px !important;
+        }
+
+        .clean-content .benefit-content p {
+            margin: 0 !important;
+        }
+
+        .clean-content .help-section h3 {
+            margin-bottom: 12px !important;
+        }
+
+        .clean-content .help-section p {
+            margin-bottom: 16px !important;
+        }
+
+        .clean-content .form-check-label {
+            margin-top: 2px !important;
+        }
+
+        .clean-content .auth-header h1 {
+            margin-bottom: 12px !important;
+        }
+
+        .clean-content .auth-header p {
+            margin-bottom: 0 !important;
+        }
+
+        .clean-content .form-label {
+            margin-bottom: 8px !important;
+        }
+
+        .clean-content .alert {
+            margin-bottom: 24px !important;
+        }
+
+        .clean-content .form-group {
+            margin-bottom: 24px !important;
+        }
+
+        .clean-content .form-row {
+            margin-bottom: 20px !important;
+        }
+
+        .clean-content .divider span {
+            margin: 0 !important;
+        }
+
+        .clean-content .requirement i {
+            margin-right: 5px !important;
+        }
+
+        .clean-content .field-error i {
+            margin-right: 6px !important;
+        }
+
+        .clean-content .brand-feature i {
+            margin-right: 0 !important;
+        }
+
+        .clean-content .step-item {
+            margin-bottom: 0 !important;
+        }
+
+        .clean-content .benefit-item {
+            margin-bottom: 0 !important;
+        }
+
+        .clean-content .btn {
+            margin: 0 !important;
+        }
+
+        .clean-content .btn i {
+            margin-right: 8px !important;
+        }
+
+        .clean-content .alert i {
+            margin-right: 8px !important;
+        }
+
+        .clean-content .success-message i {
+            margin-right: 0 !important;
+        }
+
+        .clean-content .info-box i {
+            margin-right: 0 !important;
+        }
+
+        .clean-content .security-tips i {
+            margin-right: 0 !important;
+        }
+
+        .clean-content .help-section a {
+            margin: 0 8px !important;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <div class="clean-content">
+        <div class="auth-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

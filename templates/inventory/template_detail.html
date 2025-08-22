@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h6>{{ title }}</h6>
+                    <div>
+                        {% if template.user == request.user %}
+                            <a href="{% url 'inventory:template_update' template.pk %}" class="btn btn-primary btn-sm me-2">
+                                <i class="material-icons">edit</i> Edit
+                            </a>
+                            <a href="{% url 'inventory:template_delete' template.pk %}" class="btn btn-danger btn-sm">
+                                <i class="material-icons">delete</i> Delete
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5>{{ template.name }}</h5>
+                            {% if template.description %}
+                                <p class="text-secondary">{{ template.description }}</p>
+                            {% endif %}
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6>Template Information</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Category:</strong> {{ template.category|default:"General" }}</li>
+                                        <li><strong>Visibility:</strong> 
+                                            {% if template.is_public %}
+                                                <span class="badge badge-sm bg-gradient-success">Public</span>
+                                            {% else %}
+                                                <span class="badge badge-sm bg-gradient-secondary">Private</span>
+                                            {% endif %}
+                                        </li>
+                                        <li><strong>Created:</strong> {{ template.created_at|date:"M d, Y H:i" }}</li>
+                                        <li><strong>Updated:</strong> {{ template.updated_at|date:"M d, Y H:i" }}</li>
+                                        <li><strong>Owner:</strong> {{ template.user.email }}</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Configuration</h6>
+                                    {% if template.layout_config %}
+                                        <p><strong>Layout Config:</strong> Available</p>
+                                    {% endif %}
+                                    {% if template.field_config %}
+                                        <p><strong>Field Config:</strong> Available</p>
+                                    {% endif %}
+                                    {% if template.branding_config %}
+                                        <p><strong>Branding Config:</strong> Available</p>
+                                    {% endif %}
+                                    {% if template.tags %}
+                                        <p><strong>Tags:</strong> 
+                                            {% for tag in template.tags %}
+                                                <span class="badge badge-sm bg-gradient-info me-1">{{ tag }}</span>
+                                            {% endfor %}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Quick Actions</h6>
+                                </div>
+                                <div class="card-body">
+                                    <a href="{% url 'inventory:create' %}?template={{ template.pk }}" class="btn btn-primary btn-sm w-100 mb-2">
+                                        <i class="material-icons">add</i> Use This Template
+                                    </a>
+                                    <a href="{% url 'inventory:template_list' %}" class="btn btn-secondary btn-sm w-100">
+                                        <i class="material-icons">arrow_back</i> Back to Templates
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

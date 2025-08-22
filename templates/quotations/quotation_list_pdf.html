@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Quotations List</title>
+    {% load humanize %}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 20px;
+        }
+        
+        .company-logo {
+            max-width: 100px;
+            max-height: 50px;
+            margin-bottom: 10px;
+        }
+        
+        .company-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .report-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .report-date {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .summary-label {
+            font-weight: bold;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .status-draft { background: #e3f2fd; color: #1976d2; }
+        .status-sent { background: #fff3e0; color: #f57c00; }
+        .status-accepted { background: #e8f5e8; color: #388e3c; }
+        .status-declined { background: #ffebee; color: #d32f2f; }
+        .status-expired { background: #f3e5f5; color: #7b1fa2; }
+        
+        .amount {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .total-row {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if company_logo_base64 %}
+        <img src="{{ company_logo_base64 }}" alt="Company Logo" class="company-logo">
+        {% endif %}
+        
+        {% if company_profile %}
+        <div class="company-name">{{ company_profile.company_name }}</div>
+        <div>{{ company_profile.address|linebreaks }}</div>
+        <div>Phone: {{ company_profile.phone }} | Email: {{ company_profile.email }}</div>
+        {% else %}
+        <div class="company-name">Business App</div>
+        {% endif %}
+        
+        <div class="report-title">Quotations Report</div>
+        <div class="report-date">Generated on: {{ current_date|date:"F d, Y" }}</div>
+    </div>
+
+    <div class="summary">
+        <div class="summary-row">
+            <span class="summary-label">Total Quotations:</span>
+            <span>{{ quotations.count }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Total Amount:</span>
+            <span>{{ currency_symbol }}{{ total_amount|floatformat:2|intcomma }}</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">Report Date:</span>
+            <span>{{ current_date|date:"F d, Y" }}</span>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Quotation #</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Valid Until</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for quotation in quotations %}
+            <tr>
+                <td>{{ quotation.quotation_number }}</td>
+                <td>{{ quotation.client.name|default:"No Client" }}</td>
+                <td>{{ quotation.quotation_date|date:"M d, Y" }}</td>
+                <td>
+                    <span class="status-badge status-{{ quotation.status }}">
+                        {{ quotation.get_status_display }}
+                    </span>
+                </td>
+                <td>
+                    {% if quotation.valid_until %}
+                        {{ quotation.valid_until|date:"M d, Y" }}
+                    {% else %}
+                        No expiry
+                    {% endif %}
+                </td>
+                <td class="amount">{{ currency_symbol }}{{ quotation.grand_total|floatformat:2|intcomma }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                    No quotations found
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="5" style="text-align: right; padding: 10px;">Total:</td>
+                <td style="text-align: right; padding: 10px;">{{ currency_symbol }}{{ total_amount|floatformat:2|intcomma }}</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="footer">
+        <p>This report was generated automatically by the Business App system.</p>
+        <p>For any questions, please contact your system administrator.</p>
+    </div>
+</body>
+</html> 

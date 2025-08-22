@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Import Inventory{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    
+    .import-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+    }
+    .upload-area {
+        border: 3px dashed #dee2e6;
+        border-radius: 15px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+    .upload-area:hover {
+        border-color: #667eea;
+        background: #e3f2fd;
+    }
+    .upload-area.dragover {
+        border-color: #667eea;
+        background: #e3f2fd;
+        transform: scale(1.02);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-0">Import Inventory</h6>
+                            <p class="text-sm mb-0">Upload Excel or CSV files to import products</p>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Instructions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Import Instructions</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Supported File Formats:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Excel (.xlsx, .xls)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>CSV (.csv)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Expected Columns:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Product Name (required)</li>
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>SKU/Code (required)</li>
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Category (optional)</li>
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Quantity (optional)</li>
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Unit Price (optional)</li>
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Supplier (optional)</li>
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Location (optional)</li>
+                                <li><i class="fas fa-arrow-right text-primary me-2"></i>Description (optional)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Upload -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-4">
+                    <h5 class="mb-4"><i class="fas fa-upload me-2"></i>Upload Your File</h5>
+                    
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        
+                        <div class="upload-area" id="uploadArea">
+                            <div class="mb-3">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5>Select your Excel or CSV file</h5>
+                                <p class="text-muted">Click to browse and select your file</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.file_path }}
+                                {% if form.file_path.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.file_path.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <p class="text-sm text-muted">
+                                    <strong>Maximum size:</strong> 10MB<br>
+                                    <strong>First row should contain column headers</strong>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-upload"></i> Upload & Import
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Template -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3"><i class="fas fa-download me-2"></i>Sample Template</h5>
+                    <p class="text-muted">Download this sample Excel file to see the expected format:</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-excel fa-2x text-success mb-2"></i>
+                                    <h6>Sample Excel Template</h6>
+                                    <p class="text-sm text-muted">Contains example data with proper column headers</p>
+                                    <button class="btn btn-outline-success btn-sm" onclick="downloadSample()">
+                                        <i class="fas fa-download"></i> Download Sample
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>Sample Data Format:</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Product Name</th>
+                                                    <th>SKU</th>
+                                                    <th>Category</th>
+                                                    <th>Quantity</th>
+                                                    <th>Unit Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Sample Product 1</td>
+                                                    <td>SP001</td>
+                                                    <td>Electronics</td>
+                                                    <td>50</td>
+                                                    <td>25.99</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Sample Product 2</td>
+                                                    <td>SP002</td>
+                                                    <td>Office</td>
+                                                    <td>100</td>
+                                                    <td>15.50</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('{{ form.file_path.id_for_label }}');
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            console.log('File dropped:', files[0].name, files[0].size);
+        }
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            console.log('File selected:', this.files[0].name, this.files[0].size);
+        }
+    });
+});
+
+function downloadSample() {
+    // Create a sample Excel file content
+    const sampleData = [
+        ['Product Name', 'SKU', 'Category', 'Quantity', 'Unit Price', 'Supplier', 'Location', 'Description'],
+        ['Sample Product 1', 'SP001', 'Electronics', '50', '25.99', 'Sample Supplier', 'Warehouse A', 'Sample description'],
+        ['Sample Product 2', 'SP002', 'Office', '100', '15.50', 'Sample Supplier', 'Warehouse B', 'Another sample'],
+        ['Sample Product 3', 'SP003', 'Electronics', '25', '45.00', 'Sample Supplier', 'Warehouse C', 'Third sample']
+    ];
+    
+    // Convert to CSV format
+    const csvContent = sampleData.map(row => row.join(',')).join('\n');
+    
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'inventory_sample.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %} 

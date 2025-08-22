@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Bank Accounts{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Add New Bank Account -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Add New Bank Account</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.bank_name.id_for_label }}" class="form-control-label">
+                                        Bank Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.bank_name }}
+                                    {% if form.bank_name.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.bank_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.account_name.id_for_label }}" class="form-control-label">
+                                        Account Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.account_name }}
+                                    {% if form.account_name.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.account_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.account_number.id_for_label }}" class="form-control-label">
+                                        Account Number <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.account_number }}
+                                    {% if form.account_number.errors %}
+                                        <div class="text-danger text-xs mt-1">
+                                            {% for error in form.account_number.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_default }}
+                                    <label class="form-check-label" for="{{ form.is_default.id_for_label }}">
+                                        Set as default bank account
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Add Bank Account
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bank Accounts List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="row">
+                        <div class="col-lg-6 col-7">
+                            <h6>Bank Accounts</h6>
+                            <p class="text-sm mb-0">
+                                Manage your company bank accounts
+                            </p>
+                        </div>
+                        <div class="col-lg-6 col-5 my-auto text-end">
+                            <span class="badge badge-sm bg-gradient-primary">
+                                {{ bank_accounts.count }} Account{{ bank_accounts.count|pluralize }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pb-2">
+                    {% if bank_accounts %}
+                        <div class="table-responsive p-0">
+                            <table class="table align-items-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Bank Details</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Account Details</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                        <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for account in bank_accounts %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex px-2 py-1">
+                                                <div>
+                                                    <div class="avatar avatar-sm me-3 bg-gradient-primary">
+                                                        <span class="text-white font-weight-bold text-xs">
+                                                            {{ account.bank_name|first|upper }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex flex-column justify-content-center">
+                                                    <h6 class="mb-0 text-sm">{{ account.bank_name }}</h6>
+                                                    <p class="text-xs text-secondary mb-0">
+                                                        Added {{ account.created_at|date:"M d, Y" }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <p class="text-sm font-weight-bold mb-0">{{ account.account_name }}</p>
+                                            <p class="text-xs text-secondary mb-0">
+                                                ****{{ account.account_number|slice:"-4:" }}
+                                            </p>
+                                        </td>
+                                        <td class="align-middle text-center text-sm">
+                                            {% if account.is_default %}
+                                                <span class="badge badge-sm bg-gradient-success">Default</span>
+                                            {% else %}
+                                                <span class="badge badge-sm bg-gradient-secondary">Active</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="align-middle text-center">
+                                        <div class="d-flex justify-content-center gap-1 flex-wrap">
+                                        <!-- View Button -->
+                                        <button class="btn btn-sm btn-info text-white" 
+                                        onclick="viewAccountDetails({{ account.id }}, '{{ account.bank_name }}', '{{ account.account_name }}', '{{ account.account_number }}', {{ account.is_default|yesno:'true,false' }}, '{{ account.created_at|date:"F d, Y" }}', '{{ account.updated_at|date:"F d, Y" }}')">
+                                        <i class="fas fa-eye me-1"></i>View
+                                        </button>
+                                        
+                                        <!-- Edit Button -->
+                                        <a href="{% url 'core:edit_bank_account' account.pk %}" 
+                                           class="btn btn-sm btn-warning text-white">
+                                         <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                        
+                                        <!-- Set Default Button (if not default) -->
+                                        {% if not account.is_default %}
+                                        <button class="btn btn-sm btn-success" 
+                                                onclick="setDefaultAccount({{ account.id }})">
+                                        <i class="fas fa-star me-1"></i>Set Default
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <!-- Delete Button -->
+                                        <a href="{% url 'core:delete_bank_account' account.pk %}" 
+                                        class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash me-1"></i>Delete
+                                        </a>
+                                        </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <div class="icon icon-shape icon-lg bg-gradient-primary shadow text-center border-radius-md mb-3">
+                                <i class="fas fa-university text-white"></i>
+                            </div>
+                            <h5>No Bank Accounts</h5>
+                            <p class="text-sm text-muted">
+                                Add your first bank account to get started with payments and transactions.
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Account Details Modal -->
+<div class="modal fade" id="viewAccountModal" tabindex="-1" aria-labelledby="viewAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewAccountModalLabel">Account Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border">
+                            <div class="card-body text-center">
+                                <div class="avatar avatar-lg bg-gradient-primary mx-auto mb-3">
+                                    <span class="text-white font-weight-bold" id="modal-bank-initial"></span>
+                                </div>
+                                <h5 id="modal-bank-name" class="text-primary"></h5>
+                                <p class="text-sm text-muted mb-0">Bank Name</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <h6 class="text-sm font-weight-bold mb-1">Account Name</h6>
+                                        <p id="modal-account-name" class="text-sm mb-0"></p>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <h6 class="text-sm font-weight-bold mb-1">Account Number</h6>
+                                        <p id="modal-account-number" class="text-sm mb-0"></p>
+                                        <button class="btn btn-sm btn-outline-primary mt-1" onclick="toggleAccountNumber()">
+                                            <i class="fas fa-eye" id="toggle-icon"></i> <span id="toggle-text">Show Full Number</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-12">
+                                        <h6 class="text-sm font-weight-bold mb-1">Status</h6>
+                                        <span id="modal-status-badge"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card border">
+                            <div class="card-body">
+                                <h6 class="mb-3">Account Information</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Created Date</small>
+                                        <p id="modal-created-date" class="mb-2"></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small class="text-muted">Last Updated</small>
+                                        <p id="modal-updated-date" class="mb-2"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a id="modal-edit-link" href="#" class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i>Edit Account
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentAccountData = {};
+
+function setDefaultAccount(accountId) {
+    if (confirm('Set this account as default? This will remove the default status from the current default account.')) {
+        fetch(`/dashboard/bank-accounts/${accountId}/set-default/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                showMessage('success', data.message);
+                // Reload page to update UI
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showMessage('error', 'Failed to update default account');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('error', 'An error occurred while updating the account');
+        });
+    }
+}
+
+function viewAccountDetails(id, bankName, accountName, accountNumber, isDefault, createdDate, updatedDate) {
+    // Store current account data
+    currentAccountData = {
+        id: id,
+        bankName: bankName,
+        accountName: accountName,
+        accountNumber: accountNumber,
+        isDefault: isDefault,
+        createdDate: createdDate,
+        updatedDate: updatedDate
+    };
+    
+    // Populate modal with account details
+    document.getElementById('modal-bank-initial').textContent = bankName.charAt(0).toUpperCase();
+    document.getElementById('modal-bank-name').textContent = bankName;
+    document.getElementById('modal-account-name').textContent = accountName;
+    document.getElementById('modal-account-number').textContent = '****' + accountNumber.slice(-4);
+    document.getElementById('modal-created-date').textContent = createdDate;
+    document.getElementById('modal-updated-date').textContent = updatedDate;
+    
+    // Set status badge
+    const statusBadge = document.getElementById('modal-status-badge');
+    if (isDefault) {
+        statusBadge.innerHTML = '<span class="badge badge-sm bg-gradient-success">Default Account</span>';
+    } else {
+        statusBadge.innerHTML = '<span class="badge badge-sm bg-gradient-secondary">Active Account</span>';
+    }
+    
+    // Set edit link
+    document.getElementById('modal-edit-link').href = `/dashboard/bank-accounts/${id}/edit/`;
+    
+    // Reset toggle button
+    document.getElementById('toggle-icon').className = 'fas fa-eye';
+    document.getElementById('toggle-text').textContent = 'Show Full Number';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('viewAccountModal'));
+    modal.show();
+}
+
+function toggleAccountNumber() {
+    const accountNumberElement = document.getElementById('modal-account-number');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const toggleText = document.getElementById('toggle-text');
+    
+    if (toggleIcon.classList.contains('fa-eye')) {
+        // Show full number
+        accountNumberElement.textContent = currentAccountData.accountNumber;
+        toggleIcon.className = 'fas fa-eye-slash';
+        toggleText.textContent = 'Hide Number';
+    } else {
+        // Hide number
+        accountNumberElement.textContent = '****' + currentAccountData.accountNumber.slice(-4);
+        toggleIcon.className = 'fas fa-eye';
+        toggleText.textContent = 'Show Full Number';
+    }
+}
+
+function showMessage(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alert = document.createElement('div');
+    alert.className = `alert ${alertClass} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    const container = document.createElement('div');
+    container.className = 'position-fixed bottom-0 end-0 p-3';
+    container.style.zIndex = '11';
+    container.appendChild(alert);
+    
+    document.body.appendChild(container);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        container.remove();
+    }, 5000);
+}
+
+// Auto-hide messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.classList.remove('show');
+            setTimeout(() => alert.parentElement.remove(), 300);
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Item - {{ custom_form.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    
+    .delete-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border-radius: 15px 15px 0 0;
+        padding: 30px;
+        color: white;
+    }
+    .item-details {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card delete-card">
+                <div class="delete-header">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                        <h4 class="mb-2">Confirm Deletion</h4>
+                        <p class="mb-0">Are you sure you want to delete this item?</p>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="item-details">
+                        <h6 class="mb-3">Item Details:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>SKU:</strong> {{ item.sku_code }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Form:</strong> {{ custom_form.name }}
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <strong>Created:</strong> {{ item.created_at|date:"M d, Y" }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Last Updated:</strong> {{ item.updated_at|date:"M d, Y" }}
+                            </div>
+                        </div>
+                        
+                        {% if item.data %}
+                        <div class="mt-3">
+                            <strong>Custom Data:</strong>
+                            <div class="mt-2">
+                                {% for key, value in item.data.items %}
+                                <div class="row">
+                                    <div class="col-md-4"><strong>{{ key }}:</strong></div>
+                                    <div class="col-md-8">{{ value|default:"-" }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone. The item will be permanently deleted from the database.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'inventory:custom_form_detail' custom_form.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Delete Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

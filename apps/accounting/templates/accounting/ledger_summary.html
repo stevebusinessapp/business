@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Ledger Summary - Accounting{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ledger-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+    .ledger-card:hover {
+        transform: translateY(-2px);
+    }
+    .month-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .profit-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .profit-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .year-selector {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    .month-row {
+        transition: background-color 0.2s;
+    }
+    .month-row:hover {
+        background-color: #f8f9fa;
+    }
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin: 20px 0;
+    }
+    .serial-number {
+        width: 60px;
+        text-align: center;
+        font-weight: bold;
+        color: #495057;
+    }
+    .currency-amount {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Ledger Summary</h1>
+                    <p class="text-muted">Monthly financial overview and analysis</p>
+                </div>
+                <div>
+                    <a href="{% url 'accounting:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'accounting:export_data' %}?type=ledger&year={{ selected_year }}&format=csv" class="btn btn-outline-success">
+                            <i class="fas fa-download"></i> CSV
+                        </a>
+                        <a href="{% url 'accounting:export_data' %}?type=ledger&year={{ selected_year }}&format=excel" class="btn btn-outline-info">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a href="{% url 'accounting:export_data' %}?type=ledger&year={{ selected_year }}&format=pdf" class="btn btn-outline-danger">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Year Selector -->
+    <div class="year-selector">
+        <form method="get" class="row align-items-center">
+            <div class="col-md-4">
+                <label for="year" class="form-label">Select Year</label>
+                <select name="year" id="year" class="form-select" onchange="this.form.submit()">
+                    {% for year in available_years %}
+                        <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>
+                            {{ year }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-8">
+                <div class="d-flex gap-2">
+                    {% for year in available_years %}
+                        <a href="?year={{ year }}" class="btn btn-outline-primary {% if year == selected_year %}active{% endif %}">
+                            {{ year }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Yearly Summary Stats -->
+    <div class="summary-stats">
+        <div class="stat-card">
+            <div class="stat-value text-success currency-amount">{{ yearly_totals.currency_symbol }} {{ yearly_totals.total_income|floatformat:2|intcomma }}</div>
+            <div class="stat-label">Total Income</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value text-danger currency-amount">{{ yearly_totals.currency_symbol }} {{ yearly_totals.total_expense|floatformat:2|intcomma }}</div>
+            <div class="stat-label">Total Expenses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value {% if yearly_totals.net_profit >= 0 %}profit-positive{% else %}profit-negative{% endif %} currency-amount">
+                {{ yearly_totals.currency_symbol }} {{ yearly_totals.net_profit|floatformat:2|intcomma }}
+            </div>
+            <div class="stat-label">Net Profit</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value text-info">{{ ledgers.count }}</div>
+            <div class="stat-label">Months with Data</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Monthly Financial Overview - {{ selected_year }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Income vs Expenses</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Ledger Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Monthly Breakdown</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>S/N</th>
+                            <th>Month</th>
+                            <th>Income</th>
+                            <th>Expenses</th>
+                            <th>Net Profit</th>
+                            <th>Outstanding Invoices</th>
+                            <th>Profit Margin</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ledger in ledgers %}
+                        <tr class="month-row">
+                            <td class="text-center serial-number">
+                                <strong>{{ forloop.counter }}</strong>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ ledger.month_name }} {{ ledger.year }}</strong>
+                                    <br><small class="text-muted">{{ ledger.month }}/{{ ledger.year }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-success fw-bold currency-amount">{{ ledger.currency_symbol }} {{ ledger.total_income|floatformat:2|intcomma }}</span>
+                            </td>
+                            <td>
+                                <span class="text-danger fw-bold currency-amount">{{ ledger.currency_symbol }} {{ ledger.total_expense|floatformat:2|intcomma }}</span>
+                            </td>
+                            <td>
+                                <span class="{% if ledger.net_profit >= 0 %}profit-positive{% else %}profit-negative{% endif %} fw-bold currency-amount">
+                                    {{ ledger.currency_symbol }} {{ ledger.net_profit|floatformat:2|intcomma }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-warning currency-amount">{{ ledger.currency_symbol }} {{ ledger.outstanding_invoices|floatformat:2|intcomma }}</span>
+                            </td>
+                            <td>
+                                {% if ledger.total_income > 0 %}
+                                    {% widthratio ledger.net_profit ledger.total_income 100 %}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'accounting:transaction_list' %}?start_date={{ ledger.year }}-{{ ledger.month|stringformat:'02d' }}-01&end_date={{ ledger.year }}-{{ ledger.month|stringformat:'02d' }}-31" 
+                                       class="btn btn-outline-primary" title="View Transactions">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'accounting:export_data' %}?type=transactions&start_date={{ ledger.year }}-{{ ledger.month|stringformat:'02d' }}-01&end_date={{ ledger.year }}-{{ ledger.month|stringformat:'02d' }}-31" 
+                                       class="btn btn-outline-success" title="Export">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                                    <h5>No ledger data for {{ selected_year }}</h5>
+                                    <p>No transactions have been recorded for this year yet.</p>
+                                    <a href="{% url 'accounting:add_transaction' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Add Transaction
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    {% if ledgers %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Performance Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <h4 class="text-success currency-amount">{{ yearly_totals.currency_symbol }} {{ yearly_totals.total_income|floatformat:2|intcomma }}</h4>
+                            <small class="text-muted">Total Annual Income</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h4 class="text-danger currency-amount">{{ yearly_totals.currency_symbol }} {{ yearly_totals.total_expense|floatformat:2|intcomma }}</h4>
+                            <small class="text-muted">Total Annual Expenses</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <h4 class="{% if yearly_totals.net_profit >= 0 %}text-success{% else %}text-danger{% endif %} currency-amount">
+                                {{ yearly_totals.currency_symbol }} {{ yearly_totals.net_profit|floatformat:2|intcomma }}
+                            </h4>
+                            <small class="text-muted">Annual Net Profit</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            {% if yearly_totals.total_income > 0 %}
+                                <h4 class="{% if yearly_totals.net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {% widthratio yearly_totals.net_profit yearly_totals.total_income 100 %}%
+                                </h4>
+                            {% else %}
+                                <h4 class="text-muted">0%</h4>
+                            {% endif %}
+                            <small class="text-muted">Profit Margin</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prepare chart data
+    const chartData = {{ ledgers|safe }};
+    const months = chartData.map(item => item.month_name);
+    const incomeData = chartData.map(item => parseFloat(item.total_income));
+    const expenseData = chartData.map(item => parseFloat(item.total_expense));
+    const profitData = chartData.map(item => parseFloat(item.net_profit));
+    
+    // Monthly Chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Income',
+                data: incomeData,
+                backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                borderColor: '#28a745',
+                borderWidth: 1
+            }, {
+                label: 'Expenses',
+                data: expenseData,
+                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                borderColor: '#dc3545',
+                borderWidth: 1
+            }, {
+                label: 'Net Profit',
+                data: profitData,
+                backgroundColor: 'rgba(79, 172, 254, 0.8)',
+                borderColor: '#4facfe',
+                borderWidth: 1,
+                type: 'line',
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₦' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Pie Chart
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Income', 'Expenses'],
+            datasets: [{
+                data: [{{ yearly_totals.total_income }}, {{ yearly_totals.total_expense }}],
+                backgroundColor: ['#28a745', '#dc3545'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

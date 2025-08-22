@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% load crispy_forms_tags %}
+
+{% block title %}Quotations{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .filter-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .template-preview {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .bulk-actions {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+    
+    .quotation-table {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .status-draft { background-color: #e3f2fd; color: #1976d2; }
+    .status-sent { background-color: #fff3e0; color: #f57c00; }
+    .status-accepted { background-color: #e8f5e8; color: #388e3c; }
+    .status-declined { background-color: #ffebee; color: #d32f2f; }
+    .status-expired { background-color: #f3e5f5; color: #7b1fa2; }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .pagination {
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .page-link {
+        color: #667eea;
+        border-color: #dee2e6;
+    }
+    
+    .page-item.active .page-link {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .opacity-75 {
+        opacity: 0.75;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Quotations</h2>
+            <p class="text-muted mb-0">Manage your quotations and proposals</p>
+        </div>
+        <div>
+            <a href="{% url 'quotations:quotation_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Create Quotation
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ total_quotations|default:0 }}</h4>
+                        <p class="mb-0 opacity-75">Total Quotations</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ sent_count|default:0 }}</h4>
+                        <p class="mb-0 opacity-75">Sent</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-paper-plane fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ formatted_total_amount|default:"0"|currency_format_with_symbol:company_profile }}</h4>
+                        <p class="mb-0 opacity-75">Total Value</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ accepted_count|default:0 }}</h4>
+                        <p class="mb-0 opacity-75">Accepted</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">{{ draft_count|default:0 }}</h4>
+                        <p class="mb-0 opacity-75">Drafts</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-edit fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Preview -->
+    {% if current_template %}
+    <div class="template-preview">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="mb-1">Current Template: {{ current_template.name }}</h6>
+                <p class="mb-0 opacity-75">{{ current_template.description|default:"No description" }}</p>
+            </div>
+            <a href="{% url 'quotations:template_edit' current_template.pk %}" class="btn btn-light btn-sm">
+                <i class="fas fa-edit me-1"></i>Edit
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" id="filterForm">
+            <div class="row">
+                <div class="col-md-3">
+                    {{ filter_form.search|as_crispy_field }}
+                </div>
+                <div class="col-md-2">
+                    {{ filter_form.status|as_crispy_field }}
+                </div>
+                <div class="col-md-2">
+                    {{ filter_form.date_from|as_crispy_field }}
+                </div>
+                <div class="col-md-2">
+                    {{ filter_form.date_to|as_crispy_field }}
+                </div>
+                <div class="col-md-2">
+                    {{ filter_form.client|as_crispy_field }}
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100 mt-4" style="min-width: 80px; white-space: nowrap;">
+                        <i class="fas fa-search me-1"></i>Search
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions" id="bulkActions">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span id="selectedCount">0</span> quotation(s) selected
+            </div>
+            <div>
+                <select class="form-select form-select-sm d-inline-block w-auto me-2" id="bulkAction">
+                    <option value="">Choose Action</option>
+                    <option value="delete">Delete Selected</option>
+                    <option value="update_status">Update Status</option>
+                    <option value="export">Export Selected</option>
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="executeBulkAction()">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quotations Table -->
+    <div class="quotation-table">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        </th>
+                        <th>S/N</th>
+                        <th>Quotation #</th>
+                        <th>Client</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Amount</th>
+                        <th>Valid Until</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for quotation in page_obj %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="quotation-checkbox" value="{{ quotation.pk }}" onchange="updateBulkActions()">
+                        </td>
+                        <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                        <td>
+                            <strong>{{ quotation.quotation_number }}</strong>
+                        </td>
+                        <td>
+                            {% if quotation.client %}
+                                {{ quotation.client.name }}
+                                {% if quotation.client.email %}
+                                    <br><small class="text-muted">{{ quotation.client.email }}</small>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">No client</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ quotation.quotation_date|date:"M d, Y" }}</td>
+                        <td>
+                            <span class="status-badge status-{{ quotation.status }}">
+                                {{ quotation.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <strong>{{ quotation.grand_total|currency_format_with_symbol:company_profile }}</strong>
+                        </td>
+                        <td>
+                            {% if quotation.valid_until %}
+                                {{ quotation.valid_until|date:"M d, Y" }}
+                                {% if quotation.valid_until < today %}
+                                    <br><small class="text-danger">Expired</small>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">No expiry</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'quotations:quotation_detail' quotation.pk %}" class="btn btn-sm btn-info" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'quotations:quotation_edit' quotation.pk %}" class="btn btn-sm btn-warning" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-file-alt fa-3x mb-3"></i>
+                                <h5>No quotations found</h5>
+                                <p>Create your first quotation to get started.</p>
+                                <a href="{% url 'quotations:quotation_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Create Quotation
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Quotations pagination">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.client %}&client={{ request.GET.client }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.quotation-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.quotation-checkbox:checked');
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (checkboxes.length > 0) {
+        bulkActions.style.display = 'block';
+        selectedCount.textContent = checkboxes.length;
+    } else {
+        bulkActions.style.display = 'none';
+    }
+}
+
+function executeBulkAction() {
+    const action = document.getElementById('bulkAction').value;
+    const checkboxes = document.querySelectorAll('.quotation-checkbox:checked');
+    const quotationIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (!action) {
+        alert('Please select an action');
+        return;
+    }
+    
+    if (quotationIds.length === 0) {
+        alert('Please select at least one quotation');
+        return;
+    }
+    
+    if (action === 'delete') {
+        if (confirm(`Are you sure you want to delete ${quotationIds.length} quotation(s)?`)) {
+            // Implement bulk delete
+            console.log('Bulk delete:', quotationIds);
+        }
+    } else if (action === 'update_status') {
+        // Implement bulk status update
+        console.log('Bulk status update:', quotationIds);
+    } else if (action === 'export') {
+        // Implement bulk export
+        console.log('Bulk export:', quotationIds);
+    }
+}
+</script>
+{% endblock %} 

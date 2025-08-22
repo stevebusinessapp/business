@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h6>{{ title }}</h6>
+                    <a href="{% url 'inventory:template_create' %}" class="btn btn-primary btn-sm">
+                        <i class="material-icons">add</i> Create Template
+                    </a>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    {% if templates %}
+                        <div class="table-responsive p-0">
+                            <table class="table align-items-center mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Template</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Category</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Visibility</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Created</th>
+                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for template in templates %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex px-2 py-1">
+                                                <div class="d-flex flex-column justify-content-center">
+                                                    <h6 class="mb-0 text-sm">{{ template.name }}</h6>
+                                                    {% if template.description %}
+                                                        <p class="text-xs text-secondary mb-0">{{ template.description|truncatechars:50 }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <p class="text-xs font-weight-bold mb-0">{{ template.category|default:"General" }}</p>
+                                        </td>
+                                        <td>
+                                            {% if template.is_public %}
+                                                <span class="badge badge-sm bg-gradient-success">Public</span>
+                                            {% else %}
+                                                <span class="badge badge-sm bg-gradient-secondary">Private</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="text-secondary text-xs font-weight-bold">{{ template.created_at|date:"M d, Y" }}</span>
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'inventory:template_detail' template.pk %}" class="btn btn-link text-secondary px-3 mb-0">
+                                                    <i class="material-icons text-sm me-2">visibility</i>View
+                                                </a>
+                                                {% if template.user == request.user %}
+                                                    <a href="{% url 'inventory:template_update' template.pk %}" class="btn btn-link text-secondary px-3 mb-0">
+                                                        <i class="material-icons text-sm me-2">edit</i>Edit
+                                                    </a>
+                                                    <a href="{% url 'inventory:template_delete' template.pk %}" class="btn btn-link text-danger px-3 mb-0">
+                                                        <i class="material-icons text-sm me-2">delete</i>Delete
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="material-icons text-secondary" style="font-size: 4rem;">layers</i>
+                            <h6 class="text-secondary mt-2">No templates found</h6>
+                            <p class="text-secondary">Create your first inventory template to get started.</p>
+                            <a href="{% url 'inventory:template_create' %}" class="btn btn-primary">
+                                <i class="material-icons">add</i> Create Template
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

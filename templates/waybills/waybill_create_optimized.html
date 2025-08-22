@@ -1,0 +1,428 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Multi-Purpose Business App{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block breadcrumb %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<!-- Load non-critical CSS asynchronously -->
+<link rel="preload" href="{% static 'css/waybill-optimized.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{% static 'css/waybill-optimized.css' %}"></noscript>
+
+<style>
+    /* ULTRA PERFORMANCE OPTIMIZATIONS */
+    
+    /* Critical CSS only - defer non-critical styles */
+    .waybill-creator {
+        display: flex;
+        gap: 20px;
+        min-height: 60vh;
+    }
+    
+    .form-panel, .preview-panel {
+        flex: 1;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        padding: 24px;
+        overflow-y: auto;
+        max-height: 80vh;
+    }
+    
+    /* Optimize loading states */
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 4px;
+        height: 20px;
+        margin-bottom: 10px;
+    }
+    
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    /* Fast form styles */
+    .form-group { margin-bottom: 1rem; }
+    .form-label { 
+        display: block; 
+        margin-bottom: 0.5rem; 
+        font-weight: 500;
+        color: #344767;
+    }
+    .form-control, .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d2d6da;
+        border-radius: 8px;
+        transition: border-color 0.15s ease-in-out;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color, #e91e63);
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(233, 30, 99, 0.25);
+    }
+    
+    /* Template selector optimization */
+    .template-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .template-option {
+        padding: 8px 16px;
+        border: 2px solid #e3e3e3;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #fff;
+        color: #666;
+        font-size: 14px;
+        user-select: none;
+    }
+    
+    .template-option.active {
+        border-color: var(--primary-color, #e91e63);
+        background: var(--primary-color, #e91e63);
+        color: white;
+    }
+    
+    .template-option:hover {
+        border-color: var(--primary-color, #e91e63);
+    }
+    
+    /* Items table optimization */
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    
+    .items-table th,
+    .items-table td {
+        padding: 12px 8px;
+        border: 1px solid #e3e3e3;
+        text-align: left;
+    }
+    
+    .items-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #344767;
+    }
+    
+    .items-table input {
+        width: 100%;
+        border: none;
+        padding: 8px;
+        background: transparent;
+    }
+    
+    .items-table input:focus {
+        outline: 2px solid var(--primary-color, #e91e63);
+        outline-offset: -2px;
+    }
+    
+    /* Buttons */
+    .btn-primary {
+        background: var(--primary-color, #e91e63);
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+        background: #c2185b;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    /* Hide non-critical content initially */
+    .waybill-creator { opacity: 0; transition: opacity 0.3s ease; }
+    .waybill-creator.loaded { opacity: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Quick Template Selector -->
+    <div class="template-selector" id="templateSelector">
+        {% for template in templates %}
+        <div class="template-option {% if template.id == selected_template.id %}active{% endif %}" 
+             data-template-id="{{ template.id }}"
+             style="--primary-color: {{ template.primary_color }}">
+            {{ template.name }}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="waybill-creator" id="waybillCreator">
+        <!-- Form Panel -->
+        <div class="form-panel">
+            <h5>Waybill Details</h5>
+            
+            <form method="POST" id="waybillForm">
+                {% csrf_token %}
+                <input type="hidden" name="template_id" id="selectedTemplateId" value="{{ selected_template.id }}">
+                
+                <!-- Basic Fields -->
+                <div class="form-group">
+                    <label class="form-label">Delivery Date</label>
+                    <input type="date" name="delivery_date" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="pending">Pending</option>
+                        <option value="in_transit">In Transit</option>
+                        <option value="delivered">Delivered</option>
+                    </select>
+                </div>
+                
+                <!-- Dynamic Fields Container -->
+                <div id="dynamicFields">
+                    <div class="loading-skeleton"></div>
+                    <div class="loading-skeleton"></div>
+                    <div class="loading-skeleton"></div>
+                </div>
+                
+                <!-- Items Table Container -->
+                <div id="itemsContainer">
+                    <h6>Items</h6>
+                    <div id="itemsTableContainer">
+                        <div class="loading-skeleton"></div>
+                        <div class="loading-skeleton"></div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="addItemBtn">+ Add Item</button>
+                </div>
+                
+                <!-- Notes -->
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea name="notes" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Create Waybill</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+            <h5>Live Preview</h5>
+            <div id="previewContainer">
+                <div class="loading-skeleton" style="height: 40px;"></div>
+                <div class="loading-skeleton" style="height: 20px; width: 60%;"></div>
+                <div class="loading-skeleton" style="height: 20px; width: 80%;"></div>
+                <div class="loading-skeleton" style="height: 100px; margin-top: 20px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ULTRA PERFORMANCE OPTIMIZED WAYBILL CREATOR
+(function() {
+    'use strict';
+    
+    // Performance optimization: Cache DOM elements
+    const cache = {
+        creator: document.getElementById('waybillCreator'),
+        templateSelector: document.getElementById('templateSelector'),
+        dynamicFields: document.getElementById('dynamicFields'),
+        itemsContainer: document.getElementById('itemsTableContainer'),
+        previewContainer: document.getElementById('previewContainer'),
+        selectedTemplateId: document.getElementById('selectedTemplateId'),
+        form: document.getElementById('waybillForm')
+    };
+    
+    let currentTemplateId = {{ selected_template.id }};
+    let loadingTimeouts = [];
+    
+    // Debounce function for performance
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Load template content asynchronously
+    async function loadTemplateContent(templateId) {
+        if (!templateId) return;
+        
+        try {
+            // Clear existing timeouts
+            loadingTimeouts.forEach(clearTimeout);
+            loadingTimeouts = [];
+            
+            // Load form fields and preview in parallel
+            const [formResponse, previewResponse] = await Promise.all([
+                fetch(`/waybills/api/form-content/?template_id=${templateId}`, {
+                    headers: { 'Cache-Control': 'max-age=300' }
+                }),
+                fetch(`/waybills/api/preview-content/?template_id=${templateId}`, {
+                    headers: { 'Cache-Control': 'max-age=300' }
+                })
+            ]);
+            
+            if (formResponse.ok && previewResponse.ok) {
+                const [formHtml, previewHtml] = await Promise.all([
+                    formResponse.text(),
+                    previewResponse.text()
+                ]);
+                
+                // Update content with small delays for smooth UX
+                cache.dynamicFields.innerHTML = formHtml;
+                
+                loadingTimeouts.push(setTimeout(() => {
+                    cache.previewContainer.innerHTML = previewHtml;
+                }, 50));
+                
+                loadingTimeouts.push(setTimeout(() => {
+                    initializeItemsTable();
+                }, 100));
+            }
+        } catch (error) {
+            console.error('Error loading template content:', error);
+            // Fallback to basic form
+            cache.dynamicFields.innerHTML = '<p>Basic waybill form loaded</p>';
+        }
+    }
+    
+    // Initialize items table
+    function initializeItemsTable() {
+        const tableHtml = `
+            <table class="items-table" id="itemsTable">
+                <thead>
+                    <tr>
+                        <th>Product/Service</th>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Weight (kg)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    <!-- Items will be added here -->
+                </tbody>
+            </table>
+        `;
+        cache.itemsContainer.innerHTML = tableHtml;
+        
+        // Add first row
+        addItemRow();
+    }
+    
+    // Add item row
+    function addItemRow() {
+        const tbody = document.getElementById('itemsTableBody');
+        const rowIndex = tbody.children.length;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="text" name="items[${rowIndex}][product_service]" placeholder="Product/Service"></td>
+            <td><input type="text" name="items[${rowIndex}][description]" placeholder="Description"></td>
+            <td><input type="number" name="items[${rowIndex}][quantity]" placeholder="Qty"></td>
+            <td><input type="number" name="items[${rowIndex}][weight]" step="0.1" placeholder="Weight"></td>
+                                    <td><button type="button" class="btn btn-secondary" onclick="removeItemRow(this)">Remove</button></td>
+        `;
+        
+        tbody.appendChild(row);
+    }
+    
+    // Remove item row
+    window.removeItemRow = function(button) {
+        const row = button.closest('tr');
+        const tbody = row.parentNode;
+        if (tbody.children.length > 1) {
+            row.remove();
+        }
+    };
+    
+    // Template selector handler
+    cache.templateSelector.addEventListener('click', function(e) {
+        if (e.target.classList.contains('template-option')) {
+            // Update active state
+            cache.templateSelector.querySelectorAll('.template-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            e.target.classList.add('active');
+            
+            // Update template ID
+            currentTemplateId = e.target.dataset.templateId;
+            cache.selectedTemplateId.value = currentTemplateId;
+            
+            // Load new template content
+            loadTemplateContent(currentTemplateId);
+        }
+    });
+    
+    // Add item button handler
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'addItemBtn') {
+            addItemRow();
+        }
+    });
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load initial template content
+        loadTemplateContent(currentTemplateId);
+        
+        // Show creator after brief delay
+        setTimeout(() => {
+            cache.creator.classList.add('loaded');
+        }, 200);
+    });
+    
+    // Lazy load company profile data when needed
+    let companyProfileLoaded = false;
+    function loadCompanyProfile() {
+        if (companyProfileLoaded) return Promise.resolve();
+        
+        return fetch('/waybills/api/company-profile/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    companyProfileLoaded = true;
+                    // Store profile data for use in preview
+                    window.companyProfile = data;
+                }
+            })
+            .catch(console.error);
+    }
+    
+    // Load company profile when user interacts with form
+    cache.form.addEventListener('focus', loadCompanyProfile, { once: true });
+    
+})();
+</script>
+{% endblock %}

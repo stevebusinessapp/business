@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Job Orders{% endblock %}
+{% block content %}
+<div class="container mt-4" style="overflow:auto; max-width:100vw;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Job Orders</h2>
+    <div>
+      <span class="badge bg-info text-dark me-2">Total: {{ total_joborders }}</span>
+      <span class="badge bg-primary">Visible: {{ filtered_count }}</span>
+      <a href="{% url 'job_orders:joborder_create' %}" class="btn btn-primary ms-2">Create Job Order</a>
+    </div>
+  </div>
+  <div class="mb-3 d-flex gap-2">
+    <a href="{% url 'job_orders:export_excel' %}" class="btn btn-outline-success btn-sm">
+      <i class="material-icons text-sm">table_view</i> Export as Excel
+    </a>
+    <a href="{% url 'job_orders:export_pdf' %}" class="btn btn-outline-danger btn-sm" target="_blank">
+      <i class="material-icons text-sm">picture_as_pdf</i> Export as PDF
+    </a>
+  </div>
+  <form method="get" class="row g-3 mb-3">
+    <div class="col-md-3">
+      <input type="text" name="q" class="form-control" placeholder="Search by title or status..." value="{{ request.GET.q }}">
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">All Statuses</option>
+        {% for key, label in joborders.model.STATUS_CHOICES %}
+          <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-outline-secondary w-100">Filter</button>
+    </div>
+  </form>
+  <div class="table-responsive" style="overflow:auto;">
+    <table class="table table-bordered table-hover align-middle bg-white" style="min-width:600px;">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Tracking ID</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Created By</th>
+          <th>Approved By</th>
+          <th>Created At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for joborder in joborders %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ joborder.tracking_id }}</td>
+          <td><a href="{% url 'job_orders:joborder_detail' joborder.pk %}">{{ joborder.title }}</a></td>
+          <td><span class="badge bg-{% if joborder.status == 'approved' %}success{% elif joborder.status == 'rejected' %}danger{% elif joborder.status == 'pending' %}warning{% else %}secondary{% endif %}">{{ joborder.get_status_display }}</span></td>
+          <td>
+            {% if joborder.created_by %}
+              {{ joborder.created_by.get_full_name|default:joborder.created_by.email|default:'-' }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            <select class="form-select form-select-sm joborder-status-dropdown" data-joborder-id="{{ joborder.id }}">
+              <option value="approved" {% if joborder.status == 'approved' %}selected{% endif %}>Approved</option>
+              <option value="pending" {% if joborder.status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="rejected" {% if joborder.status == 'rejected' %}selected{% endif %}>Denied</option>
+            </select>
+            {% if joborder.approved_by and joborder.status == 'approved' %}
+              <div class="small text-success mt-1">{{ joborder.approved_by.get_full_name|default:joborder.approved_by.email }}</div>
+            {% elif joborder.status == 'pending' %}
+              <div class="small text-warning mt-1">Pending</div>
+            {% elif joborder.status == 'rejected' %}
+              <div class="small text-danger mt-1">Denied</div>
+            {% endif %}
+          </td>
+          <td>{{ joborder.created_at|date:'Y-m-d H:i' }}</td>
+          <td>
+            <a href="{% url 'job_orders:joborder_detail' joborder.pk %}" class="btn btn-sm btn-info">View</a>
+            <a href="{% url 'job_orders:joborder_edit' joborder.pk %}" class="btn btn-sm btn-warning">Edit</a>
+            <a href="{% url 'job_orders:joborder_delete' joborder.pk %}" class="btn btn-sm btn-danger">Delete</a>
+            {% if joborder.status == 'draft' %}
+              <a href="{% url 'job_orders:joborder_submit' joborder.pk %}" class="btn btn-sm btn-primary">Submit</a>
+            {% endif %}
+            {% if joborder.status == 'pending' and perms.job_orders.can_approve_joborder %}
+              <a href="{% url 'job_orders:joborder_approve' joborder.pk %}" class="btn btn-sm btn-success">Approve</a>
+              <a href="{% url 'job_orders:joborder_reject' joborder.pk %}" class="btn btn-sm btn-outline-danger">Reject</a>
+            {% endif %}
+            <a href="{% url 'job_orders:joborder_print' joborder.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank">Print</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center">No job orders found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.joborder-status-dropdown').forEach(function(dropdown) {
+    dropdown.addEventListener('change', function() {
+      const joborderId = this.getAttribute('data-joborder-id');
+      const newStatus = this.value;
+      fetch(`/job-orders/${joborderId}/set_status/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': (document.querySelector('[name=csrfmiddlewaretoken]') || {}).value
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Failed to update status: ' + (data.error || 'Unknown error'));
+        }
+      })
+      .catch(() => alert('Failed to update status.'));
+    });
+  });
+});
+</script>
+</div>
+{% endblock %}
+
+<style>
+@media (max-width: 600px) {
+  .container, .table-responsive, .card {
+    overflow-x: auto !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    padding: 0 !important;
+  }
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    will-change: transform;
+  }
+  table {
+    min-width: 600px !important;
+  }
+}
+</style> 

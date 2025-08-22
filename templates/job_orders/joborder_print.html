@@ -1,0 +1,144 @@
+{% extends 'base_print.html' %}
+{% block title %}Print Job Order{% endblock %}
+{% load joborder_filters %}
+{% block content %}
+<style>
+@media (max-width: 600px) {
+  .container, .table-responsive, .card {
+    overflow-x: auto !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    padding: 0 !important;
+  }
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    will-change: transform;
+  }
+  table {
+    min-width: 600px !important;
+  }
+}
+</style>
+<div class="container mt-4" style="overflow:auto; max-width:100vw;">
+  <div class="row mb-3">
+    <div class="col-12 d-flex align-items-center">
+      {% if company_logo %}
+        <img src="{{ company_logo }}" alt="Company Logo" style="max-height: 70px; max-width: 180px; margin-right: 20px;">
+      {% endif %}
+      <div>
+        <h4 class="mb-1">{{ company_profile.company_name }}</h4>
+        <div class="text-muted small">
+          {% if company_profile.address %}<div>{{ company_profile.address }}</div>{% endif %}
+          {% if company_profile.phone %}<div>Phone: {{ company_profile.phone }}</div>{% endif %}
+          {% if company_profile.email %}<div>Email: {{ company_profile.email }}</div>{% endif %}
+          {% if company_profile.website %}<div>Website: {{ company_profile.website }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h2 class="mb-0">Job Order: {{ joborder.title }}</h2>
+          <div class="mb-2"><strong>Tracking ID:</strong> {{ joborder.tracking_id }}</div>
+          <span>Status: <span class="badge bg-{% if joborder.status == 'approved' %}success{% elif joborder.status == 'rejected' %}danger{% elif joborder.status == 'pending' %}warning{% else %}secondary{% endif %}">{{ joborder.get_status_display }}</span></span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive" style="overflow:auto;">
+            <table class="table table-bordered mb-4" style="min-width:600px;">
+            <thead>
+              <tr>
+                <th>#</th>
+                {% for col in joborder.layout.structure %}
+                  <th>{{ col.label|default:col.name }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in joborder.data %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  {% for col in joborder.layout.structure %}
+                    {% if col.name == 'quantity' %}
+                      <td>
+                        {% if row.quantity_raw is not None and row.quantity_raw != '' %}
+                          {{ row.quantity_raw }}
+                        {% elif row.quantity %}
+                          {{ row.quantity }}
+                        {% else %}
+                        {% endif %}
+                      </td>
+                    {% elif col.name in 'unit_price,price,amount,total' %}
+                      <td>{{ row|get_item:col.name|format_currency:currency_symbol }}</td>
+                    {% else %}
+                      <td>{{ row|get_item:col.name }}</td>
+                    {% endif %}
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% if joborder.summary %}
+          <div class="mb-3">
+            <h6>Summary</h6>
+            <ul class="list-group list-group-flush">
+              {% for key, value in joborder.summary.items %}
+                <li class="list-group-item"><strong>{{ key|capfirst }}:</strong> {{ value|format_currency:currency_symbol }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          <div class="mt-4">
+            <p><strong>Created By:</strong>
+              {% if joborder.created_by %}
+                {{ joborder.created_by.get_full_name|default:joborder.created_by.email|default:'-' }}
+              {% else %}
+                -
+              {% endif %}
+            </p>
+            {% if joborder.approved_by %}
+              <p><strong>Approved By:</strong> {{ joborder.approved_by.get_full_name|default:joborder.approved_by.email }}</p>
+            {% endif %}
+            {% if joborder.approved_at %}
+              <p><strong>Approved At:</strong> {{ joborder.approved_at|date:'Y-m-d H:i' }}</p>
+            {% endif %}
+            {% if joborder.organization %}
+              <p><strong>Organization:</strong> {{ joborder.organization }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% if company_signature %}
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-12 text-end">
+        <img src="{{ company_signature }}" alt="Signature" style="max-height: 60px; max-width: 150px;">
+        <div class="small text-muted">Authorized Signature</div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+<script>
+  window.onload = function() { window.print(); };
+</script>
+{% endblock %} 
+{% block extra_js %}
+<style>
+@media print {
+  .container, .table-responsive, .card {
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+  .table-responsive {
+    overflow-x: visible !important;
+  }
+}
+</style>
+{% endblock %} 

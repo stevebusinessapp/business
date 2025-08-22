@@ -1,0 +1,609 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title|default:"Layout Form" }} - Inventory Layout{% endblock %}
+
+{% block extra_css %}
+<style>
+    .layout-form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .layout-form-header {
+        background: linear-gradient(135deg, var(--primary-color, #007bff) 0%, var(--secondary-color, #6c757d) 100%);
+        color: white;
+        padding: 25px;
+    }
+    
+    .layout-form-body {
+        padding: 30px;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .form-section h5 {
+        color: var(--primary-color, #007bff);
+        margin-bottom: 15px;
+        border-bottom: 2px solid var(--primary-color, #007bff);
+        padding-bottom: 8px;
+    }
+    
+    .column-config {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .column-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .column-name {
+        font-weight: 600;
+        color: var(--primary-color, #007bff);
+    }
+    
+    .column-controls {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .column-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .column-toggle input[type="checkbox"] {
+        transform: scale(1.2);
+    }
+    
+    .column-settings {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 10px;
+    }
+    
+    .setting-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .setting-group label {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #495057;
+    }
+    
+    .setting-group input,
+    .setting-group select {
+        padding: 6px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .calculation-preview {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 6px;
+        padding: 10px;
+        margin-top: 10px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .branding-preview {
+        background: white;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        margin-top: 15px;
+    }
+    
+    .branding-preview img {
+        max-width: 150px;
+        max-height: 80px;
+        margin-bottom: 10px;
+    }
+    
+    .color-picker {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .color-picker input[type="color"] {
+        width: 50px;
+        height: 40px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    
+    .form-actions {
+        background: #f8f9fa;
+        padding: 20px;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .btn-save-layout {
+        background: var(--primary-color, #007bff);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-save-layout:hover {
+        background: #0056b3;
+        transform: translateY(-1px);
+    }
+    
+    .btn-preview {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 500;
+        margin-right: 10px;
+    }
+    
+    .btn-preview:hover {
+        background: #218838;
+        color: white;
+    }
+    
+    .drag-handle {
+        cursor: move;
+        color: #6c757d;
+        margin-right: 10px;
+    }
+    
+    .drag-handle:hover {
+        color: var(--primary-color, #007bff);
+    }
+    
+    .column-dragging {
+        opacity: 0.5;
+        transform: rotate(5deg);
+    }
+    
+    .column-drop-zone {
+        border: 2px dashed var(--primary-color, #007bff);
+        background: rgba(0, 123, 255, 0.1);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        color: var(--primary-color, #007bff);
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="layout-form-container">
+        <div class="layout-form-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-cog"></i> {{ title|default:"Layout Configuration" }}</h2>
+                    <p class="mb-0">Configure your inventory table layout and settings</p>
+                </div>
+                <div>
+                    <a href="{% url 'inventory:layout_list' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left"></i> Back to Layouts
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data" id="layoutForm">
+            {% csrf_token %}
+            <div class="layout-form-body">
+                
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h5><i class="fas fa-info-circle"></i> Basic Information</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Layout Name *</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.is_default.id_for_label }}" class="form-label">Default Layout</label>
+                                <div class="form-check">
+                                    {{ form.is_default }}
+                                    <label class="form-check-label" for="{{ form.is_default.id_for_label }}">
+                                        Set as default layout for new items
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Column Configuration -->
+                <div class="form-section">
+                    <h5><i class="fas fa-columns"></i> Column Configuration</h5>
+                    <p class="text-muted">Drag and drop columns to reorder, or toggle visibility and settings.</p>
+                    
+                    <div id="columnContainer">
+                        {% for column in layout.get_default_columns %}
+                            <div class="column-config" data-column-name="{{ column.name }}">
+                                <div class="column-header">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-grip-vertical drag-handle"></i>
+                                        <span class="column-name">{{ column.display_name }}</span>
+                                    </div>
+                                    <div class="column-controls">
+                                        <div class="column-toggle">
+                                            <input type="checkbox" id="visible_{{ column.name }}" 
+                                                   name="column_visibility" value="{{ column.name }}" 
+                                                   {% if column.name != 'actions' %}checked{% endif %}>
+                                            <label for="visible_{{ column.name }}">Visible</label>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                onclick="toggleColumnSettings('{{ column.name }}')">
+                                            <i class="fas fa-cog"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="column-settings" id="settings_{{ column.name }}" style="display: none;">
+                                    <div class="setting-group">
+                                        <label>Display Name</label>
+                                        <input type="text" name="display_name_{{ column.name }}" 
+                                               value="{{ column.display_name }}" class="form-control">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label>Width</label>
+                                        <input type="text" name="width_{{ column.name }}" 
+                                               value="{{ column.width|default:'auto' }}" class="form-control">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label>Sortable</label>
+                                        <select name="sortable_{{ column.name }}" class="form-control">
+                                            <option value="true" {% if column.sortable %}selected{% endif %}>Yes</option>
+                                            <option value="false" {% if not column.sortable %}selected{% endif %}>No</option>
+                                        </select>
+                                    </div>
+                                    {% if column.field_type == 'calculated' %}
+                                        <div class="setting-group">
+                                            <label>Calculation Formula</label>
+                                            <input type="text" name="formula_{{ column.name }}" 
+                                                   value="{{ column.formula|default:'quantity * unit_price' }}" 
+                                                   class="form-control" onchange="previewCalculation('{{ column.name }}')">
+                                            <div class="calculation-preview" id="preview_{{ column.name }}">
+                                                Preview: ₦0.00
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-primary" onclick="addCustomColumn()">
+                            <i class="fas fa-plus"></i> Add Custom Column
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Calculation Settings -->
+                <div class="form-section">
+                    <h5><i class="fas fa-calculator"></i> Calculation Settings</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.auto_calculate }}
+                                    <label class="form-check-label" for="{{ form.auto_calculate.id_for_label }}">
+                                        Enable automatic calculations
+                                    </label>
+                                </div>
+                                <small class="text-muted">Automatically calculate totals when quantity and price fields are present</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.show_totals }}
+                                    <label class="form-check-label" for="{{ form.show_totals.id_for_label }}">
+                                        Show row totals
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.show_grand_total }}
+                                    <label class="form-check-label" for="{{ form.show_grand_total.id_for_label }}">
+                                        Show grand total
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Branding Settings -->
+                <div class="form-section">
+                    <h5><i class="fas fa-palette"></i> Branding & Styling</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.company_name.id_for_label }}" class="form-label">Company Name</label>
+                                {{ form.company_name }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.company_logo.id_for_label }}" class="form-label">Company Logo</label>
+                                {{ form.company_logo }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Primary Color</label>
+                                <div class="color-picker">
+                                    {{ form.primary_color }}
+                                    <input type="text" name="primary_color_text" value="{{ form.primary_color.value|default:'#007bff' }}" 
+                                           class="form-control" onchange="updateColorPicker(this, '{{ form.primary_color.id_for_label }}')">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Secondary Color</label>
+                                <div class="color-picker">
+                                    {{ form.secondary_color }}
+                                    <input type="text" name="secondary_color_text" value="{{ form.secondary_color.value|default:'#6c757d' }}" 
+                                           class="form-control" onchange="updateColorPicker(this, '{{ form.secondary_color.id_for_label }}')">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="branding-preview" id="brandingPreview">
+                        <div id="previewLogo">
+                            {% if form.instance.company_logo %}
+                                <img src="{{ form.instance.company_logo.url }}" alt="Company Logo">
+                            {% else %}
+                                <i class="fas fa-building fa-3x text-muted"></i>
+                            {% endif %}
+                        </div>
+                        <h4 id="previewCompanyName">{{ form.company_name.value|default:"Your Company Name" }}</h4>
+                        <p class="text-muted">Branding preview for exports and reports</p>
+                    </div>
+                </div>
+                
+                <!-- Table Settings -->
+                <div class="form-section">
+                    <h5><i class="fas fa-table"></i> Table Settings</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.allow_inline_editing }}
+                                    <label class="form-check-label" for="{{ form.allow_inline_editing.id_for_label }}">
+                                        Allow inline editing
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.allow_bulk_operations }}
+                                    <label class="form-check-label" for="{{ form.allow_bulk_operations.id_for_label }}">
+                                        Allow bulk operations
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.enable_sorting }}
+                                    <label class="form-check-label" for="{{ form.enable_sorting.id_for_label }}">
+                                        Enable column sorting
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.enable_filtering }}
+                                    <label class="form-check-label" for="{{ form.enable_filtering.id_for_label }}">
+                                        Enable filtering
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <div>
+                    <button type="button" class="btn btn-preview" onclick="previewLayout()">
+                        <i class="fas fa-eye"></i> Preview Layout
+                    </button>
+                    <a href="{% url 'inventory:layout_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+                <button type="submit" class="btn btn-save-layout">
+                    <i class="fas fa-save"></i> Save Layout
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Layout Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="layoutPreviewContent">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Column management
+function toggleColumnSettings(columnName) {
+    const settingsDiv = document.getElementById(`settings_${columnName}`);
+    settingsDiv.style.display = settingsDiv.style.display === 'none' ? 'grid' : 'none';
+}
+
+function addCustomColumn() {
+    const columnName = prompt('Enter column name (e.g., custom_field):');
+    if (!columnName) return;
+    
+    const displayName = prompt('Enter display name:');
+    if (!displayName) return;
+    
+    const columnConfig = `
+        <div class="column-config" data-column-name="${columnName}">
+            <div class="column-header">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-grip-vertical drag-handle"></i>
+                    <span class="column-name">${displayName}</span>
+                </div>
+                <div class="column-controls">
+                    <div class="column-toggle">
+                        <input type="checkbox" id="visible_${columnName}" name="column_visibility" value="${columnName}" checked>
+                        <label for="visible_${columnName}">Visible</label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleColumnSettings('${columnName}')">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="column-settings" id="settings_${columnName}" style="display: none;">
+                <div class="setting-group">
+                    <label>Display Name</label>
+                    <input type="text" name="display_name_${columnName}" value="${displayName}" class="form-control">
+                </div>
+                <div class="setting-group">
+                    <label>Field Type</label>
+                    <select name="field_type_${columnName}" class="form-control">
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="decimal">Decimal</option>
+                        <option value="date">Date</option>
+                        <option value="select">Dropdown</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Width</label>
+                    <input type="text" name="width_${columnName}" value="150px" class="form-control">
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('columnContainer').insertAdjacentHTML('beforeend', columnConfig);
+}
+
+// Color picker management
+function updateColorPicker(textInput, colorInputId) {
+    const colorInput = document.getElementById(colorInputId);
+    colorInput.value = textInput.value;
+    updateBrandingPreview();
+}
+
+// Branding preview
+function updateBrandingPreview() {
+    const primaryColor = document.getElementById('{{ form.primary_color.id_for_label }}').value;
+    const companyName = document.querySelector('input[name="company_name"]').value || 'Your Company Name';
+    
+    document.getElementById('previewCompanyName').textContent = companyName;
+    document.getElementById('brandingPreview').style.borderColor = primaryColor;
+}
+
+// Calculation preview
+function previewCalculation(columnName) {
+    const formula = document.querySelector(`input[name="formula_${columnName}"]`).value;
+    const previewDiv = document.getElementById(`preview_${columnName}`);
+    
+    // Simple preview calculation (you can enhance this)
+    const result = 100 * 25; // Example values
+    previewDiv.textContent = `Preview: ₦${result.toLocaleString()}`;
+}
+
+// Layout preview
+function previewLayout() {
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+    
+    // Load preview content via AJAX
+    fetch('/inventory/ajax/layout-preview/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            form_data: new FormData(document.getElementById('layoutForm'))
+        })
+    })
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById('layoutPreviewContent').innerHTML = html;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('layoutPreviewContent').innerHTML = '<p class="text-danger">Failed to load preview</p>';
+    });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateBrandingPreview();
+    
+    // Update preview when form fields change
+    document.querySelector('input[name="company_name"]').addEventListener('input', updateBrandingPreview);
+    document.getElementById('{{ form.primary_color.id_for_label }}').addEventListener('change', updateBrandingPreview);
+});
+</script>
+{% endblock %} 

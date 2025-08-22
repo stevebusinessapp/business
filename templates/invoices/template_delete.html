@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Template - Multi-Purpose Business App{% endblock %}
+{% block page_title %}Delete Template{% endblock %}
+{% block breadcrumb %}Delete Template{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header text-center pb-0">
+                    <i class="material-icons text-danger" style="font-size: 4rem;">warning</i>
+                    <h4 class="text-danger mt-2">Delete Template</h4>
+                    <p class="text-muted mb-0">This action cannot be undone</p>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <div class="d-flex align-items-start">
+                            <i class="material-icons text-warning me-2">info</i>
+                            <div>
+                                <strong>Warning:</strong> You are about to delete the template "<strong>{{ template.name }}</strong>".
+                                {% if template.invoices.count > 0 %}
+                                <br><br>
+                                <strong>Cannot Delete:</strong> This template is currently being used by <strong>{{ template.invoices.count }}</strong> invoice{{ template.invoices.count|pluralize }}. 
+                                You must first change those invoices to use a different template or delete them before you can delete this template.
+                                {% else %}
+                                <br><br>
+                                This template is not being used by any invoices and can be safely deleted.
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Template Preview -->
+                    <div class="card border-danger mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Template to be deleted:</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-3">
+                                    <div class="d-flex">
+                                        <span class="badge" style="background-color: {{ template.primary_color }}; width: 20px; height: 20px; margin-right: 5px;"></span>
+                                        <span class="badge" style="background-color: {{ template.secondary_color }}; width: 20px; height: 20px; margin-right: 5px;"></span>
+                                        <span class="badge" style="background-color: {{ template.text_color }}; width: 20px; height: 20px; margin-right: 5px;"></span>
+                                        <span class="badge" style="background-color: {{ template.accent_color }}; width: 20px; height: 20px;"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">{{ template.name }}</h6>
+                                    <small class="text-muted">
+                                        {% if template.description %}{{ template.description|truncatechars:80 }}{% else %}No description{% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="text-muted small">Invoices Using</div>
+                                    <div class="h5 mb-0 {% if template.invoices.count > 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {{ template.invoices.count }}
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-muted small">Created</div>
+                                    <div class="h6 mb-0">{{ template.created_at|date:"M d, Y" }}</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-muted small">Default</div>
+                                    <div class="h6 mb-0">
+                                        {% if template.is_default %}
+                                            <span class="text-success">Yes</span>
+                                        {% else %}
+                                            <span class="text-muted">No</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if template.invoices.count > 0 %}
+                    <!-- Show invoices using this template -->
+                    <div class="card border-info mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Invoices using this template:</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for invoice in template.invoices.all|slice:":10" %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="material-icons text-sm text-primary me-2">receipt_long</i>
+                                        <a href="{% url 'invoices:detail' invoice.pk %}" class="text-decoration-none">
+                                            {{ invoice.invoice_number }}
+                                        </a>
+                                        <small class="text-muted ms-2">- {{ invoice.client_name }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if template.invoices.count > 10 %}
+                            <div class="text-center mt-2">
+                                <small class="text-muted">... and {{ template.invoices.count|add:"-10" }} more invoice{{ template.invoices.count|add:"-10"|pluralize }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'invoices:template_detail' template.pk %}" class="btn btn-outline-secondary">
+                            <i class="material-icons text-sm">arrow_back</i>&nbsp;&nbsp;Cancel
+                        </a>
+                        
+                        {% if template.invoices.count == 0 %}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you absolutely sure you want to delete this template? This action cannot be undone.')">
+                                <i class="material-icons text-sm">delete_forever</i>&nbsp;&nbsp;Delete Template
+                            </button>
+                        </form>
+                        {% else %}
+                        <button type="button" class="btn btn-danger" disabled title="Cannot delete template that is in use">
+                            <i class="material-icons text-sm">block</i>&nbsp;&nbsp;Cannot Delete
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

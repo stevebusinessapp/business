@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% block title %}{% if receipt %}Edit Receipt{% else %}Create Receipt{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0">{% if receipt %}Edit Receipt{% else %}Create New Receipt{% endif %}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            {% for field in form %}
+                                {% if field.name != 'notes' and field.name != 'amount_in_words' %}
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_{{ field.name }}" class="form-label">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                                        {% if field.name == 'amount_received' %}
+                                            <div class="input-group">
+                                                <span class="input-group-text" id="currency-symbol-span">{{ user_currency_symbol|default:'$' }}</span>
+                                                <input type="text" id="amount-received-display" class="form-control" value="" disabled>
+                                                <input type="hidden" name="amount_received" id="id_amount_received" value="">
+                                            </div>
+                                            <!-- Amount in Words field placed directly below Amount Received -->
+                                            <div class="mt-2">
+                                                <label for="id_amount_in_words" class="form-label">Amount in Words</label>
+                                                <input type="text" id="id_amount_in_words" name="amount_in_words" class="form-control border bg-light fw-bold" placeholder="Amount in Words" readonly>
+                                            </div>
+                                        {% elif field.name == 'custom_color' %}
+                                            {% with color_value=field.value|default:'#000000' %}
+                                                <input type="color" id="id_custom_color" name="custom_color" class="form-control form-control-color border" value="{{ color_value }}" placeholder="Pick a color">
+                                            {% endwith %}
+                                        {% else %}
+                                            {{ field }}
+                                        {% endif %}
+                                        {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                                        {% for error in field.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="{% url 'receipts:list' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Receipt</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const invoiceSelect = document.querySelector('[data-invoice-select]');
+    const currencySymbolSpan = document.getElementById('currency-symbol-span');
+    const amountReceivedDisplay = document.getElementById('amount-received-display');
+    const amountReceivedHidden = document.getElementById('id_amount_received');
+    const fieldMap = {
+        client_name: 'id_client_name',
+        client_phone: 'id_client_phone',
+        client_address: 'id_client_address',
+        amount_in_words: 'id_amount_in_words',
+        payment_method: 'id_payment_method',
+        transaction_id: 'id_transaction_id',
+        received_by: 'id_received_by',
+        custom_color: 'id_custom_color',
+        // notes intentionally excluded
+    };
+    if (invoiceSelect) {
+        invoiceSelect.addEventListener('change', function() {
+            const invoiceId = this.value;
+            // Clear all fields except notes
+            for (const key in fieldMap) {
+                const el = document.getElementById(fieldMap[key]);
+                if (el) {
+                    if (el.tagName === 'SELECT') {
+                        el.selectedIndex = 0;
+                    } else {
+                        el.value = '';
+                    }
+                }
+            }
+            if (amountReceivedDisplay) amountReceivedDisplay.value = '';
+            if (amountReceivedHidden) amountReceivedHidden.value = '';
+            if (!invoiceId) return;
+            fetch(`/api/invoices/${invoiceId}/info/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        if (data.client_name && document.getElementById('id_client_name')) document.getElementById('id_client_name').value = data.client_name;
+                        if (data.client_phone && document.getElementById('id_client_phone')) document.getElementById('id_client_phone').value = data.client_phone;
+                        if (data.client_address && document.getElementById('id_client_address')) document.getElementById('id_client_address').value = data.client_address;
+                        if (data.balance_due && Number(data.balance_due) > 0) {
+                            if (amountReceivedDisplay) amountReceivedDisplay.value = data.currency_symbol + ' ' + Number(data.balance_due).toLocaleString();
+                            if (amountReceivedHidden) amountReceivedHidden.value = data.balance_due;
+                            updateAmountInWords(Number(data.balance_due), data.currency_code);
+                        } else if (data.grand_total) {
+                            if (amountReceivedDisplay) amountReceivedDisplay.value = data.currency_symbol + ' ' + Number(data.grand_total).toLocaleString();
+                            if (amountReceivedHidden) amountReceivedHidden.value = data.grand_total;
+                            updateAmountInWords(Number(data.grand_total), data.currency_code);
+                        }
+                        if (data.transaction_id && document.getElementById('id_transaction_id')) document.getElementById('id_transaction_id').value = data.transaction_id;
+                        if (data.payment_method && document.getElementById('id_payment_method')) document.getElementById('id_payment_method').value = data.payment_method;
+                        if (data.received_by && document.getElementById('id_received_by')) document.getElementById('id_received_by').value = data.received_by;
+                        if (data.custom_color && document.getElementById('id_custom_color')) document.getElementById('id_custom_color').value = data.custom_color;
+                    }
+                })
+                .catch(() => {
+                    for (const key in fieldMap) {
+                        const el = document.getElementById(fieldMap[key]);
+                        if (el) {
+                            if (el.tagName === 'SELECT') {
+                                el.selectedIndex = 0;
+                            } else {
+                                el.value = '';
+                            }
+                        }
+                    }
+                    if (amountReceivedDisplay) amountReceivedDisplay.value = '';
+                    if (amountReceivedHidden) amountReceivedHidden.value = '';
+                    if (currencySymbolSpan) {
+                        currencySymbolSpan.textContent = '{{ user_currency_symbol|default:"$" }}';
+                    }
+                });
+        });
+    }
+});
+
+function updateAmountInWords(amount, currency) {
+    const amountInWordsField = document.getElementById('id_amount_in_words');
+    if (!amountInWordsField) return;
+    fetch(`/api/core/num2words/?amount=${amount}&currency=${currency || '{{ user_currency_code|default:"USD" }}'}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('num2words API response:', data); // Debug log
+            if (data && data.words) {
+                amountInWordsField.value = data.words;
+            } else {
+                amountInWordsField.value = '';
+            }
+        })
+        .catch((err) => {
+            console.log('num2words API error:', err); // Debug log
+            amountInWordsField.value = '';
+        });
+}
+</script>
+{% endblock %} 

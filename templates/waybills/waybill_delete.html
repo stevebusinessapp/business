@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Waybill {{ waybill.waybill_number }} - Multi-Purpose Business App{% endblock %}
+{% block page_title %}Delete Waybill{% endblock %}
+{% block breadcrumb %}Delete Waybill{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-danger shadow-danger border-radius-lg pt-4 pb-3">
+          <h6 class="text-white text-capitalize ps-3">Confirm Deletion</h6>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <div class="text-center mb-4">
+          <i class="material-icons text-danger" style="font-size: 64px;">warning</i>
+          <h4 class="mt-3">Delete Waybill {{ waybill.waybill_number }}?</h4>
+          <p class="text-muted">This action cannot be undone. All data associated with this waybill will be permanently deleted.</p>
+        </div>
+        
+        <!-- Waybill Summary -->
+        <div class="card border-light mb-4">
+          <div class="card-body">
+            <h6 class="card-title text-danger">Waybill Details</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Waybill Number:</strong> {{ waybill.waybill_number }}</p>
+                <p><strong>Template:</strong> {{ waybill.template.name }}</p>
+                <p><strong>Status:</strong> 
+                  {% if waybill.status == 'delivered' %}
+                    <span class="badge bg-success">Delivered</span>
+                  {% elif waybill.status == 'in_transit' %}
+                    <span class="badge bg-primary">In Transit</span>
+                  {% elif waybill.status == 'cancelled' %}
+                    <span class="badge bg-danger">Cancelled</span>
+                  {% else %}
+                    <span class="badge bg-warning">Pending</span>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Date Created:</strong> {{ waybill.waybill_date|date:"M d, Y" }}</p>
+                <p><strong>Delivery Date:</strong> 
+                  {% if waybill.delivery_date %}{{ waybill.delivery_date|date:"M d, Y" }}{% else %}Not set{% endif %}
+                </p>
+                <p><strong>Items Count:</strong> {{ waybill.items.count }}</p>
+              </div>
+            </div>
+            
+            <!-- Show receiver info if available -->
+            {% if waybill.custom_data.receiver_info.receiver_name %}
+            <div class="mt-3">
+              <p><strong>Receiver:</strong> {{ waybill.custom_data.receiver_info.receiver_name }}</p>
+              {% if waybill.custom_data.receiver_info.receiver_phone %}
+                <p><strong>Phone:</strong> {{ waybill.custom_data.receiver_info.receiver_phone }}</p>
+              {% endif %}
+            </div>
+            {% endif %}
+            
+            {% if waybill.notes %}
+            <div class="mt-3">
+              <p><strong>Notes:</strong></p>
+              <p class="text-muted">{{ waybill.notes|truncatewords:20 }}</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Warning Message -->
+        <div class="alert alert-danger" role="alert">
+          <h6><i class="material-icons text-sm me-2">error</i>Warning!</h6>
+          <p class="mb-0">Deleting this waybill will:</p>
+          <ul class="mt-2 mb-0">
+            <li>Remove the waybill record permanently</li>
+            <li>Delete all associated items ({{ waybill.items.count }} item{{ waybill.items.count|pluralize }})</li>
+            <li>Remove all custom field data</li>
+            <li>This action cannot be reversed</li>
+          </ul>
+        </div>
+        
+        <!-- Action Buttons -->
+        <form method="post" class="d-inline">
+          {% csrf_token %}
+          <div class="text-center">
+            <a href="{% url 'waybills:detail' waybill.pk %}" class="btn btn-outline-secondary me-3">
+              <i class="material-icons text-sm">arrow_back</i> Cancel
+            </a>
+            <button type="submit" class="btn btn-danger" onclick="return confirmDeletion()">
+              <i class="material-icons text-sm">delete_forever</i> Delete Waybill
+            </button>
+          </div>
+        </form>
+        
+        <!-- Alternative Actions -->
+        <div class="text-center mt-4">
+          <p class="text-muted small">
+            Instead of deleting, you might want to:
+            <a href="{% url 'waybills:edit' waybill.pk %}" class="text-primary">Edit this waybill</a> or
+            change its status to 
+            <a href="{% url 'waybills:edit' waybill.pk %}" class="text-warning">Cancelled</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDeletion() {
+    return confirm(
+        'Are you absolutely sure you want to delete waybill {{ waybill.waybill_number }}?\n\n' +
+        'This will permanently remove:\n' +
+        '- The waybill record\n' +
+        '- All {{ waybill.items.count }} item{{ waybill.items.count|pluralize }}\n' +
+        '- All custom field data\n\n' +
+        'This action cannot be undone!'
+    );
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Escape key - cancel
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        window.location.href = '{% url "waybills:detail" waybill.pk %}';
+    }
+});
+
+// Focus management
+document.addEventListener('DOMContentLoaded', function() {
+    // Focus on cancel button by default (safer choice)
+    const cancelButton = document.querySelector('a[href*="detail"]');
+    if (cancelButton) {
+        cancelButton.focus();
+    }
+});
+</script>
+{% endblock %}

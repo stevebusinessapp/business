@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Layout Preview - {{ layout.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .preview-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin: 20px 0;
+    }
+    
+    .preview-header {
+        background: linear-gradient(135deg, {{ layout.primary_color }} 0%, {{ layout.secondary_color }} 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .preview-header h3 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .preview-table {
+        overflow-x: auto;
+    }
+    
+    .preview-table table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+    
+    .preview-table th {
+        background: #f8f9fa;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+        color: #495057;
+    }
+    
+    .preview-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+    
+    .preview-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: white;
+        text-align: center;
+    }
+    
+    .total-cell {
+        text-align: right;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+        background-color: #f8f9fa;
+    }
+    
+    .grand-total-row {
+        background: linear-gradient(135deg, {{ layout.primary_color }} 0%, {{ layout.secondary_color }} 100%);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .grand-total-row td {
+        padding: 15px 12px;
+        border-bottom: none;
+        text-align: right;
+    }
+    
+    .preview-info {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .preview-info h5 {
+        color: #1976d2;
+        margin-bottom: 10px;
+    }
+    
+    .preview-features {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+    
+    .feature-tag {
+        background: #d4edda;
+        color: #155724;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .feature-tag.disabled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .company-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .company-info h4 {
+        color: {{ layout.primary_color }};
+        margin-bottom: 5px;
+    }
+    
+    .company-info p {
+        color: #6c757d;
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-eye"></i> Layout Preview</h2>
+            <p class="text-muted mb-0">Preview of "{{ layout.name }}" layout configuration</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-secondary" onclick="window.close()">
+                <i class="fas fa-times"></i> Close Preview
+            </button>
+        </div>
+    </div>
+
+    <!-- Layout Information -->
+    <div class="preview-info">
+        <h5><i class="fas fa-info-circle"></i> Layout Configuration</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Name:</strong> {{ layout.name }}</p>
+                <p><strong>Primary Color:</strong> <span style="color: {{ layout.primary_color }};">{{ layout.primary_color }}</span></p>
+                <p><strong>Secondary Color:</strong> <span style="color: {{ layout.secondary_color }};">{{ layout.secondary_color }}</span></p>
+            </div>
+            <div class="col-md-6">
+                <div class="preview-features">
+                    {% if layout.supports_calculations %}
+                        <span class="feature-tag">
+                            <i class="fas fa-calculator"></i> Calculations Enabled
+                        </span>
+                    {% else %}
+                        <span class="feature-tag disabled">
+                            <i class="fas fa-calculator"></i> No Calculations
+                        </span>
+                    {% endif %}
+                    
+                    {% if layout.show_totals %}
+                        <span class="feature-tag">
+                            <i class="fas fa-list-ol"></i> Row Totals
+                        </span>
+                    {% endif %}
+                    
+                    {% if layout.show_grand_total %}
+                        <span class="feature-tag">
+                            <i class="fas fa-calculator"></i> Grand Total
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Company Information Preview -->
+    {% if layout.company_name %}
+        <div class="company-info">
+            <h4>{{ layout.company_name }}</h4>
+            <p>Company branding will appear in exports and reports</p>
+        </div>
+    {% endif %}
+
+    <!-- Table Preview -->
+    <div class="preview-container">
+        <div class="preview-header">
+            <h3><i class="fas fa-boxes"></i> {{ layout.name }}</h3>
+            <p class="mb-0">Sample inventory table with your layout configuration</p>
+        </div>
+        
+        <div class="preview-table">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>SKU Code</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        {% if layout.supports_calculations and layout.show_totals %}
+                            <th>Total</th>
+                        {% endif %}
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sample_items %}
+                        <tr>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.sku_code }}</td>
+                            <td class="text-center">{{ item.quantity }}</td>
+                            <td class="text-end">₦{{ item.unit_price|floatformat:2 }}</td>
+                            {% if layout.supports_calculations and layout.show_totals %}
+                                <td class="total-cell">₦{{ item.total_value|floatformat:2 }}</td>
+                            {% endif %}
+                            <td class="text-center">
+                                <span class="status-badge" style="background-color: {{ item.status.color }};">
+                                    {{ item.status.display_name }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary" disabled>
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning" disabled>
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" disabled>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                
+                {% if layout.supports_calculations and layout.show_grand_total %}
+                    <tfoot>
+                        <tr class="grand-total-row">
+                            <td colspan="{% if layout.show_totals %}4{% else %}3{% endif %}"></td>
+                            <td class="text-end">
+                                <strong>Grand Total: ₦27,500.00</strong>
+                            </td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <!-- Export Preview -->
+    <div class="preview-info">
+        <h5><i class="fas fa-download"></i> Export Preview</h5>
+        <p>When you export data using this layout, it will include:</p>
+        <ul>
+            {% if layout.company_name %}
+                <li><strong>Company branding:</strong> {{ layout.company_name }} with your custom colors</li>
+            {% endif %}
+            {% if layout.supports_calculations %}
+                <li><strong>Calculations:</strong> Automatic total calculations for quantity × price</li>
+            {% endif %}
+            {% if layout.show_totals %}
+                <li><strong>Row totals:</strong> Individual item totals</li>
+            {% endif %}
+            {% if layout.show_grand_total %}
+                <li><strong>Grand total:</strong> Sum of all item totals</li>
+            {% endif %}
+            <li><strong>Custom styling:</strong> Your selected colors and formatting</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Close preview when clicking close button
+document.querySelector('.btn-secondary').addEventListener('click', function() {
+    window.close();
+});
+
+// Add some interactive preview features
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects to preview table
+    const tableRows = document.querySelectorAll('.preview-table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#e3f2fd';
+        });
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+});
+</script>
+{% endblock %} 

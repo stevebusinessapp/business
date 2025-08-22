@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ template.name }} - Invoice Templates{% endblock %}
+{% block page_title %}{{ template.name }}{% endblock %}
+{% block breadcrumb %}Template Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .template-preview {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border: 1px solid {{ template.accent_color }};
+    }
+    
+    .color-swatch {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: inline-block;
+        margin-right: 1rem;
+    }
+    
+    .color-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .color-details {
+        flex: 1;
+    }
+    
+    .color-name {
+        font-weight: 600;
+        color: #344767;
+    }
+    
+    .color-value {
+        font-family: monospace;
+        font-size: 0.9rem;
+        color: #666;
+        background: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        margin-top: 0.25rem;
+        display: inline-block;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid #e3e6f0;
+        transition: all 0.2s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: {{ template.primary_color }};
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .feature-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .feature-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .feature-icon {
+        color: {{ template.primary_color }};
+        margin-right: 0.5rem;
+    }
+    
+    .preview-invoice {
+        border: 1px solid {{ template.accent_color }};
+        border-radius: 0.5rem;
+        padding: 2rem;
+        background: white;
+        margin-top: 1rem;
+    }
+    
+    .invoice-header {
+        border-bottom: 3px solid {{ template.primary_color }};
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .invoice-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: {{ template.primary_color }};
+        text-align: center;
+    }
+    
+    .invoice-content {
+        background: {{ template.secondary_color }};
+        padding: 1.5rem;
+        border-radius: 0.375rem;
+        margin-bottom: 1.5rem;
+        color: {{ template.text_color }};
+    }
+    
+    .invoice-footer {
+        background: {{ template.accent_color }};
+        padding: 1rem;
+        border-radius: 0.375rem;
+        text-align: center;
+        color: {{ template.text_color }};
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-lg-flex">
+                        <div>
+                            <h5 class="mb-0">{{ template.name }}</h5>
+                            <p class="text-sm mb-0">
+                                {% if template.description %}
+                                    {{ template.description }}
+                                {% else %}
+                                    Invoice template details and preview
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <div class="action-buttons">
+                                <a href="{% url 'invoices:template_list' %}" class="btn btn-outline-secondary btn-sm">
+                                    <i class="material-icons text-sm">arrow_back</i>&nbsp;&nbsp;Back
+                                </a>
+                                <a href="{% url 'invoices:template_edit' template.pk %}" class="btn btn-primary btn-sm">
+                                    <i class="material-icons text-sm">edit</i>&nbsp;&nbsp;Edit
+                                </a>
+                                <a href="{% url 'invoices:template_duplicate' template.pk %}" class="btn btn-secondary btn-sm">
+                                    <i class="material-icons text-sm">content_copy</i>&nbsp;&nbsp;Duplicate
+                                </a>
+                                {% if invoices_count > 0 %}
+                                <a href="{% url 'invoices:template_apply_to_all' template.pk %}" class="btn btn-success btn-sm">
+                                    <i class="material-icons text-sm">brush</i>&nbsp;&nbsp;Apply to All
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Template Information -->
+        <div class="col-lg-4">
+            <!-- Statistics -->
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ invoices_count }}</div>
+                        <div class="stat-label">Invoice{{ invoices_count|pluralize }}</div>
+                    </div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{% if template.is_default %}✓{% else %}—{% endif %}</div>
+                        <div class="stat-label">Default</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Color Palette -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="material-icons text-sm me-2">palette</i>Color Palette
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="color-info">
+                        <div class="color-swatch" style="background-color: {{ template.primary_color }};"></div>
+                        <div class="color-details">
+                            <div class="color-name">Primary Color</div>
+                            <div class="color-value">{{ template.primary_color }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-info">
+                        <div class="color-swatch" style="background-color: {{ template.secondary_color }};"></div>
+                        <div class="color-details">
+                            <div class="color-name">Secondary Color</div>
+                            <div class="color-value">{{ template.secondary_color }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-info">
+                        <div class="color-swatch" style="background-color: {{ template.text_color }};"></div>
+                        <div class="color-details">
+                            <div class="color-name">Text Color</div>
+                            <div class="color-value">{{ template.text_color }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-info">
+                        <div class="color-swatch" style="background-color: {{ template.accent_color }};"></div>
+                        <div class="color-details">
+                            <div class="color-name">Accent Color</div>
+                            <div class="color-value">{{ template.accent_color }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Template Settings -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="material-icons text-sm me-2">settings</i>Template Settings
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="feature-list">
+                        <li>
+                            <i class="material-icons text-sm feature-icon">
+                                {% if template.show_company_logo %}check_circle{% else %}cancel{% endif %}
+                            </i>
+                            Company Logo
+                        </li>
+                        <li>
+                            <i class="material-icons text-sm feature-icon">
+                                {% if template.show_company_details %}check_circle{% else %}cancel{% endif %}
+                            </i>
+                            Company Details
+                        </li>
+                        <li>
+                            <i class="material-icons text-sm feature-icon">
+                                {% if template.show_bank_details %}check_circle{% else %}cancel{% endif %}
+                            </i>
+                            Bank Details
+                        </li>
+                        <li>
+                            <i class="material-icons text-sm feature-icon">
+                                {% if template.show_signature %}check_circle{% else %}cancel{% endif %}
+                            </i>
+                            Signature
+                        </li>
+                    </ul>
+                    
+                    <div class="mt-3">
+                        <div class="mb-2">
+                            <strong>Document Title:</strong> {{ template.document_title }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Number Prefix:</strong> {{ template.number_prefix }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Created:</strong> {{ template.created_at|date:"M d, Y" }}
+                        </div>
+                        <div>
+                            <strong>Last Updated:</strong> {{ template.updated_at|date:"M d, Y" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="material-icons text-sm me-2">settings</i>Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'invoices:template_edit' template.pk %}" class="btn btn-primary">
+                            <i class="material-icons text-sm">edit</i>&nbsp;&nbsp;Edit Template
+                        </a>
+                        <a href="{% url 'invoices:template_duplicate' template.pk %}" class="btn btn-secondary">
+                            <i class="material-icons text-sm">content_copy</i>&nbsp;&nbsp;Duplicate Template
+                        </a>
+                        {% if invoices_count > 0 %}
+                        <a href="{% url 'invoices:template_apply_to_all' template.pk %}" class="btn btn-success">
+                            <i class="material-icons text-sm">brush</i>&nbsp;&nbsp;Apply to All Invoices
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'invoices:template_delete' template.pk %}" class="btn btn-outline-danger">
+                            <i class="material-icons text-sm">delete</i>&nbsp;&nbsp;Delete Template
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Template Preview -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="material-icons text-sm me-2">preview</i>Template Preview
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="preview-invoice">
+                        <div class="invoice-header">
+                            <div class="invoice-title">{{ template.document_title }}</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 style="color: {{ template.primary_color }};">Invoice Information</h6>
+                                <div class="invoice-content">
+                                    <div class="mb-2">
+                                        <strong>Invoice #:</strong> {{ template.number_prefix }}-2025-01-0001
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Date:</strong> January 06, 2025
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Due Date:</strong> February 05, 2025
+                                    </div>
+                                    <div>
+                                        <strong>Status:</strong> Unpaid
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6 style="color: {{ template.primary_color }};">Client Information</h6>
+                                <div class="invoice-content">
+                                    <div class="mb-2">
+                                        <strong>Client:</strong> Sample Client Name
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Email:</strong> client@example.com
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Phone:</strong> +1-234-567-8900
+                                    </div>
+                                    <div>
+                                        <strong>Address:</strong> 123 Main Street, City, State
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h6 style="color: {{ template.primary_color }};">Invoice Items</h6>
+                            <div class="invoice-content">
+                                <div class="row mb-2">
+                                    <div class="col-6"><strong>Description</strong></div>
+                                    <div class="col-2"><strong>Qty</strong></div>
+                                    <div class="col-2"><strong>Price</strong></div>
+                                    <div class="col-2"><strong>Total</strong></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6">Sample Service/Product</div>
+                                    <div class="col-2">1</div>
+                                    <div class="col-2">$1,000.00</div>
+                                    <div class="col-2">$1,000.00</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6">Additional Service</div>
+                                    <div class="col-2">2</div>
+                                    <div class="col-2">$250.00</div>
+                                    <div class="col-2">$500.00</div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-8"><strong>Total Amount:</strong></div>
+                                    <div class="col-4"><strong>$1,500.00</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if template.default_payment_terms %}
+                        <div class="mt-3">
+                            <h6 style="color: {{ template.primary_color }};">Payment Terms</h6>
+                            <div class="invoice-content">
+                                {{ template.default_payment_terms }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if template.footer_text %}
+                        <div class="invoice-footer mt-3">
+                            {{ template.footer_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

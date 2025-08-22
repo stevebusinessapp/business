@@ -1,0 +1,264 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}{{ user.get_full_name }} - Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+        <!-- Profile Header -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center">
+                        <div class="profile-picture-container position-relative d-inline-block">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" 
+                                     alt="{{ user.get_full_name }}" 
+                                     class="profile-picture rounded-circle border border-3 border-white shadow-lg"
+                                     style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                                <div class="profile-picture rounded-circle border border-3 border-white shadow-lg d-flex align-items-center justify-content-center bg-secondary text-white"
+                                     style="width: 150px; height: 150px; font-size: 3rem;">
+                                    {{ user.first_name.0|default:"U" }}{{ user.last_name.0|default:"" }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h2 class="mb-1">{{ user.get_full_name }}</h2>
+                                <p class="text-muted mb-0">{{ user.email }}</p>
+                                {% if user.location %}
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ user.location }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+                                    <i class="fas fa-edit me-1"></i>Edit Profile
+                                </a>
+                            </div>
+                        </div>
+                        
+                        {% if user.bio %}
+                            <div class="card bg-light border-0 p-3">
+                                <p class="mb-0">{{ user.bio }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row mt-3">
+                            {% if user.website %}
+                                <div class="col-auto">
+                                    <a href="{{ user.website }}" target="_blank" class="text-decoration-none">
+                                        <i class="fas fa-globe me-1"></i>Website
+                                    </a>
+                                </div>
+                            {% endif %}
+                            <div class="col-auto">
+                                <span class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>Joined {{ user.date_joined|date:"F Y" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>Personal Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Full Name:</strong>
+                            </div>
+                            <div class="col-8">
+                                {{ user.get_full_name|default:"Not provided" }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Email:</strong>
+                            </div>
+                            <div class="col-8">
+                                {{ user.email }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Phone:</strong>
+                            </div>
+                            <div class="col-8">
+                                {{ user.phone|default:"Not provided" }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Location:</strong>
+                            </div>
+                            <div class="col-8">
+                                {{ user.location|default:"Not provided" }}
+                            </div>
+                        </div>
+                        {% if user.birth_date %}
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <strong>Birth Date:</strong>
+                                </div>
+                                <div class="col-8">
+                                    {{ user.birth_date|date:"F d, Y" }}
+                                </div>
+                            </div>
+                        {% endif %}
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Website:</strong>
+                            </div>
+                            <div class="col-8">
+                                {% if user.website %}
+                                    <a href="{{ user.website }}" target="_blank" class="text-decoration-none">
+                                        {{ user.website }}
+                                    </a>
+                                {% else %}
+                                    Not provided
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Account Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Status:</strong>
+                            </div>
+                            <div class="col-8">
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Staff:</strong>
+                            </div>
+                            <div class="col-8">
+                                {% if user.is_staff %}
+                                    <span class="badge bg-warning">Staff Member</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Regular User</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Joined:</strong>
+                            </div>
+                            <div class="col-8">
+                                {{ user.date_joined|date:"F d, Y" }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-4">
+                                <strong>Last Login:</strong>
+                            </div>
+                            <div class="col-8">
+                                {% if user.last_login %}
+                                    {{ user.last_login|date:"F d, Y g:i A" }}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if user.bio %}
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <strong>About:</strong>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <div class="bg-light p-3 rounded">
+                                        {{ user.bio }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-edit me-2"></i>Edit Profile
+                        </a>
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-picture-container {
+        position: relative;
+    }
+    
+    .profile-picture {
+        transition: transform 0.3s ease;
+    }
+    
+    .profile-picture:hover {
+        transform: scale(1.05);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    }
+    
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+    
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+    }
+</style>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}

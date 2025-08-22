@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Custom Fields - Inventory Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .custom-field-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    
+    .custom-field-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+    }
+    
+    .custom-field-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .custom-field-content {
+        padding: 20px;
+    }
+    
+    .field-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .field-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        border-left: 4px solid #007bff;
+        transition: all 0.3s ease;
+    }
+    
+    .field-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .field-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .field-type {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+    
+    .field-properties {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .field-badge {
+        background: #e9ecef;
+        color: #495057;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .field-badge.required {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .field-badge.unique {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .field-badge.calculation {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .field-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    .btn-action {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+        border-radius: 4px;
+        text-decoration: none;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-edit {
+        background: #ffc107;
+    }
+    
+    .btn-edit:hover {
+        background: #e0a800;
+        color: white;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+    }
+    
+    .btn-delete:hover {
+        background: #c82333;
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="custom-field-card">
+        <div class="custom-field-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-cogs"></i> Custom Fields</h2>
+                <a href="{% url 'inventory:custom_field_create' %}" class="btn btn-light">
+                    <i class="fas fa-plus"></i> Add Custom Field
+                </a>
+            </div>
+            <p class="mb-0 mt-2" style="opacity: 0.9;">
+                Manage custom fields for your inventory layouts. These fields can be used across all your inventory tables.
+            </p>
+        </div>
+    </div>
+
+    <!-- Custom Fields List -->
+    {% if custom_fields %}
+        <div class="field-grid">
+            {% for field in custom_fields %}
+                <div class="field-item">
+                    <div class="field-name">{{ field.display_name }}</div>
+                    <div class="field-type">{{ field.get_field_type_display }}</div>
+                    
+                    <div class="field-properties">
+                        {% if field.is_required %}
+                            <span class="field-badge required">Required</span>
+                        {% endif %}
+                        {% if field.is_unique %}
+                            <span class="field-badge unique">Unique</span>
+                        {% endif %}
+                        {% if field.is_calculation_field %}
+                            <span class="field-badge calculation">Calculation</span>
+                        {% endif %}
+                        {% if field.is_visible %}
+                            <span class="field-badge">Visible</span>
+                        {% else %}
+                            <span class="field-badge">Hidden</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if field.help_text %}
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">
+                            {{ field.help_text }}
+                        </div>
+                    {% endif %}
+                    
+                    {% if field.choices %}
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">
+                            <strong>Choices:</strong> {{ field.choices|length }} options
+                        </div>
+                    {% endif %}
+                    
+                    <div class="field-actions">
+                        <a href="{% url 'inventory:custom_field_update' field.pk %}" class="btn-action btn-edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="{% url 'inventory:custom_field_delete' field.pk %}" class="btn-action btn-delete">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="custom-field-card">
+            <div class="custom-field-content">
+                <div class="empty-state">
+                    <i class="fas fa-cogs"></i>
+                    <h3>No Custom Fields Yet</h3>
+                    <p>Create your first custom field to enhance your inventory management.</p>
+                    <a href="{% url 'inventory:custom_field_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Custom Field
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

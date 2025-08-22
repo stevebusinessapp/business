@@ -1,0 +1,496 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Print Waybill {{ waybill.waybill_number }}</title>
+    <style>
+        /* Print-optimized styles matching waybill detail */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: {{ waybill.template.text_color|default:"#333" }};
+            background: white;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .waybill-container {
+            max-width: 100%;
+            margin: 0;
+            padding: 20px;
+            background: white;
+        }
+
+        .waybill-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .company-logo img {
+            max-height: 70px;
+            max-width: 180px;
+        }
+
+        .company-details h2 {
+            color: {{ waybill.template.text_color|default:"#333" }};
+            margin-bottom: 8px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .company-details p {
+            margin: 3px 0;
+            color: #555;
+            font-size: 11px;
+        }
+
+        .waybill-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+            margin: 15px 0 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .waybill-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding: 12px;
+            background: {{ waybill.template.secondary_color|default:"#f8f9fa" }} !important;
+            border-radius: 6px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+            font-size: 11px;
+        }
+
+        .waybill-info div {
+            font-weight: bold;
+        }
+
+        .custom-section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        .section-header h3 {
+            color: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .custom-section-content {
+            padding: 10px;
+            background: {{ waybill.template.secondary_color|default:"#f8f9fa" }} !important;
+            border-radius: 6px;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            page-break-inside: auto;
+        }
+
+        .items-table th,
+        .items-table td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ccc;
+            font-size: 10px;
+            vertical-align: top;
+        }
+
+        .items-table th {
+            background: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+            color: white !important;
+            font-weight: bold;
+            text-transform: uppercase;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .items-table tr:nth-child(even) {
+            background: {{ waybill.template.secondary_color|default:"#f8f9fa" }} !important;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .items-table tbody tr {
+            page-break-inside: avoid;
+        }
+
+        .signature-section {
+            text-align: center;
+            margin: 30px 0 20px 0;
+            padding: 15px;
+            page-break-inside: avoid;
+        }
+
+        .signature-section img {
+            max-height: 60px;
+            margin-bottom: 8px;
+        }
+
+        .signature-section p {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        /* Ensure content fits on page */
+        @page {
+            size: A4;
+            margin: 0.5in;
+        }
+
+        /* Print specific adjustments */
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .waybill-container {
+                padding: 0;
+                margin: 0;
+            }
+
+            .waybill-title {
+                color: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .waybill-info {
+                background: {{ waybill.template.secondary_color|default:"#f8f9fa" }} !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .items-table th {
+                background: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .items-table tr:nth-child(even) {
+                background: {{ waybill.template.secondary_color|default:"#f8f9fa" }} !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .section-header h3 {
+                color: {{ waybill.template.primary_color|default:"#FF5900" }} !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .custom-section-content {
+                background: {{ waybill.template.secondary_color|default:"#f8f9fa" }} !important;
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Prevent page breaks in critical sections */
+            .waybill-header,
+            .waybill-title,
+            .waybill-info,
+            .custom-section,
+            .signature-section {
+                page-break-inside: avoid;
+            }
+
+            .items-table thead {
+                display: table-header-group;
+            }
+
+            .items-table tbody {
+                display: table-row-group;
+            }
+        }
+
+        /* Handle long content gracefully */
+        .custom-section-content p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .items-table td {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 150px;
+            vertical-align: top;
+            white-space: normal;
+        }
+
+        /* Specific column styling for better text wrapping */
+        .items-table td:nth-child(2), /* Product/Service */
+        .items-table td:nth-child(3) { /* Description */
+            white-space: normal;
+            word-break: break-word;
+            hyphens: auto;
+            line-height: 1.4;
+        }
+
+        .no-print {
+            display: none;
+        }
+        
+        @media screen {
+            .no-print {
+                display: block;
+            }
+        }
+    </style>
+    <script>
+        // Auto-print when page loads
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+        
+        // Close window after printing
+        window.onafterprint = function() {
+            window.close();
+        };
+        
+        // Format currency values with commas (if needed for future use)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add any client-side formatting if needed
+        });
+    </script>
+</head>
+<body>
+    <div class="waybill-container">
+        <!-- Waybill Header -->
+        <div class="waybill-header">
+            {% if waybill.template.show_company_logo %}
+            <div class="company-logo">
+                {% if company_logo %}
+                    <img src="{{ company_logo }}" alt="Company Logo">
+                {% else %}
+                    <img src="{% static 'img/logo-ct.png' %}" alt="Company Logo">
+                {% endif %}
+            </div>
+            {% endif %}
+            {% if waybill.template.show_company_details %}
+            <div class="company-details">
+                <h2>{{ company_profile.company_name|default:"Your Company Name" }}</h2>
+                <p>{{ company_profile.address|default:"Company Address" }}</p>
+                <p>{{ company_profile.phone|default:"Phone Number" }}</p>
+                <p>{{ company_profile.email|default:"Email Address" }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Waybill Title -->
+        <div class="waybill-title">{{ waybill.template.document_title|default:"WAYBILL" }}</div>
+
+        <!-- Waybill Info -->
+        <div class="waybill-info">
+            <div>Waybill #: {{ waybill.waybill_number }}</div>
+            <div>Date: {{ waybill.waybill_date|date:"M d, Y" }}</div>
+            <div>Delivery: {% if waybill.delivery_date %}{{ waybill.delivery_date|date:"M d, Y" }}{% else %}Not set{% endif %}</div>
+            <div>Status: {{ waybill.get_status_display }}</div>
+        </div>
+
+        <!-- Custom Sections -->
+        {% for section_key, section_data in waybill.custom_data.items %}
+            {% if section_data and section_key != 'user_preferences' %}
+                <div class="custom-section">
+                    <div class="section-header">
+                        <h3>
+                            {% if section_key == 'sender_info' %}SENDER INFORMATION
+                            {% elif section_key == 'receiver_info' %}RECEIVER INFORMATION
+                            {% elif section_key == 'shipment_info' %}SHIPMENT DETAILS
+                            {% else %}{{ section_key|title }}
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="custom-section-content">
+                        {% for field_key, field_value in section_data.items %}
+                            {% if field_value %}
+                                <strong>
+                                    {% if field_key == 'sender_name' %}Sender Name:
+                                    {% elif field_key == 'sender_phone' %}Sender Phone:
+                                    {% elif field_key == 'sender_address' %}Sender Address:
+                                    {% elif field_key == 'receiver_name' %}Receiver Name:
+                                    {% elif field_key == 'receiver_phone' %}Receiver Phone:
+                                    {% elif field_key == 'receiver_address' %}Receiver Address:
+                                    {% elif field_key == 'destination' %}Destination:
+                                    {% elif field_key == 'vehicle_number' %}Vehicle Number:
+                                    {% elif field_key == 'driver_name' %}Driver Name:
+                                    {% elif field_key == 'driver_phone' %}Driver Phone:
+                                    {% else %}{{ field_key|title }}:
+                                    {% endif %}
+                                </strong> {{ field_value }}<br>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 8%;">S/N</th>
+                    {% if waybill.template.table_columns %}
+                        {% for column in waybill.template.table_columns %}
+                            <th style="width: {{ column.width|default:'auto' }};">{{ column.label|upper }}</th>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Default columns matching invoice structure -->
+                        <th style="width: 25%;">PRODUCT / SERVICE</th>
+                        <th style="width: 35%;">DESCRIPTION</th>
+                        <th style="width: 20%;">QUANTITY</th>
+                        <th style="width: 20%;">WEIGHT</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in waybill.items.all %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    {% if waybill.template.table_columns %}
+                        {% for column in waybill.template.table_columns %}
+                            <td>
+                                {% if item.item_data|lookup:column.name %}
+                                    {{ item.item_data|lookup:column.name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Default columns matching invoice structure -->
+                        <td>{% if item.item_data.product_service %}{{ item.item_data.product_service }}{% else %}[No Product/Service]{% endif %}</td>
+                        <td>{% if item.item_data.description %}{{ item.item_data.description }}{% else %}[No Description]{% endif %}</td>
+                        <td>{{ item.item_data.quantity|default:"-" }}</td>
+                        <td>{{ item.item_data.weight|default:"-" }}</td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if waybill.template.table_columns %}{{ waybill.template.table_columns|length|add:1 }}{% else %}5{% endif %}" 
+                        style="text-align: center; padding: 15px; color: #999; font-style: italic;">
+                        No items found for this waybill.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Notes Section -->
+        {% if waybill.notes %}
+        <div class="custom-section">
+            <div class="section-header">
+                <h3>NOTES</h3>
+            </div>
+            <div class="custom-section-content">
+                <p>{{ waybill.notes|linebreaks }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Signature Section -->
+        {% if waybill.template.show_signature %}
+        <div class="signature-section">
+            {% if company_signature %}
+                <img src="{{ company_signature }}" alt="Signature">
+                <p>Authorized Signature</p>
+            {% else %}
+                <div style="border-top: 1px solid #333; width: 250px; margin: 0 auto; padding-top: 10px;">
+                    <p style="font-family: 'Brush Script MT', cursive; font-size: 18px; margin: 5px 0;">{{ company_profile.company_name|default:"Company Name" }}</p>
+                    <p style="font-size: 11px; font-weight: bold; margin: 0;">Authorized Signature</p>
+                    <p style="font-size: 9px; color: #666; margin: 2px 0;">{{ company_profile.email|default:"" }}</p>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Bank Details Section -->
+        {% with user_prefs=waybill.custom_data.user_preferences %}
+        {% if user_prefs.show_bank_details and default_bank_account %}
+        <div class="custom-section">
+            <div class="section-header">
+                <h3>BANK DETAILS</h3>
+            </div>
+            <div class="custom-section-content">
+                <strong>Bank Name:</strong> {{ default_bank_account.bank_name }}<br>
+                <strong>Account No:</strong> {{ default_bank_account.account_number }}<br>
+                <strong>Account Name:</strong> {{ default_bank_account.account_name }}
+            </div>
+        </div>
+        {% elif waybill.template.show_bank_details and default_bank_account %}
+        <div class="custom-section">
+            <div class="section-header">
+                <h3>BANK DETAILS</h3>
+            </div>
+            <div class="custom-section-content">
+                <strong>Bank Name:</strong> {{ default_bank_account.bank_name }}<br>
+                <strong>Account No:</strong> {{ default_bank_account.account_number }}<br>
+                <strong>Account Name:</strong> {{ default_bank_account.account_name }}
+            </div>
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <script>
+        // Auto-print when page loads
+        window.onload = function() {
+            window.print();
+        };
+        
+        // Close window after printing
+        window.onafterprint = function() {
+            window.close();
+        };
+    </script>
+</body>
+</html>

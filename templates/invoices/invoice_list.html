@@ -1,0 +1,839 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Invoices - Multi-Purpose Business App{% endblock %}
+{% block page_title %}Invoices{% endblock %}
+{% block breadcrumb %}Invoices{% endblock %}
+
+{% block content %}
+<style>
+/* Current template colors - Applied to all invoices */
+:root {
+    {% if current_template %}
+        --primary-color: {{ current_template.primary_color }};
+        --secondary-color: {{ current_template.secondary_color }};
+        --text-color: {{ current_template.text_color }};
+        --accent-color: {{ current_template.accent_color }};
+    {% else %}
+        --primary-color: #FF5900;
+        --secondary-color: #f8f9fa;
+        --text-color: #333333;
+        --accent-color: #e9ecef;
+    {% endif %}
+}
+
+/* Dynamic template colors for invoice cards */
+.invoice-card {
+    border-left: 4px solid var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.invoice-card:hover {
+    border-left-width: 6px;
+    transform: translateX(2px);
+}
+
+.invoice-status-badge {
+    background-color: var(--primary-color) !important;
+}
+
+.invoice-amount {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Template info indicator */
+.template-info {
+    background: var(--secondary-color);
+    border: 1px solid var(--accent-color);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 15px;
+    font-size: 12px;
+}
+
+.template-color-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+</style>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="text-white text-capitalize ps-3">Invoice Management</h6>
+            <div class="pe-3">
+              <a href="{% url 'invoices:create' %}" class="btn btn-outline-white btn-sm mb-0 me-2">
+                <i class="material-icons text-sm">add</i> Create Invoice
+              </a>
+              <span class="text-white-50">|</span>
+              <a href="/invoices/create/" class="btn btn-outline-white btn-sm mb-0 me-2 ms-2">
+                <i class="material-icons text-sm">preview</i> Dynamic Creator
+              </a>
+              <span class="text-white-50">|</span>
+              <a href="javascript:void(0)" onclick="location.reload()" class="btn btn-outline-white btn-sm mb-0 ms-2" title="Refresh template colors">
+                <i class="material-icons text-sm">refresh</i> Refresh Colors
+              </a>
+              <span class="text-white-50">|</span>
+              <a href="{% url 'invoices:export_excel' %}" class="btn btn-success btn-sm mb-0 ms-2">
+                <i class="material-icons text-sm">table_view</i> Export as Excel
+              </a>
+              <a href="{% url 'invoices:export_pdf' %}" class="btn btn-danger btn-sm mb-0 ms-2" target="_blank">
+                <i class="material-icons text-sm">picture_as_pdf</i> Export as PDF
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-body px-0 pb-2">
+        <!-- Current Template Indicator -->
+        {% if current_template %}
+        <div class="template-info mx-3">
+          <span class="template-color-indicator"></span>
+          <strong>Current Template:</strong> {{ current_template.name }}
+          <small class="text-muted ms-2">All invoices below are styled with this template's colors</small>
+        </div>
+        {% endif %}
+        <!-- Stats Cards -->
+        <div class="row px-3 mb-3">
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons opacity-10">receipt_long</i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Total Invoices</p>
+                  <h4 class="mb-0">{{ total_invoices }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons opacity-10">monetization_on</i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Total Amount</p>
+                  <h4 class="mb-0">{{ currency_symbol|default:"₦" }}{{ total_amount|floatformat:2|intcomma }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card">
+              <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons opacity-10">payments</i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Paid Amount</p>
+                  <h4 class="mb-0">{{ currency_symbol|default:"₦" }}{{ paid_amount|floatformat:2|intcomma }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-xl-3 col-sm-6">
+            <div class="card">
+              <div class="card-header p-3 pt-2">
+                <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons opacity-10">money_off</i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Outstanding</p>
+                  <h4 class="mb-0">{{ currency_symbol|default:"₦" }}{{ total_amount|add:'-'|add:paid_amount|floatformat:2|intcomma }}</h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Filter Form -->
+        <div class="row px-3 mb-3">
+          <div class="col-12">
+            <form method="get" class="row g-3">
+              <div class="col-md-3">
+                <label for="{{ filter_form.search.id_for_label }}" class="form-label text-xs">Search</label>
+                {{ filter_form.search }}
+              </div>
+              <div class="col-md-2">
+                <label for="{{ filter_form.status.id_for_label }}" class="form-label text-xs">Status</label>
+                {{ filter_form.status }}
+              </div>
+              <div class="col-md-2">
+                <label for="{{ filter_form.date_from.id_for_label }}" class="form-label text-xs">From Date</label>
+                {{ filter_form.date_from }}
+              </div>
+              <div class="col-md-2">
+                <label for="{{ filter_form.date_to.id_for_label }}" class="form-label text-xs">To Date</label>
+                {{ filter_form.date_to }}
+              </div>
+              <div class="col-md-3">
+                <label class="form-label text-xs">&nbsp;</label>
+                <div>
+                  <button type="submit" class="btn btn-primary mb-0">Filter</button>
+                  <a href="{% url 'invoices:list' %}" class="btn btn-outline-secondary mb-0">Clear</a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Filter Status -->
+        {% if filter_form.is_bound %}
+          <div class="row px-3 mb-2">
+            <div class="col-12">
+              <div class="d-flex align-items-center gap-2">
+                <span class="text-sm text-muted">Showing {{ page_obj.paginator.count }} invoice{{ page_obj.paginator.count|pluralize }} 
+                {% if filter_form.search.value %} matching "{{ filter_form.search.value }}"{% endif %}
+                {% if filter_form.status.value %} with status "{% if filter_form.status.value == 'unpaid' %}Not Paid{% elif filter_form.status.value == 'partial' %}Pending{% elif filter_form.status.value == 'paid' %}Paid{% elif filter_form.status.value == 'delivered' %}Delivered{% else %}{{ filter_form.status.value|title }}{% endif %}"{% endif %}
+                {% if filter_form.date_from.value %} from {{ filter_form.date_from.value }}{% endif %}
+                {% if filter_form.date_to.value %} to {{ filter_form.date_to.value }}{% endif %}
+                </span>
+                {% if filter_form.search.value or filter_form.status.value or filter_form.date_from.value or filter_form.date_to.value %}
+                  <a href="{% url 'invoices:list' %}" class="btn btn-xs btn-outline-secondary">Clear All</a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        
+        <!-- Invoices Table -->
+        <div class="table-responsive p-0">
+          <table class="table align-items-center mb-0">
+            <thead>
+              <tr>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="width: 5%;">S/N</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Invoice</th>
+                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Client</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Due Date</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Amount</th>
+                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                <th class="text-secondary opacity-7">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for invoice in page_obj %}
+              <tr class="invoice-card">
+                <td class="serial-number">
+                  <div class="d-flex px-2 py-1 justify-content-center">
+                    <span class="text-secondary text-xs font-weight-bold">{{ page_obj.start_index|add:forloop.counter0 }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex px-2 py-1">
+                    <div class="d-flex flex-column justify-content-center">
+                      <h6 class="mb-0 text-sm invoice-amount">{{ invoice.invoice_number }}</h6>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="text-xs font-weight-bold mb-0">{{ invoice.client_name }}</p>
+                  <p class="text-xs text-secondary mb-0">{{ invoice.client_email }}</p>
+                </td>
+                <td class="align-middle text-center text-sm">
+                  <span class="text-secondary text-xs font-weight-bold">{{ invoice.invoice_date|date:"M d, Y" }}</span>
+                </td>
+                <td class="align-middle text-center text-sm">
+                  <span class="text-secondary text-xs font-weight-bold">{{ invoice.due_date|date:"M d, Y" }}</span>
+                </td>
+                <td class="align-middle text-center">
+                  <span class="invoice-amount text-xs font-weight-bold">{{ currency_symbol|default:"₦" }}{{ invoice.grand_total|floatformat:2|intcomma }}</span>
+                </td>
+                <td class="align-middle text-center text-sm">
+                  <select class="form-select form-select-sm status-select" 
+                          data-invoice-id="{{ invoice.pk }}" 
+                          data-current-status="{{ invoice.status }}"
+                          onchange="updateInvoiceStatus(this)"
+                          style="width: auto; min-width: 100px;">
+                    <option value="unpaid" {% if invoice.status == 'unpaid' %}selected{% endif %}>Not Paid</option>
+                    <option value="partial" {% if invoice.status == 'partial' %}selected{% endif %}>Pending</option>
+                    <option value="paid" {% if invoice.status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="delivered" {% if invoice.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                  </select>
+                  <!-- Debug info -->
+                  <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                    DB: "{{ invoice.status }}" | ID: {{ invoice.pk }}
+                  </div>
+                </td>
+                <td class="align-middle">
+                  <div class="d-flex gap-1">
+                    <!-- View Button -->
+                    <a href="{% url 'invoices:detail' invoice.pk %}" 
+                       class="btn btn-sm btn-outline-info mb-0" 
+                       title="View Invoice Details"
+                       data-bs-toggle="tooltip">
+                      <i class="material-icons text-sm">visibility</i>
+                    </a>
+                    
+                    <!-- Edit Button -->
+                    <a href="{% url 'invoices:edit' invoice.pk %}" 
+                       class="btn btn-sm btn-outline-warning mb-0" 
+                       title="Edit Invoice"
+                       data-bs-toggle="tooltip">
+                      <i class="material-icons text-sm">edit</i>
+                    </a>
+                    
+                    <!-- More Actions Dropdown -->
+                    <div class="dropdown">
+                      <button class="btn btn-sm btn-outline-secondary mb-0" 
+                              type="button" 
+                              data-bs-toggle="dropdown"
+                              title="More Actions">
+                        <i class="material-icons text-sm">more_vert</i>
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                          <h6 class="dropdown-header">Export Options</h6>
+                        </li>
+
+                        {% comment %} <li>
+                          <a class="dropdown-item" href="{% url 'invoices:pdf' invoice.pk %}">
+                            <i class="material-icons text-sm me-2">picture_as_pdf</i>
+                            Download PDF
+                          </a>
+                        </li> {% endcomment %}
+
+
+                        <li>
+                          <a class="dropdown-item" href="{% url 'invoices:print' invoice.pk %}" target="_blank">
+                            <i class="material-icons text-sm me-2">print</i>
+                            Download / Print Invoice
+                          </a>
+                        </li>
+
+                        
+                        <li><hr class="dropdown-divider"></li>
+{% comment %} 
+
+                        <li>
+                          <h6 class="dropdown-header">Invoice Actions</h6>
+                        </li>
+
+                        <li>
+                          <a class="dropdown-item" href="#" onclick="duplicateInvoice({{ invoice.pk }})">
+                            <i class="material-icons text-sm me-2">content_copy</i>
+                            Duplicate Invoice
+                          </a>
+                        </li>
+
+                        <li>
+                          <a class="dropdown-item" href="#" onclick="markAsPaid({{ invoice.pk }})">
+                            <i class="material-icons text-sm me-2">check_circle</i>
+                            {% if invoice.status == 'paid' %}Mark as Unpaid{% else %}Mark as Paid{% endif %}
+                          </a>
+                        </li> {% endcomment %}
+
+
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                          <a class="dropdown-item text-danger" 
+                             href="#" 
+                             onclick="confirmDeleteAjax('{{ invoice.invoice_number }}', {{ invoice.pk }})">
+                            <i class="material-icons text-sm me-2">delete</i>
+                            Delete Invoice
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" class="text-center py-4">
+                  <p class="text-secondary mb-0">No invoices found.</p>
+                  <a href="{% url 'invoices:create' %}" class="btn btn-primary btn-sm mt-2">Create your first invoice</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="d-flex justify-content-center mt-3">
+          <nav aria-label="Page navigation">
+            <ul class="pagination">
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+              {% endif %}
+              
+              {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                  <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+              {% endfor %}
+              
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Custom styles for action buttons */
+.d-flex.gap-1 {
+    gap: 0.25rem !important;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.dropdown-menu .dropdown-header {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #67748e;
+    padding: 0.5rem 1rem 0.25rem;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+}
+
+.dropdown-item i {
+    opacity: 0.8;
+}
+
+.dropdown-item:hover i {
+    opacity: 1;
+}
+
+/* Tooltip customization */
+.tooltip {
+    font-size: 0.75rem;
+}
+
+/* Serial number styling */
+.serial-number {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.serial-number span {
+    font-weight: 600;
+    color: #67748e;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// AJAX delete function with smooth row removal
+function confirmDeleteAjax(invoiceNumber, invoiceId) {
+    if (confirm(`Are you sure you want to delete invoice ${invoiceNumber}? This action cannot be undone.`)) {
+        // Find the table row
+        const deleteButton = event.target.closest('a');
+        const tableRow = deleteButton.closest('tr');
+        
+        // Show loading state
+        const originalText = deleteButton.innerHTML;
+        deleteButton.innerHTML = '<i class="material-icons text-sm me-2">hourglass_empty</i>Deleting...';
+        deleteButton.classList.add('disabled');
+        
+        // Make AJAX request to delete
+        fetch(`/invoices/${invoiceId}/delete-ajax/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                showNotification(data.message, 'success');
+                
+                // Simple and effective approach: Quick fade then immediate removal
+                tableRow.style.transition = 'opacity 0.3s ease-out';
+                tableRow.style.opacity = '0';
+                
+                // Remove immediately after fade to prevent layout issues
+                setTimeout(() => {
+                    // Remove the row completely
+                    tableRow.remove();
+                    
+                    // Recalculate serial numbers for remaining rows
+                    recalculateSerialNumbers();
+                    
+                    // Check if table is empty and show empty state
+                    const tbody = document.querySelector('tbody');
+                    if (tbody.children.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <p class="text-secondary mb-0">No invoices found.</p>
+                                    <a href="{% url 'invoices:create' %}" class="btn btn-primary btn-sm mt-2">Create your first invoice</a>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    // Update stats immediately
+                    updateStatsAfterDelete();
+                }, 300);
+            } else {
+                showNotification('Error deleting invoice: ' + (data.error || 'Unknown error'), 'error');
+                // Restore button
+                deleteButton.innerHTML = originalText;
+                deleteButton.classList.remove('disabled');
+            }
+        })
+        .catch(error => {
+            showNotification('Error deleting invoice: ' + error.message, 'error');
+            // Restore button
+            deleteButton.innerHTML = originalText;
+            deleteButton.classList.remove('disabled');
+        });
+    }
+}
+
+// Duplicate invoice function
+function duplicateInvoice(invoiceId) {
+    // Show loading indicator
+    const button = event.target.closest('a');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="material-icons text-sm me-2">hourglass_empty</i>Duplicating...';
+    button.classList.add('disabled');
+    
+    // Make AJAX request to duplicate
+    fetch(`/invoices/${invoiceId}/duplicate/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message and redirect to new invoice
+            alert(`Invoice duplicated successfully! New invoice: ${data.new_invoice_number}`);
+            window.location.href = `/invoices/${data.new_invoice_id}/`;
+        } else {
+            alert('Error duplicating invoice: ' + (data.error || 'Unknown error'));
+            // Restore button
+            button.innerHTML = originalText;
+            button.classList.remove('disabled');
+        }
+    })
+    .catch(error => {
+        alert('Error duplicating invoice: ' + error.message);
+        // Restore button
+        button.innerHTML = originalText;
+        button.classList.remove('disabled');
+    });
+}
+
+// Update invoice status function
+function updateInvoiceStatus(selectElement) {
+    const invoiceId = selectElement.getAttribute('data-invoice-id');
+    const newStatus = selectElement.value;
+    const currentStatus = selectElement.getAttribute('data-current-status');
+    
+    console.log(`Status change triggered: Invoice ${invoiceId}, Current: "${currentStatus}", New: "${newStatus}"`);
+    
+    // If status hasn't actually changed, do nothing
+    if (newStatus === currentStatus) {
+        console.log('Status unchanged, skipping update');
+        return;
+    }
+    
+    console.log(`Updating invoice ${invoiceId} from "${currentStatus}" to "${newStatus}"`);
+    
+    // Show loading state
+    selectElement.disabled = true;
+    selectElement.style.opacity = '0.6';
+    
+    // Add loading indicator
+    const debugDiv = selectElement.parentNode.querySelector('div');
+    if (debugDiv) {
+        debugDiv.innerHTML = `DB: "${currentStatus}" | ID: ${invoiceId} | <span style="color: orange;">UPDATING...</span>`;
+    }
+    
+    // Make AJAX request to update status
+    fetch(`/invoices/${invoiceId}/update-status/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            'status': newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the stored current status
+            selectElement.setAttribute('data-current-status', data.new_status);
+            
+            // Update debug display
+            const debugDiv = selectElement.parentNode.querySelector('div');
+            if (debugDiv) {
+                debugDiv.innerHTML = `DB: "${data.new_status}" | ID: ${invoiceId} | <span style="color: green;">UPDATED ✓</span>`;
+                setTimeout(() => {
+                    debugDiv.innerHTML = `DB: "${data.new_status}" | ID: ${invoiceId}`;
+                }, 2000);
+            }
+            
+            // Show success feedback
+            selectElement.style.background = '#d4edda';
+            setTimeout(() => {
+                selectElement.style.background = '';
+            }, 1000);
+            
+            console.log(`Successfully updated invoice ${invoiceId} to "${data.new_status}"`);
+            console.log('Full response:', data);
+        } else {
+            console.error('Update failed:', data.error);
+            alert('Error updating invoice status: ' + (data.error || 'Unknown error'));
+            // Restore original status
+            selectElement.value = currentStatus;
+            
+            // Update debug display
+            const debugDiv = selectElement.parentNode.querySelector('div');
+            if (debugDiv) {
+                debugDiv.innerHTML = `DB: "${currentStatus}" | ID: ${invoiceId} | <span style="color: red;">FAILED ✗</span>`;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        alert('Error updating invoice status: ' + error.message);
+        // Restore original status
+        selectElement.value = currentStatus;
+        
+        // Update debug display
+        const debugDiv = selectElement.parentNode.querySelector('div');
+        if (debugDiv) {
+            debugDiv.innerHTML = `DB: "${currentStatus}" | ID: ${invoiceId} | <span style="color: red;">ERROR ✗</span>`;
+        }
+    })
+    .finally(() => {
+        // Re-enable select
+        selectElement.disabled = false;
+        selectElement.style.opacity = '1';
+    });
+}
+
+// Mark as paid/unpaid function (keeping for backward compatibility)
+function markAsPaid(invoiceId) {
+    const button = event.target.closest('a');
+    const originalText = button.innerHTML;
+    const isPaid = originalText.includes('Mark as Paid');
+    
+    // Show loading indicator
+    button.innerHTML = '<i class="material-icons text-sm me-2">hourglass_empty</i>Updating...';
+    button.classList.add('disabled');
+    
+    // Make AJAX request to update status
+    fetch(`/invoices/${invoiceId}/toggle-payment/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            'mark_as_paid': isPaid
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the page to show updated status
+            location.reload();
+        } else {
+            alert('Error updating invoice status: ' + (data.error || 'Unknown error'));
+            // Restore button
+            button.innerHTML = originalText;
+            button.classList.remove('disabled');
+        }
+    })
+    .catch(error => {
+        alert('Error updating invoice status: ' + error.message);
+        // Restore button
+        button.innerHTML = originalText;
+        button.classList.remove('disabled');
+    });
+}
+
+// Get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Quick actions keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Alt + N: New Invoice
+    if (e.altKey && e.key === 'n') {
+        e.preventDefault();
+        window.location.href = '{% url "invoices:create" %}';
+    }
+    
+    // Alt + D: Dynamic Creator
+    if (e.altKey && e.key === 'd') {
+        e.preventDefault();
+        window.location.href = '/invoices/create/';
+    }
+});
+
+// Recalculate serial numbers after deletion
+function recalculateSerialNumbers() {
+    const serialCells = document.querySelectorAll('.serial-number span');
+    
+    // Get current page info from URL or pagination
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = parseInt(urlParams.get('page')) || 1;
+    
+    // Django pagination is set to 25 items per page
+    const itemsPerPage = 25;
+    const startIndex = (currentPage - 1) * itemsPerPage + 1;
+    
+    serialCells.forEach((cell, index) => {
+        cell.textContent = startIndex + index;
+    });
+}
+
+// Show notification function
+function showNotification(message, type = 'success') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <span>${message}</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Add to body
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Update stats after delete
+function updateStatsAfterDelete() {
+    // Update the total invoices count immediately
+    const totalInvoicesElements = document.querySelectorAll('.card-header .text-end h4');
+    if (totalInvoicesElements.length > 0) {
+        // First stats card should be total invoices
+        const totalInvoicesElement = totalInvoicesElements[0];
+        let currentCount = parseInt(totalInvoicesElement.textContent);
+        if (currentCount > 0) {
+            totalInvoicesElement.textContent = currentCount - 1;
+        }
+    }
+    
+    // You could also update other stats here manually
+    // For accurate amounts, we'd need to know the deleted invoice amount
+    // For now, we'll reload the page after a short delay to get accurate stats
+    setTimeout(() => {
+        // Only reload if user hasn't navigated away
+        if (window.location.pathname === '/invoices/') {
+            location.reload();
+        }
+    }, 2000);
+}
+
+// Add keyboard shortcut hints to page
+document.addEventListener('DOMContentLoaded', function() {
+    const shortcutHint = document.createElement('div');
+    shortcutHint.innerHTML = `
+        <small class="text-muted">
+            <i class="material-icons text-xs">keyboard</i>
+            Shortcuts: Alt+N (New Invoice), Alt+D (Dynamic Creator), F5 (Refresh Colors)
+        </small>
+    `;
+    shortcutHint.className = 'text-center mt-2';
+    document.querySelector('.card-body').appendChild(shortcutHint);
+});
+
+// Auto-refresh when returning from template management
+let pageHidden = false;
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        pageHidden = true;
+    } else if (pageHidden) {
+        // Page became visible again, check if we need to refresh template colors
+        pageHidden = false;
+        
+        // Add a small delay to ensure any template changes are saved
+        setTimeout(function() {
+            // Check if we came from template management (basic heuristic)
+            if (document.referrer.includes('/templates/')) {
+                console.log('🎨 Returning from template management - refreshing colors...');
+                location.reload();
+            }
+        }, 1000);
+    }
+});
+
+// Manual refresh function
+window.refreshTemplateColors = function() {
+    console.log('🔄 Refreshing template colors...');
+    location.reload();
+};
+
+console.log('📋 Invoice list template color system loaded');
+</script>
+{% endblock %}

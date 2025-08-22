@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Waybill - Multi-Purpose Business App{% endblock %}
+{% block page_title %}Create Waybill{% endblock %}
+{% block breadcrumb %}Create Waybill{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ULTRA MINIMAL CSS FOR INSTANT LOAD */
+.fast-container{max-width:1200px;margin:0 auto;padding:20px}
+.fast-row{display:flex;gap:20px}
+.fast-col{flex:1;background:#fff;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.fast-form input,.fast-form select,.fast-form textarea{width:100%;padding:10px;margin-bottom:15px;border:1px solid #ddd;border-radius:4px}
+.fast-btn{background:#e91e63;color:#fff;padding:12px 24px;border:none;border-radius:4px;cursor:pointer}
+.fast-btn:hover{background:#c2185b}
+.template-tabs{display:flex;gap:10px;margin-bottom:20px}
+.tab{padding:8px 16px;background:#f8f9fa;border:1px solid #ddd;border-radius:4px;cursor:pointer}
+.tab.active{background:#e91e63;color:#fff}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fast-container">
+    <!-- Template Selector -->
+    <div class="template-tabs">
+        {% for template in templates %}
+        <div class="tab {% if template.id == selected_template.id %}active{% endif %}" 
+             onclick="selectTemplate({{ template.id }})">
+            {{ template.name }}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="fast-row">
+        <!-- Form Column -->
+        <div class="fast-col">
+            <h4>Waybill Details</h4>
+            
+            <form method="POST" class="fast-form">
+                {% csrf_token %}
+                <input type="hidden" name="template_id" id="templateId" value="{{ selected_template.id }}">
+                
+                <label>Delivery Date:</label>
+                <input type="date" name="delivery_date">
+                
+                <label>Status:</label>
+                <select name="status">
+                    <option value="pending">Pending</option>
+                    <option value="in_transit">In Transit</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+                
+                <label>Sender Name:</label>
+                <input type="text" name="custom_sender_info_sender_name" placeholder="Enter sender name" required>
+                
+                <label>Sender Phone:</label>
+                <input type="text" name="custom_sender_info_sender_phone" placeholder="Enter sender phone">
+                
+                <label>Receiver Name:</label>
+                <input type="text" name="custom_receiver_info_receiver_name" placeholder="Enter receiver name" required>
+                
+                <label>Receiver Phone:</label>
+                <input type="text" name="custom_receiver_info_receiver_phone" placeholder="Enter receiver phone">
+                
+                <label>Destination:</label>
+                <input type="text" name="custom_shipment_info_destination" placeholder="Enter destination" required>
+                
+                <label>Vehicle Number:</label>
+                <input type="text" name="custom_shipment_info_vehicle_number" placeholder="Enter vehicle number">
+                
+                <h5>Items</h5>
+                <div id="itemsContainer">
+                    <div class="item-row" style="display:flex;gap:10px;margin-bottom:10px">
+                        <input type="text" name="items[0][product]" placeholder="Product" style="flex:1">
+                        <input type="text" name="items[0][description]" placeholder="Description" style="flex:2">
+                        <input type="number" name="items[0][quantity]" placeholder="Qty" style="flex:1">
+                        <input type="number" name="items[0][weight]" placeholder="Weight" style="flex:1">
+                    </div>
+                </div>
+                <button type="button" onclick="addItem()" style="background:#6c757d;color:#fff;padding:8px 16px;border:none;border-radius:4px;margin-bottom:15px">+ Add Item</button>
+                
+                <label>Notes:</label>
+                <textarea name="notes" rows="3" placeholder="Additional notes (optional)"></textarea>
+                
+                <button type="submit" class="fast-btn">Create Waybill</button>
+            </form>
+        </div>
+        
+        <!-- Preview Column -->
+        <div class="fast-col">
+            <h4>Preview</h4>
+            <div style="border:2px solid {{ selected_template.primary_color|default:'#e91e63' }};border-radius:8px;padding:20px;background:#fff">
+                <div style="text-align:center;border-bottom:2px solid {{ selected_template.primary_color|default:'#e91e63' }};padding-bottom:15px;margin-bottom:20px">
+                    <h2 style="color:{{ selected_template.primary_color|default:'#e91e63' }};margin:0">{{ selected_template.document_title|default:'WAYBILL' }}</h2>
+                    <p style="margin:5px 0;background:#f8f9fa;padding:5px 10px;display:inline-block;border-radius:15px">WB-PREVIEW</p>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px">
+                    <div>
+                        <h6 style="color:{{ selected_template.primary_color|default:'#e91e63' }};margin:0 0 8px 0">From (Sender)</h6>
+                        <p style="margin:0;font-size:14px;color:#666">Sample Sender Name<br>+1 (555) 123-4567<br>123 Sender Street</p>
+                    </div>
+                    <div>
+                        <h6 style="color:{{ selected_template.primary_color|default:'#e91e63' }};margin:0 0 8px 0">To (Receiver)</h6>
+                        <p style="margin:0;font-size:14px;color:#666">Sample Receiver Name<br>+1 (555) 987-6543<br>456 Receiver Ave</p>
+                    </div>
+                </div>
+                
+                <h6 style="color:{{ selected_template.primary_color|default:'#e91e63' }};margin:0 0 10px 0">Items</h6>
+                <table style="width:100%;border-collapse:collapse;font-size:14px">
+                    <tr style="background:{{ selected_template.primary_color|default:'#e91e63' }};color:#fff">
+                        <th style="padding:8px;border:1px solid #ddd;text-align:left">Product</th>
+                        <th style="padding:8px;border:1px solid #ddd;text-align:left">Description</th>
+                        <th style="padding:8px;border:1px solid #ddd;text-align:center">Qty</th>
+                        <th style="padding:8px;border:1px solid #ddd;text-align:center">Weight</th>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px;border:1px solid #ddd">Electronics</td>
+                        <td style="padding:8px;border:1px solid #ddd">Sample items</td>
+                        <td style="padding:8px;border:1px solid #ddd;text-align:center">5</td>
+                        <td style="padding:8px;border:1px solid #ddd;text-align:center">2.5kg</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// MINIMAL JAVASCRIPT FOR FUNCTIONALITY
+let itemCount = 1;
+
+function selectTemplate(templateId) {
+    document.getElementById('templateId').value = templateId;
+    // Update active tab
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function addItem() {
+    const container = document.getElementById('itemsContainer');
+    const newRow = document.createElement('div');
+    newRow.className = 'item-row';
+    newRow.style.cssText = 'display:flex;gap:10px;margin-bottom:10px';
+    newRow.innerHTML = `
+        <input type="text" name="items[${itemCount}][product]" placeholder="Product" style="flex:1">
+        <input type="text" name="items[${itemCount}][description]" placeholder="Description" style="flex:2">
+        <input type="number" name="items[${itemCount}][quantity]" placeholder="Qty" style="flex:1">
+        <input type="number" name="items[${itemCount}][weight]" placeholder="Weight" style="flex:1">
+        <button type="button" onclick="this.parentNode.remove()" style="background:#dc3545;color:#fff;border:none;padding:8px;border-radius:4px">×</button>
+    `;
+    container.appendChild(newRow);
+    itemCount++;
+}
+</script>
+{% endblock %}

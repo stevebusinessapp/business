@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load quotation_extras %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if create %}Create Quotation{% else %}Edit Quotation{% endif %}</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form|crispy }}
+        {% if header_fields_config %}
+            <h4>Custom Header Fields</h4>
+            <div class="row">
+                {% for field in header_fields_config %}
+                    <div class="col-md-4 mb-2">
+                        {% with field_name="header_"|add:field.name %}
+                            {{ form|get_form_field:field_name|as_crispy_field }}
+                        {% endwith %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <h4>Line Items</h4>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                    {% for col in custom_columns %}
+                        <th>{{ col }}</th>
+                    {% endfor %}
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ formset.management_form }}
+                {% for form in formset %}
+                <tr class="form-row">
+                    <td>{{ form.description }}</td>
+                    <td>{{ form.quantity }}</td>
+                    <td>{{ form.unit_price }}</td>
+                    <td>{{ form.total }}</td>
+                    {% for col in custom_columns %}
+                        <td>{{ form.fields|get_custom_field:col }}</td>
+                    {% endfor %}
+                    <td>{% if form.instance.pk %}{{ form.DELETE }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-success">{% if create %}Create{% else %}Update{% endif %} Quotation</button>
+        <a href="{% url 'quotations:quotation_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% load static %}
+<script src="{% static 'js/quotation_form.js' %}"></script>
+{% endblock %} 

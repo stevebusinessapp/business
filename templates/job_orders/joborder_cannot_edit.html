@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Cannot Edit Job Order{% endblock %}
+{% block content %}
+<div class="container py-5 d-flex align-items-center justify-content-center" style="min-height:70vh;">
+  <div class="card shadow-lg p-4 w-100" style="max-width: 500px;">
+    <div class="text-center mb-3">
+      <span class="material-icons text-danger" style="font-size: 64px;">block</span>
+      <h2 class="mb-2">Editing Not Allowed</h2>
+      <p class="text-muted">This job order cannot be edited because it is in a finalized state (approved or rejected).</p>
+    </div>
+    <div class="d-grid gap-2">
+      <a href="{% url 'job_orders:joborder_list' %}" class="btn btn-outline-primary btn-lg">Back to Job Order List</a>
+      <a href="{% url 'job_orders:joborder_detail' joborder.pk %}" class="btn btn-outline-secondary btn-lg">View Job Order</a>
+      <a href="{% url 'job_orders:joborder_create' %}" class="btn btn-success btn-lg">Create New Job Order</a>
+    </div>
+    <div class="mt-4 text-center text-muted small">
+      <span>If you need to edit this job order, you can make a new one or contact your administrator.</span>
+    </div>
+  </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Waybill Templates - Multi-Purpose Business App{% endblock %}
+{% block page_title %}Waybill Templates{% endblock %}
+{% block breadcrumb %}Template Management{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card my-4">
+      <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+        <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="text-white text-capitalize ps-3">Waybill Template Management</h6>
+            <div class="pe-3">
+              <a href="{% url 'waybills:template_create' %}" class="btn btn-outline-white btn-sm mb-0 me-2">
+                <i class="material-icons text-sm">add</i> Create Template
+              </a>
+              <a href="{% url 'waybills:list' %}" class="btn btn-outline-white btn-sm mb-0">
+                <i class="material-icons text-sm">arrow_back</i> Back to Waybills
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card-body px-0 pb-2">
+        <!-- Templates Grid -->
+        <div class="row px-3">
+          {% for template in templates %}
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 template-card" style="border-color: {{ template.primary_color }};">
+              <div class="card-header text-center" style="background: {{ template.primary_color }}; color: white;">
+                <h6 class="mb-0">{{ template.name }}</h6>
+                {% if template.is_default %}
+                  <small><i class="material-icons text-sm">star</i> Default</small>
+                {% endif %}
+              </div>
+              
+              <div class="card-body">
+                <div class="template-preview mb-3" style="border: 2px solid {{ template.primary_color }}; border-radius: 8px; padding: 15px; background: {{ template.secondary_color }};">
+                  <div class="text-center mb-2">
+                    <strong style="color: {{ template.primary_color }};">{{ template.document_title }}</strong>
+                  </div>
+                  <div class="row text-center">
+                    <div class="col-6">
+                      <small class="text-muted">Number:</small><br>
+                      <small>{{ template.number_prefix }}-YYYY-####</small>
+                    </div>
+                    <div class="col-6">
+                      <small class="text-muted">Fields:</small><br>
+                      <small>{{ template.custom_fields|length }} section{{ template.custom_fields|length|pluralize }}</small>
+                    </div>
+                  </div>
+                </div>
+                
+                <p class="text-muted small">{{ template.description|truncatewords:15 }}</p>
+                
+                <!-- Template Settings -->
+                <div class="row text-center mb-3">
+                  <div class="col-3">
+                    <i class="material-icons text-sm {% if template.show_company_logo %}text-success{% else %}text-muted{% endif %}">business</i>
+                    <small class="d-block">Logo</small>
+                  </div>
+                  <div class="col-3">
+                    <i class="material-icons text-sm {% if template.show_company_details %}text-success{% else %}text-muted{% endif %}">info</i>
+                    <small class="d-block">Details</small>
+                  </div>
+                  <div class="col-3">
+                    <i class="material-icons text-sm {% if template.show_bank_details %}text-success{% else %}text-muted{% endif %}">account_balance</i>
+                    <small class="d-block">Bank</small>
+                  </div>
+                  <div class="col-3">
+                    <i class="material-icons text-sm {% if template.show_signature %}text-success{% else %}text-muted{% endif %}">edit</i>
+                    <small class="d-block">Sign</small>
+                  </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2">
+                  <a href="{% url 'waybills:create_original' %}?template_id={{ template.id }}"
+                     class="btn btn-primary btn-sm flex-fill">
+                    <i class="material-icons text-sm">add</i> Use Template
+                  </a>
+                  
+                  <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm" 
+                            type="button" 
+                            data-bs-toggle="dropdown">
+                      <i class="material-icons text-sm">more_vert</i>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li>
+                        <h6 class="dropdown-header">Template Actions</h6>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="{% url 'waybills:template_detail' template.pk %}">
+                          <i class="material-icons text-sm me-2">visibility</i>
+                          View Details
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="{% url 'waybills:template_edit' template.pk %}">
+                          <i class="material-icons text-sm me-2">edit</i>
+                          Edit Template
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="{% url 'waybills:template_duplicate' template.pk %}">
+                          <i class="material-icons text-sm me-2">content_copy</i>
+                          Duplicate
+                        </a>
+                      </li>
+                      {% if not template.is_default %}
+                      <li>
+                        <a class="dropdown-item" href="#" onclick="setAsDefault({{ template.pk }})">
+                          <i class="material-icons text-sm me-2">star</i>
+                          Set as Default
+                        </a>
+                      </li>
+                      {% endif %}
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <a class="dropdown-item text-danger" href="{% url 'waybills:template_delete' template.pk %}">
+                          <i class="material-icons text-sm me-2">delete</i>
+                          Delete Template
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card-footer text-muted text-center">
+                <small>Created {{ template.created_at|date:"M d, Y" }}</small>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-12">
+            <div class="text-center py-5">
+              <i class="material-icons" style="font-size: 64px; color: #ccc;">design_services</i>
+              <h4 class="text-muted mt-3">No Templates Found</h4>
+              <p class="text-muted">Create your first waybill template to get started.</p>
+              <a href="{% url 'waybills:template_create' %}" class="btn btn-primary">
+                <i class="material-icons text-sm">add</i> Create First Template
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.template-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.template-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.template-preview {
+  font-size: 12px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dropdown-menu {
+  min-width: 180px;
+}
+
+.dropdown-item i {
+  opacity: 0.8;
+}
+
+.dropdown-item:hover i {
+  opacity: 1;
+}
+
+.template-card .card-header {
+  border-bottom: none;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.d-flex.gap-2 {
+  gap: 0.5rem !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setAsDefault(templateId) {
+    if (confirm('Set this template as the default for new waybills?')) {
+        // You can implement this via AJAX if needed
+        fetch(`/waybills/templates/${templateId}/set-default/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error setting default template: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error setting default template: ' + error.message);
+        });
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Alt + N: New Template
+    if (e.altKey && e.key === 'n') {
+        e.preventDefault();
+        window.location.href = '{% url "waybills:template_create" %}';
+    }
+    
+    // Alt + B: Back to Waybills
+    if (e.altKey && e.key === 'b') {
+        e.preventDefault();
+        window.location.href = '{% url "waybills:list" %}';
+    }
+});
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    // Add tooltip to show template colors
+    const templateCards = document.querySelectorAll('.template-card');
+    templateCards.forEach(card => {
+        const header = card.querySelector('.card-header');
+        if (header) {
+            const bgColor = header.style.backgroundColor;
+            card.setAttribute('title', `Primary Color: ${bgColor}`);
+        }
+    });
+});
+</script>
+{% endblock %}

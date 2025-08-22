@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Edit Waybill{% endblock %}
+{% block page_title %}Edit Waybill{% endblock %}
+{% block breadcrumb %}Edit Waybill{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-waybill-container { max-width: 900px; margin: 0 auto; padding: 30px 0; }
+    .edit-waybill-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px; }
+    .form-label { font-weight: 500; color: #344767; margin-bottom: 4px; }
+    .form-section-title { font-size: 1.1em; font-weight: 600; margin-top: 24px; margin-bottom: 12px; color: #FF5900; }
+    .item-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
+    .item-row input, .item-row textarea { min-width: 80px; }
+    .remove-item-btn { color: #dc3545; background: none; border: none; font-size: 1.2em; cursor: pointer; }
+    .add-item-btn { margin-top: 10px; }
+    .actions { display: flex; gap: 10px; margin-top: 24px; }
+    .actions .btn { min-width: 120px; }
+    /* Add visible border to all form fields */
+    .edit-waybill-card input.form-control,
+    .edit-waybill-card textarea.form-control,
+    .edit-waybill-card select.form-control {
+        border: 2px solid #FF5900 !important;
+        border-radius: 6px !important;
+        box-shadow: none !important;
+        background: #fff !important;
+        transition: border-color 0.2s;
+    }
+    .edit-waybill-card input.form-control:focus,
+    .edit-waybill-card textarea.form-control:focus,
+    .edit-waybill-card select.form-control:focus {
+        border-color: #344767 !important;
+        outline: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ form_data|json_script:'waybill-form-data' }}
+{{ existing_items|json_script:'waybill-items-data' }}
+<div class="edit-waybill-container">
+    <div class="edit-waybill-card">
+        <h3 class="mb-4">Edit Waybill</h3>
+        <form id="waybill-edit-form" method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="form-section-title">Sender Information</div>
+            <div class="mb-3">
+                <label class="form-label">Sender Name</label>
+                <input type="text" id="sender_name" name="sender_name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Sender Phone</label>
+                <input type="text" id="sender_phone" name="sender_phone" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Sender Address</label>
+                <textarea id="sender_address" name="sender_address" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-section-title">Receiver Information</div>
+            <div class="mb-3">
+                <label class="form-label">Receiver Name</label>
+                <input type="text" id="receiver_name" name="receiver_name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Receiver Phone</label>
+                <input type="text" id="receiver_phone" name="receiver_phone" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Receiver Address</label>
+                <textarea id="receiver_address" name="receiver_address" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-section-title">Waybill Details</div>
+            <div class="mb-3">
+                <label class="form-label">Waybill Number</label>
+                <input type="text" id="waybill_number" name="waybill_number" class="form-control" readonly>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Delivery Date</label>
+                <input type="date" id="delivery_date" name="delivery_date" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Status</label>
+                <select id="status" name="status" class="form-control">
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="dispatched">Dispatched / In Transit</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="not_delivered">Not Delivered</option>
+                    <option value="returned">Returned</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="on_hold">On Hold</option>
+                    <option value="awaiting_pickup">Awaiting Pickup</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                <textarea id="notes" name="notes" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-section-title">Line Items</div>
+            <div id="items-list"></div>
+            <button type="button" class="btn btn-outline-success add-item-btn" id="add-item-btn">Add Item</button>
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{% url 'waybills:list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getInitialData() {
+    let formData = {};
+    let items = [];
+    try {
+        formData = JSON.parse(document.getElementById('waybill-form-data').textContent);
+        items = JSON.parse(document.getElementById('waybill-items-data').textContent);
+    } catch (e) {
+        console.error('[DEBUG] Failed to load formData/items from json_script:', e);
+    }
+    return { formData, items };
+}
+
+function renderItems(items) {
+    const itemsList = document.getElementById('items-list');
+    itemsList.innerHTML = '';
+    // Always show at least one row for editing
+    if (!items || !items.length) items = [{}];
+    items.forEach((itemObj, idx) => {
+        const item = itemObj.item_data || itemObj || {};
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.innerHTML = `
+            <input type="text" name="items[${idx}][product_service]" class="form-control" placeholder="Product/Service" value="${item.product_service || ''}" required>
+            <input type="text" name="items[${idx}][description]" class="form-control" placeholder="Description" value="${item.description || ''}">
+            <input type="text" name="items[${idx}][quantity]" class="form-control" placeholder="Quantity" value="${item.quantity || ''}">
+            <input type="text" name="items[${idx}][weight]" class="form-control" placeholder="Weight" value="${item.weight || ''}">
+            <button type="button" class="remove-item-btn" title="Remove" onclick="removeItem(this)">&times;</button>
+        `;
+        itemsList.appendChild(row);
+    });
+}
+
+function removeItem(btn) {
+    btn.parentElement.remove();
+    // Re-index all item rows
+    const itemsList = document.getElementById('items-list');
+    Array.from(itemsList.children).forEach((row, idx) => {
+        Array.from(row.querySelectorAll('input, textarea')).forEach(input => {
+            if (input.name.includes('product_service')) input.name = `items[${idx}][product_service]`;
+            if (input.name.includes('description')) input.name = `items[${idx}][description]`;
+            if (input.name.includes('quantity')) input.name = `items[${idx}][quantity]`;
+            if (input.name.includes('weight')) input.name = `items[${idx}][weight]`;
+        });
+    });
+}
+
+function addItemRow() {
+    const itemsList = document.getElementById('items-list');
+    const idx = itemsList.children.length;
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.innerHTML = `
+        <input type="text" name="items[${idx}][product_service]" class="form-control" placeholder="Product/Service" required>
+        <input type="text" name="items[${idx}][description]" class="form-control" placeholder="Description">
+        <input type="text" name="items[${idx}][quantity]" class="form-control" placeholder="Quantity">
+        <input type="text" name="items[${idx}][weight]" class="form-control" placeholder="Weight">
+        <button type="button" class="remove-item-btn" title="Remove" onclick="removeItem(this)">&times;</button>
+    `;
+    itemsList.appendChild(row);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const { formData, items } = getInitialData();
+    let errorLog = [];
+    function logError(msg) {
+        errorLog.push(msg);
+        const logDiv = document.getElementById('js-error-log');
+        logDiv.style.display = '';
+        logDiv.innerHTML = '<b>JS Error Log:</b><br>' + errorLog.map(e => '<div>' + e + '</div>').join('');
+    }
+    // Pre-fill form fields
+    try {
+        if (formData) {
+            if (document.getElementById('waybill_number')) document.getElementById('waybill_number').value = formData.waybill_number || '';
+            else logError('waybill_number field not found');
+            if (document.getElementById('delivery_date')) document.getElementById('delivery_date').value = formData.delivery_date || '';
+            else logError('delivery_date field not found');
+            if (document.getElementById('status')) document.getElementById('status').value = formData.status || 'pending';
+            else logError('status field not found');
+            if (document.getElementById('notes')) document.getElementById('notes').value = formData.notes || '';
+            else logError('notes field not found');
+            if (formData.custom_data) {
+                const cd = formData.custom_data;
+                if (cd.sender_info) {
+                    if (document.getElementById('sender_name')) document.getElementById('sender_name').value = cd.sender_info.sender_name || '';
+                    else logError('sender_name field not found');
+                    if (document.getElementById('sender_phone')) document.getElementById('sender_phone').value = cd.sender_info.sender_phone || '';
+                    else logError('sender_phone field not found');
+                    if (document.getElementById('sender_address')) document.getElementById('sender_address').value = cd.sender_info.sender_address || '';
+                    else logError('sender_address field not found');
+                } else {
+                    logError('sender_info missing in custom_data');
+                }
+                if (cd.receiver_info) {
+                    if (document.getElementById('receiver_name')) document.getElementById('receiver_name').value = cd.receiver_info.receiver_name || '';
+                    else logError('receiver_name field not found');
+                    if (document.getElementById('receiver_phone')) document.getElementById('receiver_phone').value = cd.receiver_info.receiver_phone || '';
+                    else logError('receiver_phone field not found');
+                    if (document.getElementById('receiver_address')) document.getElementById('receiver_address').value = cd.receiver_info.receiver_address || '';
+                    else logError('receiver_address field not found');
+                } else {
+                    logError('receiver_info missing in custom_data');
+                }
+            } else {
+                logError('custom_data missing in formData');
+            }
+        } else {
+            logError('formData is empty');
+        }
+    } catch (e) {
+        logError('Exception during pre-fill: ' + e);
+    }
+    try {
+        renderItems(items);
+    } catch (e) {
+        logError('Exception during renderItems: ' + e);
+    }
+    document.getElementById('add-item-btn').addEventListener('click', addItemRow);
+    document.getElementById('waybill-edit-form').addEventListener('submit', function(e) {
+        // Optionally add client-side validation here
+    });
+});
+</script>
+{% endblock %}

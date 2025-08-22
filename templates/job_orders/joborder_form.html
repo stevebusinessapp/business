@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}{% if edit %}Edit Job Order{% else %}Create Job Order{% endif %}{% endblock %}
+{% block content %}
+<style>
+@media (max-width: 600px) {
+  .responsive-wrapper, .container, .table-responsive, .card {
+    overflow-x: auto !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    padding: 0 !important;
+  }
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    will-change: transform;
+  }
+  #lineitems-table {
+    min-width: 600px !important;
+  }
+}
+</style>
+<div class="responsive-wrapper">
+  <div class="container mt-4">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8">
+        <div class="card shadow" style="overflow:auto;">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">{% if edit %}Edit Job Order{% else %}Create Job Order{% endif %}</h4>
+          </div>
+          <div class="card-body">
+            <form method="post" id="joborder-form">
+              {% csrf_token %}
+              {{ form.title|as_crispy_field }}
+              <div class="mb-3">
+                <label for="layout-select" class="form-label">Layout</label>
+                <select name="layout" id="layout-select" class="form-select" required {% if edit %}disabled{% endif %}>
+                  {% for layout in layouts %}
+                    <option value="{{ layout.id }}" {% if layout.id == form.instance.layout_id %}selected{% endif %}>{{ layout.name }}</option>
+                  {% endfor %}
+                </select>
+                <div class="form-text">Select a layout to define the table structure for this job order.</div>
+              </div>
+              <div id="dynamic-table-section" class="mb-3">
+                <label class="form-label">Line Items</label>
+                <div class="table-responsive" style="overflow:auto;">
+                  <table class="table table-bordered align-middle" id="lineitems-table" style="min-width:600px;">
+                    <thead class="table-light">
+                      <tr id="lineitems-header"></tr>
+                    </thead>
+                    <tbody id="lineitems-tbody"></tbody>
+                  </table>
+                </div>
+                <input type="hidden" name="data" id="id_data">
+                <div class="form-text mt-2">Add as many line items as needed. Required fields are marked with *.</div>
+              </div>
+              <button type="button" class="btn btn-outline-success btn-sm mt-2" id="add-row-btn">Add Row</button>
+              <div id="summary-section" class="mb-3" style="display:none;">
+                <h6>Summary</h6>
+                <ul class="list-group" id="summary-list"></ul>
+              </div>
+              <div class="mt-3 d-flex justify-content-between">
+                <button type="submit" class="btn btn-success">Save</button>
+                <a href="{% url 'job_orders:joborder_list' %}" class="btn btn-secondary">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+#dynamic-table-section table.table, #dynamic-table-section table.table-bordered, #dynamic-table-section table.table-bordered th, #dynamic-table-section table.table-bordered td {
+  border: 1px solid #dee2e6 !important;
+  background: #fff;
+}
+#dynamic-table-section table.table-bordered th, #dynamic-table-section table.table-bordered td {
+  box-shadow: none !important;
+}
+#dynamic-table-section .input-group {
+  flex-direction: row !important;
+  direction: ltr !important;
+}
+</style>
+{% if edit %}
+<!-- DEBUG: joborder_data = {{ joborder_data|safe }} -->
+{{ joborder_data|json_script:'joborder-data' }}
+{% endif %}
+{{ layout_data|json_script:'joborder-layouts' }}
+<script>
+// Currency symbol from Django context
+const currencySymbol = '{{ currency_symbol|default:"$" }}';
+let layouts = JSON.parse(document.getElementById('joborder-layouts').textContent);
+// Build a dictionary for fast lookup by ID
+let layoutsById = {};
+layouts.forEach(l => { layoutsById[l.id] = l.structure; });
+let currentLayout = null;
+let columns = [];
+let lineitems = [];
+// Set edit mode JS variable
+var isEdit = ("{{ edit|yesno:'true,false' }}" === "true");
+if (isEdit) {
+  try {
+    const dataElem = document.getElementById('joborder-data');
+    if (!dataElem) {
+      console.error('[DEBUG] joborder-data element not found. No previous data to load.');
+      lineitems = [];
+    } else {
+      let joborderData = JSON.parse(dataElem.textContent);
+      console.log('DEBUG: Loaded joborderData:', joborderData);
+      if (Array.isArray(joborderData) && joborderData.length > 0) {
+        lineitems = joborderData;
+      } else if (typeof joborderData === 'object' && joborderData !== null && Object.keys(joborderData).length > 0) {
+        lineitems = [joborderData];
+      } else {
+        lineitems = [];
+        console.log('DEBUG: No previous joborder data found, starting with empty row.');
+      }
+      // Ensure every row has quantity_raw
+      lineitems.forEach(row => {
+        if ('quantity' in row && row.quantity_raw === undefined) {
+          row.quantity_raw = row.quantity || '';
+        }
+      });
+    }
+    // Set columns for the current layout
+    const layoutSelect = document.getElementById('layout-select');
+    if (layoutSelect && layoutSelect.value) {
+      columns = layoutsById[layoutSelect.value] || [];
+    }
+    showDynamicTable(); // Always call, even if columns is empty
+  } catch (e) {
+    lineitems = [];
+    console.error('DEBUG: Failed to parse joborderData', e);
+  }
+}
+
+function renderTableHeader() {
+  const header = document.getElementById('lineitems-header');
+  header.innerHTML = '';
+  if (columns.length === 0) {
+    const th = document.createElement('th');
+    th.colSpan = 2;
+    th.innerHTML = '<span class="text-danger">No columns defined for this layout.</span>';
+    header.appendChild(th);
+    return;
+  }
+  // Add serial number column
+  const thSerial = document.createElement('th');
+  thSerial.textContent = '#';
+  header.appendChild(thSerial);
+  columns.forEach(col => {
+    const th = document.createElement('th');
+    th.innerHTML = col.label + (col.required ? ' <span class="text-danger">*</span>' : '');
+    header.appendChild(th);
+  });
+  const th = document.createElement('th');
+  th.textContent = 'Actions';
+  header.appendChild(th);
+}
+
+function renderTableBody() {
+  const tbody = document.getElementById('lineitems-tbody');
+  tbody.innerHTML = '';
+  if (columns.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 2;
+    td.innerHTML = '<span class="text-danger">No fields available. Please check your layout structure.</span>';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    document.getElementById('id_data').value = JSON.stringify(lineitems);
+    return;
+  }
+  // If there are no lineitems, always show one empty row for editing
+  if (lineitems.length === 0) {
+    let row = {};
+    columns.forEach(col => { row[col.name] = ''; });
+    // Always set quantity_raw for new rows
+    if ('quantity' in row) row.quantity_raw = '';
+    lineitems.push(row);
+  }
+  lineitems.forEach((row, rowIdx) => {
+    // Always ensure quantity_raw is set for every row
+    if ('quantity' in row && row.quantity_raw === undefined) {
+      row.quantity_raw = row.quantity || '';
+    }
+    const tr = document.createElement('tr');
+    // Serial number cell
+    const tdSerial = document.createElement('td');
+    tdSerial.textContent = rowIdx + 1;
+    tr.appendChild(tdSerial);
+    columns.forEach((col, colIdx) => {
+      const td = document.createElement('td');
+      if (["unit_price","price","amount","total"].includes(col.name)) {
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'input-group';
+        inputGroup.setAttribute('style', 'flex-direction: row !important; direction: ltr !important;');
+        const span = document.createElement('span');
+        span.className = 'input-group-text';
+        span.textContent = currencySymbol;
+        span.tabIndex = -1;
+        span.style.userSelect = 'none';
+        let input = document.createElement('input');
+        input.className = 'form-control';
+        input.name = col.name;
+        input.value = row[col.name] || '';
+        input.required = col.required;
+        input.dataset.row = rowIdx;
+        input.dataset.col = col.name;
+        input.disabled = false;
+        input.readOnly = false;
+        input.type = 'number';
+        input.step = (col.type === 'decimal') ? '0.01' : '1';
+        input.style.textAlign = 'right';
+        input.addEventListener('input', onInputChange);
+        inputGroup.appendChild(span);
+        inputGroup.appendChild(input);
+        td.appendChild(inputGroup);
+      } else if (col.name === 'quantity') {
+        let input = document.createElement('input');
+        input.className = 'form-control';
+        input.name = col.name;
+        // Always show the raw input if present, else fallback to numeric
+        input.value = row.quantity_raw !== undefined ? row.quantity_raw : (row[col.name] || '');
+        input.required = col.required;
+        input.dataset.row = rowIdx;
+        input.dataset.col = col.name;
+        input.disabled = false;
+        input.readOnly = false;
+        input.type = 'text';
+        input.addEventListener('input', onInputChange);
+        td.appendChild(input);
+      } else {
+        let input = document.createElement('input');
+        input.className = 'form-control';
+        input.name = col.name;
+        input.value = row[col.name] || '';
+        input.required = col.required;
+        input.dataset.row = rowIdx;
+        input.dataset.col = col.name;
+        input.disabled = false;
+        input.readOnly = false;
+        if (col.type === 'int') {
+          input.type = 'number';
+          input.step = '1';
+        } else if (col.type === 'decimal') {
+          input.type = 'number';
+          input.step = '0.01';
+        } else if (col.type === 'date') {
+          input.type = 'date';
+        } else {
+          input.type = 'text';
+        }
+        input.addEventListener('input', onInputChange);
+        td.appendChild(input);
+      }
+      tr.appendChild(td);
+    });
+    // Actions
+    const tdActions = document.createElement('td');
+    const btnRemove = document.createElement('button');
+    btnRemove.type = 'button';
+    btnRemove.className = 'btn btn-danger btn-sm';
+    btnRemove.textContent = 'Remove';
+    btnRemove.onclick = function() {
+      lineitems.splice(rowIdx, 1);
+      renderTableBody();
+      updateSummary();
+    };
+    tdActions.appendChild(btnRemove);
+    tr.appendChild(tdActions);
+    tbody.appendChild(tr);
+  });
+  document.getElementById('id_data').value = JSON.stringify(lineitems);
+}
+
+function addRow(defaults = {}) {
+  let row = {};
+  columns.forEach(col => {
+    row[col.name] = defaults[col.name] || '';
+  });
+  // Always set quantity_raw for new rows
+  if ('quantity' in row) row.quantity_raw = row['quantity'] || '';
+  lineitems.push(row);
+  console.log('DEBUG: addRow - columns:', columns);
+  console.log('DEBUG: addRow - lineitems:', lineitems);
+  showDynamicTable();
+  updateSummary();
+}
+
+function onInputChange(e) {
+  const rowIdx = e.target.dataset.row;
+  const colName = e.target.dataset.col;
+  if (["unit_price","price","amount","total"].includes(colName)) {
+    let raw = e.target.value;
+    let cleaned = raw.replace(/[^\d.]/g, "");
+    let parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts.slice(1).join('');
+    }
+    lineitems[rowIdx][colName] = cleaned;
+    e.target.value = raw;
+  } else if (colName === "quantity") {
+    let raw = e.target.value;
+    let cleaned = raw.replace(/[^\d.]/g, "");
+    let parts = cleaned.split('.');
+    if (parts.length > 2) {
+      cleaned = parts[0] + '.' + parts.slice(1).join('');
+    }
+    lineitems[rowIdx][colName] = cleaned;
+    lineitems[rowIdx]["quantity_raw"] = raw;
+    e.target.value = raw;
+  } else {
+    lineitems[rowIdx][colName] = e.target.value;
+  }
+  updateSummary();
+}
+
+function updateSummary() {
+  // Example: auto-calculate total if quantity and unit_price exist
+  let total = 0;
+  let hasQty = columns.some(col => col.name === 'quantity');
+  let hasPrice = columns.some(col => col.name === 'unit_price');
+  if (hasQty && hasPrice) {
+    lineitems.forEach(row => {
+      // Use quantity_numeric if present, else extract from quantity
+      let qty = parseFloat(row["quantity_numeric"] !== undefined ? row["quantity_numeric"] : (row["quantity"] || '')) || 0;
+      if (row["quantity_raw"] !== undefined) {
+        let raw = (row["quantity_raw"] !== null && row["quantity_raw"] !== undefined) ? String(row["quantity_raw"]) : '';
+        let cleaned = raw.replace(/[^\d.]/g, "");
+        let parts = cleaned.split('.');
+        if (parts.length > 2) {
+          cleaned = parts[0] + '.' + parts.slice(1).join('');
+        }
+        qty = parseFloat(cleaned) || 0;
+      }
+      let price = parseFloat(row['unit_price']) || 0;
+      total += qty * price;
+    });
+  }
+  const summarySection = document.getElementById('summary-section');
+  const summaryList = document.getElementById('summary-list');
+  summaryList.innerHTML = '';
+  if (hasQty && hasPrice) {
+    let li = document.createElement('li');
+    li.className = 'list-group-item';
+    li.innerHTML = '<strong>Total:</strong> ' + formatCurrency(total, currencySymbol);
+    summaryList.appendChild(li);
+    summarySection.style.display = '';
+  } else {
+    summarySection.style.display = 'none';
+  }
+}
+
+function formatCurrency(amount, symbol) {
+  let n = parseFloat(amount);
+  if (isNaN(n)) n = 0;
+  return symbol + n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function showDynamicTable() {
+  // No longer set display property, just render the table
+  renderTableHeader();
+  renderTableBody();
+  updateSummary();
+  let warning = document.getElementById('no-columns-warning');
+  if (columns.length === 0) {
+    if (!warning) {
+      warning = document.createElement('div');
+      warning.id = 'no-columns-warning';
+      warning.className = 'alert alert-warning mt-2';
+      warning.innerText = 'No columns defined for this layout. Please check your layout structure.';
+      document.getElementById('dynamic-table-section').appendChild(warning);
+    }
+  } else if (warning) {
+    warning.remove();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const layoutSelect = document.getElementById('layout-select');
+  if (layoutSelect && !layoutSelect.disabled) {
+    layoutSelect.addEventListener('change', function() {
+      const layoutId = this.value;
+      if (layoutsById[layoutId]) {
+        columns = layoutsById[layoutId];
+        lineitems = [];
+        showDynamicTable();
+      } else {
+        columns = [];
+        lineitems = [];
+        showDynamicTable();
+      }
+    });
+    // Auto-select first layout if not editing
+    if (layoutSelect.value) {
+      columns = layoutsById[layoutSelect.value] || [];
+      lineitems = [];
+      if (columns.length > 0) {
+        showDynamicTable();
+      }
+    }
+  } else if (isEdit && layoutSelect && layoutSelect.value) {
+    // In edit mode, always use the loaded lineitems and columns
+    columns = layoutsById[layoutSelect.value] || [];
+    showDynamicTable();
+  }
+  // If in edit mode and lineitems is empty, add a default row
+  if (isEdit && lineitems.length === 0 && columns.length > 0) {
+    addRow();
+    console.log('DEBUG: Added default row on edit because lineitems was empty.');
+  }
+  // Add row
+  document.getElementById('add-row-btn').addEventListener('click', function() {
+    console.log('DEBUG: Add Row button clicked');
+    addRow();
+  });
+  // Validate before submit
+  document.getElementById('joborder-form').addEventListener('submit', function(e) {
+    if (columns.length === 0) {
+      alert('No layout selected or layout has no columns.');
+      e.preventDefault();
+      return false;
+    }
+    if (lineitems.length === 0) {
+      alert('Please add at least one line item.');
+      e.preventDefault();
+      return false;
+    }
+    // Validate required fields
+    for (let i = 0; i < lineitems.length; i++) {
+      for (let j = 0; j < columns.length; j++) {
+        let col = columns[j];
+        if (col.required && (!lineitems[i][col.name] || lineitems[i][col.name].toString().trim() === '')) {
+          alert('Row ' + (i+1) + ': ' + col.label + ' is required.');
+          e.preventDefault();
+          return false;
+        }
+      }
+    }
+    document.getElementById('id_data').value = JSON.stringify(lineitems);
+    console.log('DEBUG: Submitting lineitems:', lineitems);
+    console.log('DEBUG: id_data value:', document.getElementById('id_data').value);
+  });
+  document.getElementById('log-lineitems-btn').addEventListener('click', function() {
+    console.log('DEBUG: Manual log of lineitems:', lineitems);
+  });
+});
+</script>
+{% endblock %} 

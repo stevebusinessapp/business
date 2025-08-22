@@ -1,0 +1,971 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load inventory_extras %}
+
+{% block title %}{{ layout.name|default:"Inventory" }} - Inventory Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inventory-dynamic.css' %}">
+<style>
+    :root {
+        --primary-color: {{ layout.primary_color|default:"#007bff" }};
+        --secondary-color: {{ layout.secondary_color|default:"#6c757d" }};
+    }
+    
+    .inventory-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    
+    .inventory-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .inventory-header h2 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.8rem;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary-custom {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .btn-primary-custom:hover {
+        background: rgba(255,255,255,0.3);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .btn-success-custom {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-success-custom:hover {
+        background: #218838;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .inventory-table {
+        overflow-x: auto;
+    }
+    
+    .table {
+        margin: 0;
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .table th {
+        background: #f8f9fa;
+        padding: 15px 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: nowrap;
+    }
+    
+    .table td {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .quantity-cell {
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .price-cell {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .total-cell {
+        text-align: right;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+        background-color: #f8f9fa;
+    }
+    
+    .status-cell {
+        text-align: center;
+    }
+    
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .actions-cell {
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    .serial-cell {
+        text-align: center;
+        font-weight: 600;
+        color: #6c757d;
+        background-color: #f8f9fa;
+        border-right: 2px solid #dee2e6;
+    }
+    
+    .serial-number {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        background-color: #007bff;
+        color: white;
+        border-radius: 50%;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .btn-group .btn {
+        margin: 0 2px;
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .editable-field {
+        padding: 4px 8px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .editable-field:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .editable-field:focus {
+        outline: none;
+        border-color: #007bff;
+        background-color: white;
+        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    }
+    
+    .editable-field.calculating {
+        background-color: #fff3cd;
+        border-color: #ffc107;
+        transition: all 0.3s ease;
+    }
+    
+    .editable-field.updated {
+        background-color: #d4edda;
+        border-color: #28a745;
+        animation: highlightUpdate 1s ease-out;
+    }
+    
+    @keyframes highlightUpdate {
+        0% { background-color: #d4edda; }
+        50% { background-color: #c3e6cb; }
+        100% { background-color: transparent; }
+    }
+    
+    .grand-total-row {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .grand-total-row td {
+        padding: 15px 12px;
+        border-top: 3px solid #1e7e34;
+        font-size: 16px;
+    }
+    
+    .search-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .search-form {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: end;
+    }
+    
+    .form-group {
+        margin: 0;
+    }
+    
+    .form-control {
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+    
+    .pagination {
+        margin: 20px 0;
+    }
+    
+    .page-link {
+        border-radius: 6px;
+        margin: 0 2px;
+        border: 1px solid #dee2e6;
+        color: var(--primary-color);
+    }
+    
+    .page-link:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .layout-selector {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .dropdown-menu {
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        border: none;
+    }
+    
+    .dropdown-item {
+        padding: 8px 16px;
+        border-radius: 4px;
+        margin: 2px 8px;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .dropdown-item.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid">
+    <!-- Layout Selector -->
+    <div class="layout-selector">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0">Current Layout: <strong>{{ layout.name }}</strong></h5>
+                {% if layout.description %}
+                    <small class="text-muted">{{ layout.description }}</small>
+                {% endif %}
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-table"></i> Switch Layout
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for user_layout in user_layouts %}
+                            <li>
+                                <a class="dropdown-item {% if user_layout.id == layout.id %}active{% endif %}" 
+                                   href="?layout={{ user_layout.id }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                                    {{ user_layout.name }}
+                                    {% if user_layout.is_default %}<span class="badge bg-primary ms-2">Default</span>{% endif %}
+                                </a>
+                            </li>
+                        {% endfor %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'inventory:layout_create' %}">
+                            <i class="fas fa-plus"></i> Create New Layout
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <form method="get" class="search-form">
+            <div class="form-group">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ request.GET.search }}" placeholder="Search products...">
+            </div>
+            <div class="form-group">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-control" id="status" name="status">
+                    <option value="">All Statuses</option>
+                    {% for status in statuses %}
+                        <option value="{{ status.id }}" {% if request.GET.status == status.id|stringformat:"s" %}selected{% endif %}>
+                            {{ status.display_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="min_quantity" class="form-label">Min Quantity</label>
+                <input type="number" class="form-control" id="min_quantity" name="min_quantity" 
+                       value="{{ request.GET.min_quantity }}" min="0">
+            </div>
+            <div class="form-group">
+                <label for="max_quantity" class="form-label">Max Quantity</label>
+                <input type="number" class="form-control" id="max_quantity" name="max_quantity" 
+                       value="{{ request.GET.max_quantity }}" min="0">
+            </div>
+            <div class="form-group">
+                <label for="min_price" class="form-label">Min Price</label>
+                <input type="number" class="form-control" id="min_price" name="min_price" 
+                       value="{{ request.GET.min_price }}" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="max_price" class="form-label">Max Price</label>
+                <input type="number" class="form-control" id="max_price" name="max_price" 
+                       value="{{ request.GET.max_price }}" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="is_active" class="form-label">Active Status</label>
+                <select class="form-control" id="is_active" name="is_active">
+                    <option value="">All Items</option>
+                    <option value="true" {% if request.GET.is_active == 'true' %}selected{% endif %}>Active Only</option>
+                    <option value="false" {% if request.GET.is_active == 'false' %}selected{% endif %}>Inactive Only</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <a href="{% url 'inventory:list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Inventory Container -->
+    <div class="inventory-container">
+        <!-- Header -->
+        <div class="inventory-header">
+            <div>
+                <h2>
+                    <i class="fas fa-boxes"></i> 
+                    {% if current_category %}
+                        {{ current_category.name }} - {{ layout.name|default:"Inventory" }}
+                        <a href="{% url 'inventory:list' %}" class="btn btn-sm btn-outline-light ms-2">
+                            <i class="fas fa-times"></i> Clear Filter
+                        </a>
+                    {% else %}
+                        {{ layout.name|default:"Inventory" }}
+                    {% endif %}
+                </h2>
+                <p class="mb-0">
+                    <span class="badge bg-primary">{{ total_items }} items</span>
+                    <span class="badge bg-success">{{ active_items }} active</span>
+                    <span class="badge bg-warning">{{ low_stock_items }} low stock</span>
+                    {% if current_category %}
+                        <span class="badge bg-info">Filtered by: {{ current_category.name }}</span>
+                    {% endif %}
+                </p>
+                {% if layout.supports_calculations %}
+                    <small class="text-white-50 mt-2 d-block">
+                        <i class="fas fa-info-circle"></i> 
+                        Real-time calculations enabled. Click on quantity or price fields to edit and see totals update automatically.
+                        <span id="calculator-status" class="badge bg-success ms-2">
+                            <i class="fas fa-check"></i> Active
+                        </span>
+                        <span id="last-update" class="badge bg-info ms-2">
+                            <i class="fas fa-clock"></i> Updated: {{ items.first.updated_at|date:"H:i"|default:"Now" }}
+                        </span>
+                    </small>
+                {% endif %}
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'inventory:create' %}?layout={{ layout.id }}" class="btn-action btn-success-custom">
+                    <i class="fas fa-plus"></i> Add Item
+                </a>
+                <a href="{% url 'inventory:import' %}" class="btn-action btn-primary-custom">
+                    <i class="fas fa-upload"></i> Import
+                </a>
+                <a href="{% url 'inventory:export' %}" class="btn-action btn-primary-custom">
+                    <i class="fas fa-download"></i> Export
+                </a>
+                <a href="{% url 'inventory:layout_update' layout.id %}" class="btn-action btn-primary-custom">
+                    <i class="fas fa-cog"></i> Layout Settings
+                </a>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="inventory-table">
+            <table class="table">
+                <thead>
+                    <tr>
+                        {% for column in layout.columns %}
+                            <!-- eslint-disable-next-line -->
+                            <th style="width: {{ column.width|default:'auto' }};">
+                                {{ column.display_name }}
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr data-item-id="{{ item.id }}">
+                            {% for column in layout.columns %}
+                                <td class="{% if column.field_type == 'calculated' %}total-cell{% elif column.name == 'quantity' %}quantity-cell{% elif column.name == 'unit_price' %}price-cell{% elif column.name == 'status' %}status-cell status-{{ item.status.name }}{% elif column.name == 'actions' %}actions-cell{% elif column.name == 'serial_number' %}serial-cell{% endif %}">
+                                    {% if column.name == 'serial_number' %}
+                                        <span class="serial-number">{{ forloop.parentloop.counter }}</span>
+                                    {% elif column.name == 'status' %}
+                                        <select class="form-select status-select" 
+                                                data-item-id="{{ item.id }}"
+                                                onchange="updateStatus(this)">
+                                            {% for status in statuses %}
+                                                <option value="{{ status.id }}" 
+                                                        {% if item.status.id == status.id %}selected{% endif %}>
+                                                    {{ status.display_name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    {% elif column.name == 'actions' %}
+                                        <div class="btn-group">
+                                            <a href="{% url 'inventory:detail' item.id %}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'inventory:update' item.id %}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'inventory:delete' item.id %}" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    {% elif column.field_type == 'calculated' %}
+                                        <span class="editable-field" data-field="{{ column.name }}" data-type="{{ column.field_type }}" data-item-id="{{ item.id }}">
+                                            {{ item|get_field_value:column.name|default:"0" }}
+                                        </span>
+                                    {% elif column.name == 'quantity' %}
+                                        <span class="editable-field" data-field="{{ column.name }}" data-type="{{ column.field_type }}" data-item-id="{{ item.id }}">
+                                            {{ item|get_field_value:column.name|default:"0" }}
+                                        </span>
+                                    {% elif column.name == 'unit_price' %}
+                                        <span class="editable-field" data-field="{{ column.name }}" data-type="{{ column.field_type }}" data-item-id="{{ item.id }}">
+                                            {{ item|get_field_value:column.name|default:"0" }}
+                                        </span>
+                                    {% elif column.name == 'total' %}
+                                        <span class="editable-field" data-field="{{ column.name }}" data-type="{{ column.field_type }}" data-item-id="{{ item.id }}">
+                                            {{ item|get_field_value:column.name|default:"0" }}
+                                        </span>
+                                    {% else %}
+                                        {{ item|get_field_value:column.name|default:"" }}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="{{ layout.columns|length }}" class="empty-state">
+                                <i class="fas fa-box-open"></i>
+                                <h4>No inventory items found</h4>
+                                <p>Get started by adding your first inventory item.</p>
+                                <a href="{% url 'inventory:create' %}?layout={{ layout.id }}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Add Your First Item
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                {% if layout.supports_calculations and items %}
+                    <tfoot>
+                        <tr class="grand-total-row">
+                            <td colspan="{{ layout.columns|length|add:-1 }}">
+                                <strong>Grand Total:</strong>
+                            </td>
+                            <td>
+                                <strong>{{ user_currency_symbol }}<span id="grandTotal">{{ grand_total|floatformat:2 }}</span></strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if items.has_other_pages %}
+        <nav aria-label="Inventory pagination">
+            <ul class="pagination justify-content-center">
+                {% if items.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.layout %}&layout={{ request.GET.layout }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ items.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.layout %}&layout={{ request.GET.layout }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in items.paginator.page_range %}
+                    {% if items.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > items.number|add:'-3' and num < items.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.layout %}&layout={{ request.GET.layout }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if items.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ items.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.layout %}&layout={{ request.GET.layout }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ items.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.layout %}&layout={{ request.GET.layout }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
+<!-- Layout Data for JavaScript -->
+<script>
+    // eslint-disable-next-line
+    const layoutData = {{ layout_json|safe }};
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Ensure layout data is properly structured
+    if (layoutData && !layoutData.calculation_fields) {
+        layoutData.calculation_fields = ['quantity', 'unit_price'];
+    }
+    
+
+    
+    // INLINE REAL-TIME CALCULATOR - NO EXTERNAL DEPENDENCIES
+    class InlineInventoryCalculator {
+        constructor() {
+            this.csrfToken = csrfToken;
+            this.init();
+        }
+
+        init() {
+            console.log('InlineInventoryCalculator initialized');
+            this.setupEventListeners();
+            this.calculateAllTotals();
+            this.updateStatusIndicator();
+            
+
+        }
+
+        updateStatusIndicator() {
+            const statusElement = document.getElementById('calculator-status');
+            if (statusElement) {
+                statusElement.innerHTML = '<i class="fas fa-check"></i> Ready';
+                statusElement.className = 'badge bg-success ms-2';
+            }
+        }
+
+        setupEventListeners() {
+            // Make quantity and price fields editable on click
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('editable-field')) {
+                    const fieldName = e.target.dataset.field;
+                    if (fieldName === 'quantity' || fieldName === 'unit_price') {
+                        this.makeEditable(e.target);
+                    }
+                }
+            });
+
+            // Handle input changes for real-time calculation
+            document.addEventListener('input', (e) => {
+                if (e.target.classList.contains('editable-input')) {
+                    this.handleRealTimeInput(e.target);
+                }
+            });
+
+            // Save on blur
+            document.addEventListener('blur', (e) => {
+                if (e.target.classList.contains('editable-input')) {
+                    this.saveField(e.target);
+                }
+            }, true);
+
+            // Save on Enter key
+            document.addEventListener('keydown', (e) => {
+                if (e.target.classList.contains('editable-input')) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.saveField(e.target);
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        this.cancelEdit(e.target);
+                    }
+                }
+            });
+        }
+
+        makeEditable(element) {
+            if (element.classList.contains('editing')) return;
+            
+            const currentValue = element.textContent.trim();
+            const fieldName = element.dataset.field;
+            
+            // Store original value for cancel functionality
+            element.dataset.originalValue = currentValue;
+            
+            element.classList.add('editing');
+            
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = '0.01';
+            input.min = '0';
+            input.value = this.extractNumber(currentValue) || '';
+            input.className = 'form-control form-control-sm editable-input';
+            input.dataset.field = fieldName;
+            input.dataset.itemId = element.dataset.itemId;
+            
+            // Add placeholder text
+            if (fieldName === 'quantity') {
+                input.placeholder = 'Enter quantity';
+            } else if (fieldName === 'unit_price') {
+                input.placeholder = 'Enter price';
+            }
+            
+            element.innerHTML = '';
+            element.appendChild(input);
+            input.focus();
+            input.select();
+            
+            // Add visual feedback
+            element.style.backgroundColor = '#fff3cd';
+            element.style.border = '2px solid #ffc107';
+        }
+
+        handleRealTimeInput(input) {
+            const fieldName = input.dataset.field;
+            const row = input.closest('tr');
+            const newValue = input.value;
+            
+            // Don't update the display immediately - let user finish typing
+            // Only calculate totals in real-time
+            
+            // Calculate row total immediately
+            this.calculateRowTotal(row);
+            
+            // Calculate grand total
+            this.calculateGrandTotal();
+        }
+
+        saveField(input) {
+            const fieldName = input.dataset.field;
+            const itemId = input.dataset.itemId;
+            const newValue = input.value;
+            const row = input.closest('tr');
+            
+            // Update display with proper formatting
+            const fieldElement = input.closest('.editable-field');
+            fieldElement.classList.remove('editing');
+            
+            // Remove visual feedback
+            fieldElement.style.backgroundColor = '';
+            fieldElement.style.border = '';
+            
+            let displayValue = newValue;
+            if (fieldName === 'unit_price') {
+                // Format currency for display
+                const numValue = parseFloat(newValue) || 0;
+                displayValue = this.formatCurrency(numValue);
+            } else if (fieldName === 'quantity') {
+                // Format number for display
+                const numValue = parseFloat(newValue) || 0;
+                displayValue = numValue.toString();
+            }
+            
+            fieldElement.textContent = displayValue;
+            
+            // Send AJAX update
+            this.updateFieldAjax(itemId, fieldName, newValue);
+            
+            // Final calculation
+            this.calculateRowTotal(row);
+            this.calculateGrandTotal();
+        }
+
+        cancelEdit(input) {
+            const fieldElement = input.closest('.editable-field');
+            const originalValue = fieldElement.dataset.originalValue || fieldElement.textContent;
+            
+            fieldElement.classList.remove('editing');
+            fieldElement.style.backgroundColor = '';
+            fieldElement.style.border = '';
+            fieldElement.textContent = originalValue;
+            
+            // Recalculate totals with original values
+            const row = fieldElement.closest('tr');
+            this.calculateRowTotal(row);
+            this.calculateGrandTotal();
+        }
+
+        calculateRowTotal(row) {
+            const quantityField = row.querySelector('[data-field="quantity"]');
+            const priceField = row.querySelector('[data-field="unit_price"]');
+            const totalField = row.querySelector('[data-field="total"]');
+            
+            if (!quantityField || !priceField || !totalField) {
+                console.log('Missing fields for calculation');
+                return;
+            }
+            
+            // Get values - check if field is currently being edited
+            let quantity, price;
+            
+            // Check if quantity field is being edited
+            const quantityInput = quantityField.querySelector('.editable-input');
+            if (quantityInput) {
+                quantity = parseFloat(quantityInput.value) || 0;
+            } else {
+                quantity = this.extractNumber(quantityField.textContent) || 0;
+            }
+            
+            // Check if price field is being edited
+            const priceInput = priceField.querySelector('.editable-input');
+            if (priceInput) {
+                price = parseFloat(priceInput.value) || 0;
+            } else {
+                price = this.extractNumber(priceField.textContent) || 0;
+            }
+            
+            const total = quantity * price;
+            
+            totalField.textContent = this.formatCurrency(total);
+            totalField.dataset.value = total;
+            
+            console.log('Row total calculated:', { quantity, price, total });
+        }
+
+        calculateAllTotals() {
+            const rows = document.querySelectorAll('tbody tr[data-item-id]');
+            rows.forEach(row => {
+                this.calculateRowTotal(row);
+            });
+            this.calculateGrandTotal();
+        }
+
+        calculateGrandTotal() {
+            const totalFields = document.querySelectorAll('[data-field="total"]');
+            let grandTotal = 0;
+            
+            totalFields.forEach(field => {
+                const value = this.extractNumber(field.textContent) || 0;
+                grandTotal += value;
+            });
+            
+            const grandTotalElement = document.getElementById('grandTotal');
+            if (grandTotalElement) {
+                grandTotalElement.textContent = this.formatCurrency(grandTotal);
+            }
+            
+            console.log('Grand total calculated:', grandTotal);
+        }
+
+        extractNumber(value) {
+            if (value === null || value === undefined || value === '') {
+                return 0;
+            }
+            
+            // Remove currency symbols and other non-numeric characters
+            const cleaned = String(value).replace(/[₦$€£¥₹₿₤₩₪₫₭₮₯₰₱₲₳₴₵₶₷₸₹₺₻₼₽₾₿]/g, '');
+            const numeric = cleaned.replace(/[^\d.-]/g, '');
+            
+            const result = parseFloat(numeric);
+            return isNaN(result) ? 0 : result;
+        }
+
+        formatCurrency(value) {
+            const currencySymbol = '{{ user_currency_symbol }}';
+            return `${currencySymbol}${parseFloat(value).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        updateFieldAjax(itemId, fieldName, value) {
+            fetch('/inventory/ajax/update-field/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.csrfToken
+                },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    field_name: fieldName,
+                    value: value,
+                    field_type: 'number'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Field updated successfully:', fieldName, value);
+                    
+                    // Update the last update timestamp
+                    const lastUpdateElement = document.getElementById('last-update');
+                    if (lastUpdateElement) {
+                        const now = new Date();
+                        const timeString = now.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: false 
+                        });
+                        lastUpdateElement.innerHTML = `<i class="fas fa-clock"></i> Updated: ${timeString}`;
+                        lastUpdateElement.style.backgroundColor = '#28a745';
+                        
+                        // Reset color after 3 seconds
+                        setTimeout(() => {
+                            lastUpdateElement.style.backgroundColor = '#17a2b8';
+                        }, 3000);
+                    }
+                    
+                    // Update serial numbers if needed
+                    if (window.updateSerialNumbers) {
+                        window.updateSerialNumbers();
+                    }
+                } else {
+                    console.error('Failed to update field:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating field:', error);
+            });
+        }
+
+        updateStatus(select) {
+            const itemId = select.dataset.itemId;
+            const newStatus = select.value;
+            
+            fetch('/inventory/ajax/update-status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.csrfToken
+                },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    new_status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Status updated successfully:', data);
+                } else {
+                    console.error('Failed to update status:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating status:', error);
+            });
+        }
+    }
+
+    // Initialize immediately when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            window.inventoryCalculator = new InlineInventoryCalculator();
+            console.log('✅ InlineInventoryCalculator initialized on DOMContentLoaded');
+        });
+    } else {
+        window.inventoryCalculator = new InlineInventoryCalculator();
+        console.log('✅ InlineInventoryCalculator initialized immediately');
+    }
+
+        window.updateStatus = function(select) {
+        if (window.inventoryCalculator) {
+            window.inventoryCalculator.updateStatus(select);
+        } else {
+            console.log('Calculator not initialized');
+        }
+    };
+</script>
+
+<!-- Currency Handler Script -->
+<script src="{% static 'js/inventory-currency-handler.js' %}"></script>
+{% endblock %} 

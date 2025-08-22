@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DEBUG - Create Waybill</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .debug { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: #28a745; }
+        .info { color: #007bff; }
+        .form-group { margin-bottom: 15px; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="debug">
+        <h1 class="success">✅ SUCCESS: Page Loaded!</h1>
+        <p class="info">If you can see this, the waybill create page is working perfectly.</p>
+        
+        <h3>Debug Information:</h3>
+        <ul>
+            <li><strong>User:</strong> {{ request.user.email }}</li>
+            <li><strong>Templates Count:</strong> {{ templates|length }}</li>
+            <li><strong>Selected Template:</strong> {{ selected_template.name }}</li>
+            <li><strong>Time:</strong> {% now "Y-m-d H:i:s" %}</li>
+        </ul>
+    </div>
+
+    <div class="debug">
+        <h2>Quick Waybill Creation Form</h2>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="template_id" value="{{ selected_template.id }}">
+            
+            <div class="form-group">
+                <label>Delivery Date:</label>
+                <input type="date" name="delivery_date" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label>Status:</label>
+                <select name="status" class="form-control">
+                    <option value="pending">Pending</option>
+                    <option value="in_transit">In Transit</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Sender Name:</label>
+                <input type="text" name="custom_sender_info_sender_name" class="form-control" placeholder="Enter sender name" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Receiver Name:</label>
+                <input type="text" name="custom_receiver_info_receiver_name" class="form-control" placeholder="Enter receiver name" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Destination:</label>
+                <input type="text" name="custom_shipment_info_destination" class="form-control" placeholder="Enter destination" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Product/Service:</label>
+                <input type="text" name="items[0][product]" class="form-control" placeholder="Enter product/service">
+            </div>
+            
+            <div class="form-group">
+                <label>Description:</label>
+                <input type="text" name="items[0][description]" class="form-control" placeholder="Enter description">
+            </div>
+            
+            <div class="form-group">
+                <label>Notes:</label>
+                <textarea name="notes" class="form-control" rows="3" placeholder="Additional notes (optional)"></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Create Waybill</button>
+        </form>
+    </div>
+
+    <div class="debug">
+        <h3>Available Templates:</h3>
+        {% for template in templates %}
+        <div style="padding: 10px; background: #f8f9fa; margin: 5px 0; border-radius: 4px;">
+            <strong>{{ template.name }}</strong>
+            {% if template.is_default %}<span style="color: #28a745;">(Default)</span>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        console.log("✅ JavaScript is working!");
+        console.log("Page loaded at:", new Date());
+        
+        // Show that the page is fully loaded
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.3s ease';
+        
+        window.addEventListener('load', function() {
+            document.body.style.opacity = '1';
+            console.log("✅ Page fully loaded and visible!");
+        });
+    </script>
+</body>
+</html>

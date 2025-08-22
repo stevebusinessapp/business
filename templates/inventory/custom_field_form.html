@@ -1,0 +1,499 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Inventory Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+    }
+    
+    .form-header h2 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.8rem;
+    }
+    
+    .form-content {
+        padding: 30px;
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+    }
+    
+    .form-section h4 {
+        color: #333;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .field-full {
+        grid-column: 1 / -1;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        padding: 10px 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+    
+    .choices-container {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 15px;
+        background: white;
+        margin-top: 10px;
+    }
+    
+    .choice-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+    
+    .choice-item input {
+        flex: 1;
+    }
+    
+    .btn-remove-choice {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+    }
+    
+    .btn-remove-choice:hover {
+        background: #c82333;
+    }
+    
+    .btn-add-choice {
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    
+    .btn-add-choice:hover {
+        background: #218838;
+    }
+    
+    .validation-section {
+        background: #fff3cd;
+        border-left-color: #ffc107;
+    }
+    
+    .calculation-section {
+        background: #d1ecf1;
+        border-left-color: #17a2b8;
+    }
+    
+    .display-section {
+        background: #d4edda;
+        border-left-color: #28a745;
+    }
+    
+    .form-actions {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .btn-primary {
+        background: #007bff;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 0 10px;
+    }
+    
+    .btn-primary:hover {
+        background: #0056b3;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 0 10px;
+    }
+    
+    .btn-secondary:hover {
+        background: #545b62;
+    }
+    
+    .help-text {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 5px;
+    }
+    
+    .field-type-info {
+        background: #e9ecef;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="form-container">
+        <!-- Header -->
+        <div class="form-header">
+            <h2><i class="fas fa-cogs"></i> {{ title }}</h2>
+            <p class="mb-0 mt-2" style="opacity: 0.9;">
+                Configure custom fields to enhance your inventory management system.
+            </p>
+        </div>
+
+        <!-- Form Content -->
+        <div class="form-content">
+            <form method="post" id="custom-field-form">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h4><i class="fas fa-info-circle"></i> Basic Information</h4>
+                    
+                    <div class="field-row">
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}">Field Name *</label>
+                            {{ form.name }}
+                            {% if form.name.help_text %}
+                                <div class="help-text">{{ form.name.help_text }}</div>
+                            {% endif %}
+                            {% if form.name.errors %}
+                                <div class="text-danger">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.display_name.id_for_label }}">Display Name *</label>
+                            {{ form.display_name }}
+                            {% if form.display_name.errors %}
+                                <div class="text-danger">{{ form.display_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.field_type.id_for_label }}">Field Type *</label>
+                        {{ form.field_type }}
+                        <div class="field-type-info" id="field-type-info">
+                            Select a field type to see additional options.
+                        </div>
+                        {% if form.field_type.errors %}
+                            <div class="text-danger">{{ form.field_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.help_text.id_for_label }}">Help Text</label>
+                        {{ form.help_text }}
+                        {% if form.help_text.errors %}
+                            <div class="text-danger">{{ form.help_text.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Field Configuration -->
+                <div class="form-section">
+                    <h4><i class="fas fa-cog"></i> Field Configuration</h4>
+                    
+                    <div class="field-row">
+                        <div class="form-group">
+                            <label>
+                                {{ form.is_required }}
+                                Required Field
+                            </label>
+                            {% if form.is_required.errors %}
+                                <div class="text-danger">{{ form.is_required.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                {{ form.is_unique }}
+                                Unique Values
+                            </label>
+                            {% if form.is_unique.errors %}
+                                <div class="text-danger">{{ form.is_unique.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.default_value.id_for_label }}">Default Value</label>
+                        {{ form.default_value }}
+                        {% if form.default_value.errors %}
+                            <div class="text-danger">{{ form.default_value.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Choices (for select/multiselect fields) -->
+                <div class="form-section" id="choices-section" style="display: none;">
+                    <h4><i class="fas fa-list"></i> Field Choices</h4>
+                    <div class="choices-container" id="choices-container">
+                        <div class="choice-item">
+                            <input type="text" name="choice_0" placeholder="Enter choice value" class="form-control">
+                            <button type="button" class="btn-remove-choice" onclick="removeChoice(this)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add-choice" onclick="addChoice()">
+                        <i class="fas fa-plus"></i> Add Choice
+                    </button>
+                </div>
+
+                <!-- Validation -->
+                <div class="form-section validation-section">
+                    <h4><i class="fas fa-check-circle"></i> Validation Rules</h4>
+                    
+                    <div class="field-row">
+                        <div class="form-group">
+                            <label for="{{ form.min_length.id_for_label }}">Minimum Length</label>
+                            {{ form.min_length }}
+                            {% if form.min_length.errors %}
+                                <div class="text-danger">{{ form.min_length.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.max_length.id_for_label }}">Maximum Length</label>
+                            {{ form.max_length }}
+                            {% if form.max_length.errors %}
+                                <div class="text-danger">{{ form.max_length.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="field-row" id="numeric-validation" style="display: none;">
+                        <div class="form-group">
+                            <label for="{{ form.min_value.id_for_label }}">Minimum Value</label>
+                            {{ form.min_value }}
+                            {% if form.min_value.errors %}
+                                <div class="text-danger">{{ form.min_value.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.max_value.id_for_label }}">Maximum Value</label>
+                            {{ form.max_value }}
+                            {% if form.max_value.errors %}
+                                <div class="text-danger">{{ form.max_value.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculation Settings -->
+                <div class="form-section calculation-section">
+                    <h4><i class="fas fa-calculator"></i> Calculation Settings</h4>
+                    
+                    <div class="form-group">
+                        <label>
+                            {{ form.is_calculation_field }}
+                            Include in Calculations
+                        </label>
+                        {% if form.is_calculation_field.errors %}
+                            <div class="text-danger">{{ form.is_calculation_field.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" id="formula-section" style="display: none;">
+                        <label for="{{ form.calculation_formula.id_for_label }}">Calculation Formula</label>
+                        {{ form.calculation_formula }}
+                        <div class="help-text">
+                            Use field names in curly braces, e.g., {quantity} * {unit_price}
+                        </div>
+                        {% if form.calculation_formula.errors %}
+                            <div class="text-danger">{{ form.calculation_formula.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Display Settings -->
+                <div class="form-section display-section">
+                    <h4><i class="fas fa-eye"></i> Display Settings</h4>
+                    
+                    <div class="field-row">
+                        <div class="form-group">
+                            <label>
+                                {{ form.is_visible }}
+                                Visible in Table
+                            </label>
+                            {% if form.is_visible.errors %}
+                                <div class="text-danger">{{ form.is_visible.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.sort_order.id_for_label }}">Sort Order</label>
+                            {{ form.sort_order }}
+                            {% if form.sort_order.errors %}
+                                <div class="text-danger">{{ form.sort_order.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.width.id_for_label }}">Column Width</label>
+                        {{ form.width }}
+                        <div class="help-text">e.g., 100px, 20%, auto</div>
+                        {% if form.width.errors %}
+                            <div class="text-danger">{{ form.width.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Field
+                    </button>
+                    <a href="{% url 'inventory:custom_field_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let choiceCounter = 1;
+
+function addChoice() {
+    const container = document.getElementById('choices-container');
+    const choiceItem = document.createElement('div');
+    choiceItem.className = 'choice-item';
+    choiceItem.innerHTML = `
+        <input type="text" name="choice_${choiceCounter}" placeholder="Enter choice value" class="form-control">
+        <button type="button" class="btn-remove-choice" onclick="removeChoice(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(choiceItem);
+    choiceCounter++;
+}
+
+function removeChoice(button) {
+    button.closest('.choice-item').remove();
+}
+
+// Field type change handler
+document.getElementById('{{ form.field_type.id_for_label }}').addEventListener('change', function() {
+    const fieldType = this.value;
+    const choicesSection = document.getElementById('choices-section');
+    const numericValidation = document.getElementById('numeric-validation');
+    const formulaSection = document.getElementById('formula-section');
+    const fieldTypeInfo = document.getElementById('field-type-info');
+    
+    // Show/hide choices section
+    if (fieldType === 'select' || fieldType === 'multiselect') {
+        choicesSection.style.display = 'block';
+    } else {
+        choicesSection.style.display = 'none';
+    }
+    
+    // Show/hide numeric validation
+    if (fieldType === 'number' || fieldType === 'decimal') {
+        numericValidation.style.display = 'block';
+    } else {
+        numericValidation.style.display = 'none';
+    }
+    
+    // Show/hide formula section
+    if (fieldType === 'number' || fieldType === 'decimal') {
+        formulaSection.style.display = 'block';
+    } else {
+        formulaSection.style.display = 'none';
+    }
+    
+    // Update field type info
+    const typeInfo = {
+        'text': 'Simple text input field',
+        'number': 'Numeric input field (whole numbers)',
+        'decimal': 'Numeric input field (decimal numbers)',
+        'date': 'Date picker field',
+        'datetime': 'Date and time picker field',
+        'select': 'Dropdown selection field',
+        'multiselect': 'Multiple choice selection field',
+        'boolean': 'Yes/No checkbox field',
+        'url': 'URL input field with validation',
+        'email': 'Email input field with validation',
+        'phone': 'Phone number input field',
+        'textarea': 'Multi-line text input field',
+        'file': 'File upload field',
+        'image': 'Image upload field'
+    };
+    
+    fieldTypeInfo.textContent = typeInfo[fieldType] || 'Select a field type to see additional options.';
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Trigger change event to set initial state
+    document.getElementById('{{ form.field_type.id_for_label }}').dispatchEvent(new Event('change'));
+});
+</script>
+{% endblock %} 

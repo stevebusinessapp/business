@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Waybill - WORKING!</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .success-banner {
+            background: #28a745;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+        .form-section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        .form-control, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+        .items-section {
+            grid-column: 1 / -1;
+            background: #fff3cd;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #ffc107;
+            margin-top: 20px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .items-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .items-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .items-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .items-table input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        .status-info {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #28a745;
+        }
+        .preview-section {
+            background: #e7f3ff;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #007bff;
+        }
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .container { padding: 20px; }
+            .header h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-banner">
+        🎉 SUCCESS! Waybill Create Page is Working Perfectly! 🎉
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Create Waybill</h1>
+            <p>Fast, reliable waybill creation system</p>
+        </div>
+
+        <div class="status-info">
+            <strong>✅ Status:</strong> Page loaded successfully | 
+            <strong>User:</strong> {{ request.user.email }} | 
+            <strong>Templates:</strong> {{ templates|length }} available
+        </div>
+
+        <form method="POST" id="waybillForm">
+            {% csrf_token %}
+            <input type="hidden" name="template_id" value="{{ selected_template.id }}">
+
+            <div class="form-grid">
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3>📋 Basic Information</h3>
+                    
+                    <div class="form-group">
+                        <label>Delivery Date</label>
+                        <input type="date" name="delivery_date" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select name="status" class="form-select">
+                            <option value="pending">📋 Pending</option>
+                            <option value="in_transit">🚚 In Transit</option>
+                            <option value="delivered">✅ Delivered</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Additional notes (optional)"></textarea>
+                    </div>
+                </div>
+
+                <!-- Sender & Receiver -->
+                <div class="form-section">
+                    <h3>👤 Sender Information</h3>
+                    
+                    <div class="form-group">
+                        <label>Sender Name *</label>
+                        <input type="text" name="custom_sender_info_sender_name" class="form-control" placeholder="Enter sender name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Sender Phone</label>
+                        <input type="tel" name="custom_sender_info_sender_phone" class="form-control" placeholder="Enter sender phone">
+                    </div>
+
+                    <h3 style="margin-top: 25px;">📍 Receiver Information</h3>
+                    
+                    <div class="form-group">
+                        <label>Receiver Name *</label>
+                        <input type="text" name="custom_receiver_info_receiver_name" class="form-control" placeholder="Enter receiver name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Receiver Phone</label>
+                        <input type="tel" name="custom_receiver_info_receiver_phone" class="form-control" placeholder="Enter receiver phone">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Destination *</label>
+                        <input type="text" name="custom_shipment_info_destination" class="form-control" placeholder="Enter destination" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vehicle Number</label>
+                        <input type="text" name="custom_shipment_info_vehicle_number" class="form-control" placeholder="Enter vehicle number">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Section -->
+            <div class="items-section">
+                <h3>📦 Items</h3>
+                <p>Add items to be transported</p>
+                
+                <table class="items-table" id="itemsTable">
+                    <thead>
+                        <tr>
+                            <th>Product/Service</th>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                            <th>Weight (kg)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsBody">
+                        <tr>
+                            <td><input type="text" name="items[0][product]" placeholder="Product name"></td>
+                            <td><input type="text" name="items[0][description]" placeholder="Item description"></td>
+                            <td><input type="number" name="items[0][quantity]" placeholder="Qty" min="1"></td>
+                            <td><input type="number" name="items[0][weight]" placeholder="Weight" step="0.1" min="0"></td>
+                            <td>
+                                <button type="button" class="btn btn-danger" onclick="removeRow(this)" disabled>Remove</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 15px;">
+                    <button type="button" class="btn btn-success" onclick="addRow()">+ Add Item</button>
+                </div>
+            </div>
+
+            <!-- Submit Section -->
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #dee2e6;">
+                <button type="submit" class="btn btn-primary" style="font-size: 18px; padding: 15px 40px;">
+                    🚀 Create Waybill
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let itemCount = 1;
+
+        function addRow() {
+            const tbody = document.getElementById('itemsBody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="text" name="items[${itemCount}][product]" placeholder="Product name"></td>
+                <td><input type="text" name="items[${itemCount}][description]" placeholder="Item description"></td>
+                <td><input type="number" name="items[${itemCount}][quantity]" placeholder="Qty" min="1"></td>
+                <td><input type="number" name="items[${itemCount}][weight]" placeholder="Weight" step="0.1" min="0"></td>
+                <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">Remove</button></td>
+            `;
+            tbody.appendChild(newRow);
+            itemCount++;
+            updateRemoveButtons();
+        }
+
+        function removeRow(button) {
+            const row = button.closest('tr');
+            const tbody = row.parentNode;
+            if (tbody.children.length > 1) {
+                row.remove();
+                updateRemoveButtons();
+            }
+        }
+
+        function updateRemoveButtons() {
+            const tbody = document.getElementById('itemsBody');
+            const removeButtons = tbody.querySelectorAll('.btn-danger');
+            removeButtons.forEach(btn => {
+                btn.disabled = tbody.children.length <= 1;
+            });
+        }
+
+        // Initialize
+        updateRemoveButtons();
+
+        // Form validation
+        document.getElementById('waybillForm').addEventListener('submit', function(e) {
+            const requiredFields = ['custom_sender_info_sender_name', 'custom_receiver_info_receiver_name', 'custom_shipment_info_destination'];
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                const input = document.querySelector(`[name="${field}"]`);
+                if (!input.value.trim()) {
+                    input.style.borderColor = '#dc3545';
+                    isValid = false;
+                } else {
+                    input.style.borderColor = '#28a745';
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields (marked with *)');
+            }
+        });
+
+        // Show success message
+        setTimeout(() => {
+            console.log('✅ Waybill create page loaded successfully!');
+        }, 100);
+    </script>
+</body>
+</html>

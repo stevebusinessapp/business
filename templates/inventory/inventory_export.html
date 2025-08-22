@@ -1,0 +1,711 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Export Inventory{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Button visibility fixes */
+    .btn {
+        color: white !important;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+    .btn-info {
+        background-color: #17a2b8 !important;
+        border-color: #17a2b8 !important;
+    }
+    .btn-success {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+    }
+    .btn-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+    .btn-danger {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+    .btn-secondary {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+    .btn-light {
+        background-color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        color: #212529 !important;
+    }
+    .btn-outline-primary {
+        color: #007bff !important;
+        border-color: #007bff !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-success {
+        color: #28a745 !important;
+        border-color: #28a745 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        background-color: transparent !important;
+    }
+    .btn-outline-light {
+        color: #f8f9fa !important;
+        border-color: #f8f9fa !important;
+        background-color: transparent !important;
+    }
+    
+    .export-section {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+    }
+    .format-card {
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: white;
+    }
+    .format-card:hover {
+        border-color: #28a745;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .format-card.selected {
+        border-color: #28a745;
+        background: #f8fff9;
+    }
+    .format-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    .filter-group {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid #28a745;
+    }
+    .filter-group h6 {
+        color: #495057;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    .preview-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .preview-table {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .export-summary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        margin-bottom: 25px;
+    }
+    .summary-item {
+        text-align: center;
+        padding: 15px;
+    }
+    .summary-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .summary-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .help-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .filter-group .form-control {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .filter-group .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .filter-group .form-check-input:checked {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-0">Export Inventory</h6>
+                            <p class="text-sm mb-0">Export your inventory data to various formats</p>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="export-summary">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="summary-item">
+                            <div class="summary-number" id="totalProducts">0</div>
+                            <div class="summary-label">Total Products</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="summary-item">
+                            <div class="summary-number" id="totalValue">$0.00</div>
+                            <div class="summary-label">Total Value</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="summary-item">
+                            <div class="summary-number" id="categories">0</div>
+                            <div class="summary-label">Categories</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="summary-item">
+                            <div class="summary-number" id="lowStock">0</div>
+                            <div class="summary-label">Low Stock Items</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="exportForm">
+        {% csrf_token %}
+        
+        <!-- Export Format Selection -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header pb-0">
+                        <h6 class="mb-0"><i class="fas fa-file-export me-2"></i>Select Export Format</h6>
+                        <p class="text-sm mb-0">Choose the format for your exported data</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="format-card" data-format="pdf">
+                                    <div class="format-icon text-danger">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <h6>PDF Document</h6>
+                                    <p class="text-muted mb-0">Professional report format with company branding</p>
+                                    <small class="text-muted">Best for printing and sharing</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="format-card" data-format="excel">
+                                    <div class="format-icon text-success">
+                                        <i class="fas fa-file-excel"></i>
+                                    </div>
+                                    <h6>Excel Spreadsheet</h6>
+                                    <p class="text-muted mb-0">Editable spreadsheet with formulas and formatting</p>
+                                    <small class="text-muted">Best for data analysis</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="format-card" data-format="csv">
+                                    <div class="format-icon text-info">
+                                        <i class="fas fa-file-csv"></i>
+                                    </div>
+                                    <h6>CSV File</h6>
+                                    <p class="text-muted mb-0">Simple text format compatible with all systems</p>
+                                    <small class="text-muted">Best for data import/export</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="format" id="selectedFormat" value="">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Options -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header pb-0">
+                        <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Options</h6>
+                        <p class="text-sm mb-0">Customize what data to include in your export</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <h6><i class="fas fa-layer-group me-2"></i>Layout Selection</h6>
+                                    <label class="form-label">Select Layout</label>
+                                    {{ form.layout }}
+                                    <div class="help-text">Choose which layout to export</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <h6><i class="fas fa-search me-2"></i>Search Filter</h6>
+                                    <label class="form-label">Search Products</label>
+                                    {{ form.search }}
+                                    <div class="help-text">Search by product name, SKU, or description</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <h6><i class="fas fa-tag me-2"></i>Category & Status Filter</h6>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="form-label">Category</label>
+                                            {{ form.category_filter }}
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Status</label>
+                                            {{ form.status_filter }}
+                                        </div>
+                                    </div>
+                                    <div class="help-text">Filter by specific categories or statuses</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Stock Level Filter</h6>
+                                    <div class="form-check">
+                                        {{ form.include_low_stock }}
+                                        <label class="form-check-label" for="{{ form.include_low_stock.id_for_label }}">
+                                            Include low stock items
+                                        </label>
+                                    </div>
+                                    <div class="help-text">Uncheck to exclude items below minimum threshold</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <h6><i class="fas fa-calendar me-2"></i>Date Range</h6>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="form-label">From Date</label>
+                                            {{ form.date_from }}
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">To Date</label>
+                                            {{ form.date_to }}
+                                        </div>
+                                    </div>
+                                    <div class="help-text">Filter by date added (optional)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <h6><i class="fas fa-sort-numeric-up me-2"></i>Quantity Range</h6>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="form-label">Min Quantity</label>
+                                            {{ form.min_quantity }}
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Max Quantity</label>
+                                            {{ form.max_quantity }}
+                                        </div>
+                                    </div>
+                                    <div class="help-text">Filter by quantity range</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <h6><i class="fas fa-dollar-sign me-2"></i>Price Range</h6>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <label class="form-label">Min Price</label>
+                                            {{ form.min_price }}
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Max Price</label>
+                                            {{ form.max_price }}
+                                        </div>
+                                    </div>
+                                    <div class="help-text">Filter by unit price range</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="filter-group">
+                                    <h6><i class="fas fa-cog me-2"></i>Export Options</h6>
+                                    <div class="form-check mb-2">
+                                        {{ form.include_calculations }}
+                                        <label class="form-check-label" for="{{ form.include_calculations.id_for_label }}">
+                                            Include calculations and totals
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        {{ form.include_branding }}
+                                        <label class="form-check-label" for="{{ form.include_branding.id_for_label }}">
+                                            Include company branding
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeImages" name="include_images">
+                                        <label class="form-check-label" for="includeImages">
+                                            Include product images (if available)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header pb-0">
+                        <h6 class="mb-0"><i class="fas fa-eye me-2"></i>Export Preview</h6>
+                        <p class="text-sm mb-0">Preview of data that will be exported</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row mb-3">
+                            <div class="col">
+                                <button type="button" class="btn btn-outline-primary" id="refreshPreview">
+                                    <i class="fas fa-sync-alt"></i> Refresh Preview
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <span class="badge bg-info" id="previewCount">0 items</span>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-section">
+                            <div class="preview-table">
+                                <table class="table table-sm table-hover" id="previewTable">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Product Name</th>
+                                            <th>SKU</th>
+                                            <th>Category</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Total Value</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="previewBody">
+                                        <!-- Preview data will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Actions -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body p-4 text-center">
+                        <div class="alert alert-info mb-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Ready to Export:</strong> Your data will be processed and downloaded automatically.
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success btn-lg" id="exportBtn" disabled>
+                            <i class="fas fa-download"></i> Export Data
+                        </button>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                Export will include all selected data with your company branding
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format selection
+    const formatCards = document.querySelectorAll('.format-card');
+    const selectedFormatInput = document.getElementById('selectedFormat');
+    const exportBtn = document.getElementById('exportBtn');
+    
+    formatCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove selection from all cards
+            formatCards.forEach(c => c.classList.remove('selected'));
+            
+            // Add selection to clicked card
+            this.classList.add('selected');
+            
+            // Update hidden input
+            selectedFormatInput.value = this.dataset.format;
+            
+            // Enable export button
+            exportBtn.disabled = false;
+            
+            // Update button text
+            const formatName = this.querySelector('h6').textContent;
+            exportBtn.innerHTML = `<i class="fas fa-download"></i> Export as ${formatName}`;
+        });
+    });
+    
+    // Load initial data
+    loadExportSummary();
+    loadPreview();
+    
+    // Refresh preview button
+    document.getElementById('refreshPreview').addEventListener('click', function() {
+        loadPreview();
+    });
+    
+    // Form submission
+    document.getElementById('exportForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!selectedFormatInput.value) {
+            alert('Please select an export format.');
+            return;
+        }
+        
+        // Show loading state
+        const btn = document.getElementById('exportBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        btn.disabled = true;
+        
+        // Submit form
+        this.submit();
+    });
+    
+    // Filter change handlers
+    const filterInputs = [
+        '{{ form.layout.id_for_label }}',
+        '{{ form.category_filter.id_for_label }}',
+        '{{ form.status_filter.id_for_label }}',
+        '{{ form.search.id_for_label }}',
+        '{{ form.include_low_stock.id_for_label }}',
+        '{{ form.date_from.id_for_label }}',
+        '{{ form.date_to.id_for_label }}',
+        '{{ form.min_quantity.id_for_label }}',
+        '{{ form.max_quantity.id_for_label }}',
+        '{{ form.min_price.id_for_label }}',
+        '{{ form.max_price.id_for_label }}'
+    ];
+    
+    filterInputs.forEach(inputId => {
+        const element = document.getElementById(inputId);
+        if (element) {
+            element.addEventListener('change', debouncedLoadPreview);
+            if (element.type === 'text') {
+                element.addEventListener('input', debouncedLoadPreview);
+            }
+        }
+    });
+});
+
+function loadExportSummary() {
+    // This will be updated by the preview data
+    const currencySymbol = '{{ user_currency_symbol|default:"$" }}';
+    document.getElementById('totalProducts').textContent = '{{ total_products|default:"0" }}';
+    document.getElementById('totalValue').textContent = currencySymbol + '{{ total_value|default:"0.00" }}';
+    document.getElementById('categories').textContent = '{{ categories|default:"0" }}';
+    document.getElementById('lowStock').textContent = '{{ low_stock_count|default:"0" }}';
+}
+
+function loadPreview() {
+    const previewBody = document.getElementById('previewBody');
+    const previewCount = document.getElementById('previewCount');
+    
+    // Show loading state
+    previewBody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center py-4">
+                <i class="fas fa-spinner fa-spin me-2"></i> Loading preview...
+            </td>
+        </tr>
+    `;
+    
+    // Get filter values
+    const layoutId = document.getElementById('{{ form.layout.id_for_label }}')?.value;
+    const categoryFilter = document.getElementById('{{ form.category_filter.id_for_label }}')?.value;
+    const statusFilter = document.getElementById('{{ form.status_filter.id_for_label }}')?.value;
+    const search = document.getElementById('{{ form.search.id_for_label }}')?.value;
+    const includeLowStock = document.getElementById('{{ form.include_low_stock.id_for_label }}')?.checked;
+    const dateFrom = document.getElementById('{{ form.date_from.id_for_label }}')?.value;
+    const dateTo = document.getElementById('{{ form.date_to.id_for_label }}')?.value;
+    const minQuantity = document.getElementById('{{ form.min_quantity.id_for_label }}')?.value;
+    const maxQuantity = document.getElementById('{{ form.max_quantity.id_for_label }}')?.value;
+    const minPrice = document.getElementById('{{ form.min_price.id_for_label }}')?.value;
+    const maxPrice = document.getElementById('{{ form.max_price.id_for_label }}')?.value;
+    
+    // Build request data
+    const requestData = {
+        layout_id: layoutId,
+        category_filter: categoryFilter,
+        status_filter: statusFilter,
+        search: search,
+        include_low_stock: includeLowStock,
+        date_from: dateFrom,
+        date_to: dateTo,
+        min_quantity: minQuantity,
+        max_quantity: maxQuantity,
+        min_price: minPrice,
+        max_price: maxPrice
+    };
+    
+    // Make AJAX request to get preview data
+    fetch('{% url "inventory:ajax_export_preview" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update summary statistics
+            const currencySymbol = '{{ user_currency_symbol|default:"$" }}';
+            document.getElementById('totalProducts').textContent = data.summary.total_items;
+            document.getElementById('totalValue').textContent = currencySymbol + data.summary.total_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('categories').textContent = data.summary.categories;
+            document.getElementById('lowStock').textContent = data.summary.low_stock_count;
+            
+            // Update preview table
+            if (data.preview_data.length > 0) {
+                previewBody.innerHTML = '';
+                data.preview_data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.product_name}</td>
+                        <td>${item.sku_code}</td>
+                        <td>${item.category}</td>
+                        <td>${item.quantity}</td>
+                        <td>${currencySymbol}${item.unit_price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>${currencySymbol}${item.total_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td>
+                            <span class="badge ${item.is_low_stock ? 'bg-warning' : 'bg-success'}">
+                                ${item.status}
+                            </span>
+                        </td>
+                    `;
+                    previewBody.appendChild(row);
+                });
+                previewCount.textContent = `${data.preview_data.length} items (showing first 10 of ${data.summary.total_items})`;
+            } else {
+                previewBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <i class="fas fa-inbox fa-2x mb-3"></i>
+                            <p>No data found with current filters</p>
+                        </td>
+                    </tr>
+                `;
+                previewCount.textContent = '0 items';
+            }
+        } else {
+            previewBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error: ${data.error}
+                    </td>
+                </tr>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading preview:', error);
+        previewBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-4 text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error loading preview data
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Auto-refresh preview when filters change
+let previewTimeout;
+function debouncedLoadPreview() {
+    clearTimeout(previewTimeout);
+    previewTimeout = setTimeout(loadPreview, 500);
+}
+</script>
+{% endblock %} 

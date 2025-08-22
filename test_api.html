@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Template API Test</title>
+</head>
+<body>
+    <h1>Template API Test</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="result"></div>
+
+    <script>
+    function testAPI() {
+        fetch('/invoices/api/templates/')
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.text();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                document.getElementById('result').innerHTML = '<pre>' + data + '</pre>';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 'Error: ' + error;
+            });
+    }
+    </script>
+</body>
+</html>

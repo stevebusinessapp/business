@@ -1,0 +1,776 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load currency_filters %}
+
+{% block title %}Transactions - Accounting{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .transaction-row {
+        transition: background-color 0.2s;
+    }
+    .transaction-row:hover {
+        background-color: #f8f9fa;
+    }
+    .amount-income {
+        color: #28a745;
+        font-weight: 600;
+    }
+    .amount-expense {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    .source-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+        background: #e9ecef;
+        color: #495057;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+    .status-reconciled {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-unreconciled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .summary-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    /* Table improvements for better layout */
+    .table-responsive {
+        position: relative;
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .table th {
+        white-space: nowrap;
+        vertical-align: middle;
+        font-weight: 600;
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        word-wrap: break-word;
+        max-width: 200px;
+    }
+    
+    /* Text wrapping for better cell content */
+    .cell-content {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        line-height: 1.4;
+    }
+    
+    .title-cell {
+        max-width: 250px;
+        min-width: 150px;
+    }
+    
+    .amount-cell {
+        text-align: right;
+        white-space: nowrap;
+    }
+    
+    .source-cell {
+        max-width: 120px;
+    }
+    
+    .status-cell {
+        max-width: 100px;
+        text-align: center;
+    }
+    
+    .actions-cell {
+        white-space: nowrap;
+        text-align: center;
+    }
+    
+    .serial-number {
+        font-weight: 600;
+        color: #6c757d;
+        text-align: center;
+        min-width: 50px;
+    }
+    
+    /* Loading and interaction improvements */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .transaction-row {
+        transition: all 0.2s ease;
+    }
+    
+    .transaction-row:hover {
+        background-color: #f8f9fa;
+        transform: translateX(2px);
+    }
+    
+    .summary-box {
+        transition: all 0.3s ease;
+    }
+    
+    .summary-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .filter-section .row {
+            margin: 0;
+        }
+        
+        .filter-section .col-md-2,
+        .filter-section .col-md-4,
+        .filter-section .col-md-6 {
+            padding: 5px;
+        }
+        
+        .export-buttons {
+            flex-direction: column;
+        }
+        
+        .export-buttons .btn {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .title-cell {
+            max-width: 150px;
+        }
+    }
+    
+    /* Animation for new transactions */
+    @keyframes highlightNew {
+        0% { background-color: #d4edda; }
+        100% { background-color: transparent; }
+    }
+    
+    .highlight-new {
+        animation: highlightNew 2s ease-out;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">Transactions</h1>
+                    <p class="text-muted">Manage and view all financial transactions</p>
+                </div>
+                <div>
+                    <a href="{% url 'accounting:add_transaction' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Transaction
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Box -->
+    <div class="summary-box">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <h4 class="mb-1">{{ total_count }}</h4>
+                <small class="text-white-50">Total Transactions</small>
+            </div>
+            <div class="col-md-3">
+                <h4 class="mb-1 text-success">{{ total_income|floatformat:2|intcomma }}</h4>
+                <small class="text-white-50">Total Income</small>
+            </div>
+            <div class="col-md-3">
+                <h4 class="mb-1 text-danger">{{ total_expense|floatformat:2|intcomma }}</h4>
+                <small class="text-white-50">Total Expenses</small>
+            </div>
+            <div class="col-md-3">
+                <h4 class="mb-1 {% if net_total >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ net_total|floatformat:2|intcomma }}
+                </h4>
+                <small class="text-white-50">Net Total</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        {% csrf_token %}
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label for="{{ filter_form.start_date.id_for_label }}" class="form-label">Start Date</label>
+                {{ filter_form.start_date }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ filter_form.end_date.id_for_label }}" class="form-label">End Date</label>
+                {{ filter_form.end_date }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ filter_form.transaction_type.id_for_label }}" class="form-label">Type</label>
+                {{ filter_form.transaction_type }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ filter_form.source_app.id_for_label }}" class="form-label">Source</label>
+                {{ filter_form.source_app }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ filter_form.min_amount.id_for_label }}" class="form-label">Min Amount</label>
+                {{ filter_form.min_amount }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ filter_form.max_amount.id_for_label }}" class="form-label">Max Amount</label>
+                {{ filter_form.max_amount }}
+            </div>
+            <div class="col-md-4">
+                <label for="{{ filter_form.search.id_for_label }}" class="form-label">Search</label>
+                {{ filter_form.search }}
+            </div>
+            <div class="col-md-2">
+                <label for="{{ filter_form.is_reconciled.id_for_label }}" class="form-label">Status</label>
+                {{ filter_form.is_reconciled }}
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'accounting:transaction_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Export and Actions -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="export-buttons">
+                    <a href="{% url 'accounting:export_data' %}?type=transactions&format=csv{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}" 
+                       class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-download"></i> Export CSV
+                    </a>
+                    <a href="{% url 'accounting:export_data' %}?type=transactions&format=excel{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}" 
+                       class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </a>
+                    <a href="{% url 'accounting:export_data' %}?type=transactions&format=pdf{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}" 
+                       class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </a>
+                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="updateTransactionCurrencies()">
+                        <i class="fas fa-sync-alt"></i> Update Currencies
+                    </button>
+                </div>
+                <div>
+                    <span class="text-muted">Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} transactions</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="serial-number">S/N</th>
+                            <th>Date</th>
+                            <th class="title-cell">Title</th>
+                            <th>Type</th>
+                            <th class="amount-cell">Amount</th>
+                            <th class="source-cell">Source</th>
+                            <th class="status-cell">Status</th>
+                            <th class="actions-cell">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in page_obj %}
+                        <tr class="transaction-row">
+                            <td class="serial-number">
+                                {{ forloop.counter0|add:page_obj.start_index }}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ transaction.transaction_date|date:"M d, Y" }}</small>
+                            </td>
+                            <td class="title-cell">
+                                <div class="cell-content">
+                                    <strong>{{ transaction.title|safe|striptags }}</strong>
+                                    {% if transaction.description %}
+                                        <br><small class="text-muted">{{ transaction.description|striptags|truncatechars:50 }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {% if transaction.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ transaction.get_type_display }}
+                                </span>
+                            </td>
+                            <td class="amount-cell">
+                                <span class="{% if transaction.type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
+                                    {{ transaction.currency|currency_display }}{{ transaction.net_amount|floatformat:2|intcomma }}
+                                </span>
+                                {% if transaction.tax or transaction.discount %}
+                                    <br><small class="text-muted">
+                                        Base: {{ transaction.currency|currency_display }}{{ transaction.amount|floatformat:2|intcomma }}
+                                        {% if transaction.tax %}<br>Tax: {{ transaction.currency|currency_display }}{{ transaction.tax|floatformat:2|intcomma }}{% endif %}
+                                        {% if transaction.discount %}<br>Discount: {{ transaction.currency|currency_display }}{{ transaction.discount|floatformat:2|intcomma }}{% endif %}
+                                    </small>
+                                {% endif %}
+                            </td>
+                            <td class="source-cell">
+                                <div class="cell-content">
+                                    <span class="source-badge">{{ transaction.get_source_app_display|striptags }}</span>
+                                    {% if transaction.reference_id %}
+                                        <br><small class="text-muted">Ref: {{ transaction.reference_id|striptags }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="status-cell">
+                                <span class="status-badge {% if transaction.is_reconciled %}status-reconciled{% else %}status-unreconciled{% endif %}">
+                                    {% if transaction.is_reconciled %}Reconciled{% else %}Not Reconciled{% endif %}
+                                </span>
+                            </td>
+                            <td class="actions-cell">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'accounting:edit_transaction' transaction.id %}" 
+                                       class="btn btn-outline-primary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if not transaction.is_reconciled %}
+                                        <button type="button" 
+                                                class="btn btn-outline-success reconcile-btn" 
+                                                title="Mark as Reconciled"
+                                                data-transaction-id="{{ transaction.id }}"
+                                                onclick="reconcileTransaction('{{ transaction.id }}')">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    {% else %}
+                                        <button type="button" 
+                                                class="btn btn-outline-warning unreconcile-btn" 
+                                                title="Mark as Not Reconciled"
+                                                data-transaction-id="{{ transaction.id }}"
+                                                onclick="unreconcileTransaction('{{ transaction.id }}')">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    {% endif %}
+                                    <a href="{% url 'accounting:delete_transaction' transaction.id %}" 
+                                       class="btn btn-outline-danger" title="Delete"
+                                       onclick="return confirm('Are you sure you want to void this transaction?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                                    <h5>No transactions found</h5>
+                                    <p>Try adjusting your filters or add a new transaction.</p>
+                                    <a href="{% url 'accounting:add_transaction' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Add Transaction
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Transaction pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filters change
+    const filterInputs = document.querySelectorAll('.filter-section select, .filter-section input[type="date"], .filter-section input[type="number"]');
+    filterInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Don't auto-submit for search field
+            if (this.name !== 'search') {
+                showLoadingState();
+                this.closest('form').submit();
+            }
+        });
+    });
+
+    // Search with debounce
+    const searchInput = document.querySelector('input[name="search"]');
+    let searchTimeout;
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                showLoadingState();
+                this.closest('form').submit();
+            }, 500);
+        });
+    }
+
+    // Add loading state function
+    function showLoadingState() {
+        const tableBody = document.querySelector('table tbody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <div class="text-muted">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+                            <h5>Loading transactions...</h5>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Add error handling for form submission
+    const filterForm = document.querySelector('.filter-section form');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            // Add a small delay to show loading state
+            setTimeout(() => {
+                showLoadingState();
+            }, 100);
+        });
+    }
+
+    // Add confirmation for delete actions
+    const deleteButtons = document.querySelectorAll('a[href*="delete"]');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (!confirm('Are you sure you want to void this transaction? This action cannot be undone.')) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Add real-time summary updates (if needed)
+    function updateSummaryTotals() {
+        const summaryBox = document.querySelector('.summary-box');
+        if (summaryBox) {
+            // Add a subtle animation to indicate data is fresh
+            summaryBox.style.transition = 'all 0.3s ease';
+            summaryBox.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                summaryBox.style.transform = 'scale(1)';
+            }, 300);
+        }
+    }
+
+    // Call update function when page loads
+    updateSummaryTotals();
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + F to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+        
+        // Ctrl/Cmd + N to add new transaction
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            const addButton = document.querySelector('a[href*="add_transaction"]');
+            if (addButton) {
+                addButton.click();
+            }
+        }
+    });
+
+    // Add tooltips for better UX
+    const tooltipElements = document.querySelectorAll('[title]');
+    tooltipElements.forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            const title = this.getAttribute('title');
+            if (title) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'custom-tooltip';
+                tooltip.textContent = title;
+                tooltip.style.cssText = `
+                    position: absolute;
+                    background: rgba(0,0,0,0.8);
+                    color: white;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    z-index: 1000;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(tooltip);
+                
+                const rect = this.getBoundingClientRect();
+                tooltip.style.left = rect.left + 'px';
+                tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
+                
+                this._tooltip = tooltip;
+            }
+        });
+        
+        element.addEventListener('mouseleave', function() {
+            if (this._tooltip) {
+                this._tooltip.remove();
+                this._tooltip = null;
+            }
+        });
+    });
+
+    // Add responsive table improvements
+    const table = document.querySelector('.table-responsive table');
+    if (table) {
+        // Add horizontal scroll indicator
+        const tableContainer = table.closest('.table-responsive');
+        if (tableContainer) {
+            tableContainer.addEventListener('scroll', function() {
+                const isAtEnd = this.scrollLeft + this.clientWidth >= this.scrollWidth;
+                const isAtStart = this.scrollLeft === 0;
+                
+                if (!isAtEnd) {
+                    this.style.boxShadow = 'inset -5px 0 10px -5px rgba(0,0,0,0.1)';
+                } else if (!isAtStart) {
+                    this.style.boxShadow = 'inset 5px 0 10px -5px rgba(0,0,0,0.1)';
+                } else {
+                    this.style.boxShadow = 'none';
+                }
+            });
+        }
+    }
+
+    // Add export button enhancements
+    const exportButtons = document.querySelectorAll('.export-buttons a');
+    exportButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+            this.disabled = true;
+            
+            // Reset after a delay (in case of error)
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }, 5000);
+        });
+    });
+
+    // Add pagination improvements
+    const paginationLinks = document.querySelectorAll('.pagination a');
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            showLoadingState();
+        });
+    });
+
+    console.log('Accounting transactions page enhanced with real-time features');
+    
+    // Reconciliation functions
+    function reconcileTransaction(transactionId) {
+        if (confirm('Are you sure you want to mark this transaction as reconciled?')) {
+            fetch(`/accounting/transactions/${transactionId}/reconcile/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Transaction marked as reconciled successfully!', 'success');
+                    // Reload the page to update the status
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showNotification('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error updating transaction status', 'error');
+            });
+        }
+    }
+    
+    function unreconcileTransaction(transactionId) {
+        if (confirm('Are you sure you want to mark this transaction as not reconciled?')) {
+            fetch(`/accounting/transactions/${transactionId}/unreconcile/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Transaction marked as not reconciled successfully!', 'success');
+                    // Reload the page to update the status
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showNotification('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error updating transaction status', 'error');
+            });
+        }
+    }
+
+    // Function to update transaction currencies
+    function updateTransactionCurrencies() {
+        if (confirm('This will update all transaction currencies to match the current company profile currency. This action cannot be undone. Proceed?')) {
+            showLoadingState();
+            fetch('/accounting/transactions/update_currencies/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Transaction currencies updated successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showNotification('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error updating transaction currencies', 'error');
+            });
+        }
+    }
+
+    // Function to show notifications
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show`;
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '300px';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+        `;
+        document.body.appendChild(notification);
+        
+        // Auto-remove notification after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+});
+</script>
+{% endblock %} 

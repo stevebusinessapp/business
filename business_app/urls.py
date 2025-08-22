@@ -6,8 +6,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
+from django.http import HttpResponse
+
+def health_check(request):
+    """Health check endpoint for Render"""
+    return HttpResponse("OK", status=200)
 
 urlpatterns = [
+    path('healthz/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='/dashboard/landing/', permanent=False)),
     path('auth/', include('apps.accounts.urls')),

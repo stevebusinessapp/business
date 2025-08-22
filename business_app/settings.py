@@ -24,11 +24,17 @@ ALLOWED_HOSTS = [
     'testserver',
     '.railway.app',  # Allow all Railway subdomains
     '.up.railway.app',  # Railway's domain
+    '.onrender.com',  # Allow all Render subdomains
 ]
 
 # Add Railway URL to allowed hosts if provided
 if RAILWAY_STATIC_URL:
     ALLOWED_HOSTS.append(RAILWAY_STATIC_URL.replace('https://', '').replace('http://', ''))
+
+# Add Render URL to allowed hosts if provided
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # Application definition
 DJANGO_APPS = [
@@ -166,7 +172,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Performance optimizations for production
 if not DEBUG:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 else:
     STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 

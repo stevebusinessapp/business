@@ -12,8 +12,13 @@ def health_check(request):
     """Health check endpoint for Render"""
     return HttpResponse("OK", status=200)
 
+def simple_health(request):
+    """Simple health check that always works"""
+    return HttpResponse("healthy", content_type="text/plain")
+
 urlpatterns = [
     path('healthz/', health_check, name='health_check'),
+    path('health/', simple_health, name='simple_health'),
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='/dashboard/landing/', permanent=False)),
     path('auth/', include('apps.accounts.urls')),
@@ -43,3 +48,11 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+else:
+    # Serve media files in production
+    from django.views.static import serve
+    from django.urls import re_path
+    
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]

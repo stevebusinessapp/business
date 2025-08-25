@@ -1,0 +1,5 @@
+[33m968ab32[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add health check endpoint for Render deployment
+[33m0dc08b7[m Remove all source map references from JavaScript files
+[33m57a1649[m Fix static files collection issue by removing source map reference and updating storage
+[33md912a0a[m Fix psycopg2 compatibility and remove deprecated JSONField import
+[33m21b528a[m Fix Pillow compatibility issue for Render deployment

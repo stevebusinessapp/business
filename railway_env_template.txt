@@ -1,0 +1,20 @@
+# Railway Deployment Environment Variables
+# Copy these to your Railway project variables
+
+# Django Settings
+SECRET_KEY=cv&#cToJyYqF+^gU5&azDh($Qs9)YQb0yp6_xpvLon@TTu_g8j
+DEBUG=False
+DEBUG_INVENTORY=False
+
+# Database (Railway will set this automatically)
+# DATABASE_URL=postgresql://...
+
+# Email Settings (Optional)
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=587
+# EMAIL_USE_TLS=True
+# EMAIL_HOST_USER=your-email@gmail.com
+# EMAIL_HOST_PASSWORD=your-app-password
+
+# Custom Domain (Optional)
+# RAILWAY_STATIC_URL=https://your-domain.com

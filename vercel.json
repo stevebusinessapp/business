@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "business_app/wsgi.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "business_app/wsgi.py"
+    }
+  ],
+  "env": {
+    "SECRET_KEY": "cv&#cToJyYqF+^gU5&azDh($Qs9)YQb0yp6_xpvLon@TTu_g8j",
+    "DEBUG": "False",
+    "DEBUG_INVENTORY": "False"
+  }
+}

@@ -184,6 +184,9 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Media file serving in production (for Render)
+# Note: Media files are served via URL patterns in production
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

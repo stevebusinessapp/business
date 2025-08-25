@@ -2,11 +2,14 @@
 # exit on error
 set -o errexit
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies with faster pip options
+pip install -r requirements.txt --no-cache-dir --disable-pip-version-check
 
-# Collect static files
-python manage.py collectstatic --no-input
+# Create media directory if it doesn't exist
+mkdir -p media
+
+# Collect static files with optimization
+python manage.py collectstatic --no-input --clear
 
 # Run database migrations
-python manage.py migrate
+python manage.py migrate --noinput

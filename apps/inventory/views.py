@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 import json
 import re
 from decimal import Decimal
-import pandas as pd
+# import pandas as pd  # Commented out - heavy dependency, using openpyxl instead
 import io
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -864,17 +864,39 @@ def inventory_import(request):
                     messages.error(request, 'Unsupported file format. Please use Excel (.xlsx, .xls) or CSV files.')
                     return redirect('inventory:import')
                 
-                # Read the file
+                # Read the file using openpyxl for Excel and csv for CSV
                 if file_type == 'excel':
-                    df = pd.read_excel(uploaded_file)
+                    from openpyxl import load_workbook
+                    wb = load_workbook(uploaded_file, data_only=True)
+                    ws = wb.active
+                    
+                    # Get headers from first row
+                    headers = []
+                    for cell in ws[1]:
+                        headers.append(cell.value if cell.value else '')
+                    
+                    # Get data rows
+                    data_rows = []
+                    for row in ws.iter_rows(min_row=2):
+                        row_data = []
+                        for cell in row:
+                            row_data.append(cell.value if cell.value else '')
+                        data_rows.append(row_data)
                 else:
-                    df = pd.read_csv(uploaded_file)
+                    # CSV file
+                    import csv
+                    decoded_file = uploaded_file.read().decode('utf-8').splitlines()
+                    reader = csv.reader(decoded_file)
+                    headers = next(reader)  # First row is headers
+                    data_rows = list(reader)
                 
                 # Auto-detect columns and create mapping
                 column_mapping = {}
                 detected_columns = []
                 
-                for col in df.columns:
+                for col in headers:
+                    if not col:
+                        continue
                     col_lower = col.lower().strip()
                     if any(keyword in col_lower for keyword in ['product', 'name', 'item']):
                         column_mapping[col] = 'product_name'
@@ -901,7 +923,7 @@ def inventory_import(request):
                     file_size=uploaded_file.size,
                     file_type=file_type,
                     column_mapping=column_mapping,
-                    total_rows=len(df),
+                    total_rows=len(data_rows),
                     status='processing'
                 )
                 
@@ -910,8 +932,16 @@ def inventory_import(request):
                 failed_count = 0
                 errors = []
                 
-                for index, row in df.iterrows():
+                for index, row_data in enumerate(data_rows):
                     try:
+                        # Create a row dictionary for easier access
+                        row = {}
+                        for i, header in enumerate(headers):
+                            if i < len(row_data):
+                                row[header] = row_data[i]
+                            else:
+                                row[header] = ''
+                        
                         # Extract values using mapping
                         product_name = row.get(column_mapping.get('product_name', ''), '')
                         sku_code = row.get(column_mapping.get('sku_code', ''), '')
@@ -982,7 +1012,7 @@ def inventory_import(request):
                         'file_name': uploaded_file.name,
                         'imported_count': imported_count,
                         'failed_count': failed_count,
-                        'total_rows': len(df)
+                        'total_rows': len(data_rows)
                     }
                 )
                 
